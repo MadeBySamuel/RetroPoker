@@ -8,7 +8,10 @@
 #include <numeric>
 #include <map>
 #include <string>
+#include <memory>
 
+
+#include "constants.h"
 
 class Player{
     private:
@@ -20,7 +23,7 @@ class Player{
         bool isSmallBlind = false;
         bool isInGame = true;
 
-        std::vector<std::string> cards2;
+        std::vector<Card> cards2;
     
         
         
@@ -28,17 +31,20 @@ class Player{
     Player();
         std::string getName();
 
-        std::vector<std::string>& getcard2();
+        std::vector<Card>& getcard2();
         
 
         void setName(std::string name);
 
-        int getmoney();
+        int& getMoney();
 
-        void setmoney(int money);
+        void setMoney(int money);
 
 
         bool getIsBigBlind();
+
+        bool Player::getIsSmallBlind();
+
 
         void ToggleBigBlind();
 
@@ -54,5 +60,8 @@ class Player{
         void check();
         void raise();
 
-};
+        ~Player();
+    };
+
+
 

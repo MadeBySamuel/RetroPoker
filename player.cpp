@@ -1,14 +1,5 @@
-
 #include "player.h"
 
-#include <iostream>
-#include <stdlib.h>
-#include <vector>
-#include <algorithm>
-#include <random>
-#include <numeric>
-#include <map>
-#include <string>
 
 
      
@@ -20,7 +11,7 @@ std::string Player::getName(){
     return name;
 }
 
-std::vector<std::string>& Player::getcard2(){
+std::vector<Card>& Player::getcard2(){
     return cards2;
 }
 
@@ -28,17 +19,21 @@ void Player::setName(std::string name){
     this->name = name;
 }
 
-int Player::getmoney(){
+int& Player::getMoney(){
     return money;
 }
 
-void Player::setmoney(int money){
+void Player::setMoney(int money){
     this->money = money; 
 }
 
 
 bool Player::getIsBigBlind(){
     return isBigBlind;
+}
+
+bool Player::getIsSmallBlind(){
+    return isSmallBlind;
 }
 
 void Player::ToggleBigBlind(){
@@ -94,7 +89,12 @@ void Player::call(){
 void Player::check(){
 
 }
-/*
+
+
+Player::~Player(){
+        std::cout << "Player was deleted. " << std::endl;
+}
+
 void Player::raise(){
     std::string raise_amount;
     while (true)
@@ -121,7 +121,6 @@ void Player::raise(){
 
         std::cout << "You added " << input << " € to pot" << std::endl;
         this->money -= input;
-        pot += input;
         break;
 
     }
@@ -134,4 +133,4 @@ void Player::raise(){
 }
     
 }
-*/
+

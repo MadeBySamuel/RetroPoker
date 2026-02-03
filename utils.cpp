@@ -2,6 +2,10 @@
 #include "constants.h"
 
 #include "utils.h"
+#include "game.h"
+
+#include <memory>
+
 
 
 bool utils::is_valid(int money, int bet_amount){
@@ -24,23 +28,13 @@ bool utils::is_valid(int money, int bet_amount){
 }
 
 
-void utils::shuffle_cards(std::vector<std::string>& cards){
+void utils::shuffle_cards(std::vector<Card>& cards){
     utils::shuffle_function(cards);
 }
 
 void utils::shuffle_players(std::vector<std::string>& names){
     utils::shuffle_function(names);
 }
-
-
-
-
-
-
-
-
-
-
 
 int utils::set_player_position(std::vector<std::string>& game_names){
     int player_position = rand()% 6;
@@ -50,11 +44,17 @@ int utils::set_player_position(std::vector<std::string>& game_names){
 }
 
 
-std::vector<Player> utils::createPlayers(std::vector<std::string>& game_names, std::vector<Player>& players){
+std::vector<std::unique_ptr<Player>>& utils::createPlayers(std::vector<std::string>& game_names, std::vector<std::unique_ptr<Player>>& players){
     
+    players.reserve(Constants::MAX_PEOPLE);
+
+    for (size_t i = 0; i < Constants::MAX_PEOPLE; ++i) {
+        players.push_back(std::make_unique<Player>());
+    }
+
     for(int i = 0; i < game_names.size(); i++){
-        players[i].setName(game_names[i]);
-        if (game_names[i] == "Player") players[i].setmoney(Constants::START_PLAYER_MONEY);
+        players[i]->setName(game_names[i]);
+        if (game_names[i] == "Player") players[i]->setMoney(Constants::START_PLAYER_MONEY);
         // tu sa hracom negenruju peniaze lebo uz boli pri tvorbe vygenerovane konstruktorom
 
     }
@@ -66,20 +66,20 @@ std::vector<Player> utils::createPlayers(std::vector<std::string>& game_names, s
 
 
 
-void utils::show_my_cards(std::vector<Player> players){
+void utils::show_my_cards(std::vector<std::unique_ptr<Player>>& players){
 for(int i = 0; i < players.size(); i++){
-        if(players[i].getName() == "Player"){
-            for (int j = 0; j < players[i].getcard2().size(); j++){
-                std::cout << players[i].getcard2()[j] << std::endl;
+        if(players[i]->getName() == "Player"){
+            for (int j = 0; j < players[i]->getcard2().size(); j++){
+                std::cout << players[i]->getcard2()[j].write_name() << std::endl;  
             }
         }
     } 
 }
 
-void utils::card_selection(std::vector<Player> players, std::vector<int> used_cards_index, std::vector<std::string> game_cards){
+void utils::card_selection(std::vector<std::unique_ptr<Player>>& players, std::vector<int>& used_cards_index, std::vector<Card>& game_cards){
     
 
-    for (int i = 0; i < players.size(); i++){
+    for (auto& player: players){
         
         int card1 = rand()% game_cards.size() + 1;
         int card2 = rand()% game_cards.size() + 1;
@@ -87,16 +87,15 @@ void utils::card_selection(std::vector<Player> players, std::vector<int> used_ca
             std::find(used_cards_index.begin(), used_cards_index.end(), card2) == used_cards_index.end())
         {
             used_cards_index.push_back(card1);
-            players[i].getcard2().push_back(game_cards[card1]);
+            player->getcard2().push_back(game_cards[card1]);
             used_cards_index.push_back(card2);
-            players[i].getcard2().push_back(game_cards[card2]);
-            break;
+            player->getcard2().push_back(game_cards[card2]);
         }
 }
 }
 
-void utils::community_cards_selection(std::vector<std::string>& game_cards, std::vector<int>& used_cards_index, std::vector<std::string>& community_cards){
-    for(int i = 0; i < 5; i ++){
+void utils::community_cards_selection(std::vector<Card>& game_cards, std::vector<int>& used_cards_index, std::vector<Card>& community_cards){
+    for(std::size_t i = 0; i < 5; i ++){
         int number = rand()% game_cards.size() + 1;
         if(std::find(used_cards_index.begin(), used_cards_index.end(), number) == used_cards_index.end())
         {
@@ -104,3 +103,23 @@ void utils::community_cards_selection(std::vector<std::string>& game_cards, std:
         }
     }
 }
+
+void utils::blindSelection(std::vector<std::unique_ptr<Player>>& players, int& bigBlindPosition, int& smallBlindPositon){
+    players[bigBlindPosition]->ToggleBigBlind();
+    players[smallBlindPositon]->ToggleSmallBlind();
+
+    if (players[bigBlindPosition]->getIsBigBlind() && players[smallBlindPositon]->getIsSmallBlind() )
+    {
+        players[bigBlindPosition]->ToggleBigBlind();
+        players[smallBlindPositon]->ToggleSmallBlind();
+        
+        bigBlindPosition -= 1;
+        smallBlindPositon -= 1;
+    }
+    else{
+        players[bigBlindPosition]->ToggleBigBlind();
+        players[smallBlindPositon]->ToggleSmallBlind();
+    }
+}
+
+

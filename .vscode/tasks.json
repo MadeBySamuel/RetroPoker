@@ -12,6 +12,8 @@
 				"${workspaceFolder}/player.cpp",
 				"${workspaceFolder}/utils.cpp",
 				"${workspaceFolder}/constants.cpp",
+				"${workspaceFolder}/handevoluator.cpp",
+
 				"-o",
 				"${fileDirname}\\${fileBasenameNoExtension}.exe"
 			],
