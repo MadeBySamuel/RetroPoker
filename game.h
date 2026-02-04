@@ -1,3 +1,5 @@
+#pragma once
+
 #include "player.h"
 #include <iostream>
 #include <windows.h>
@@ -20,11 +22,12 @@ class Game {
          
 
     public:
-        int getPot();
+        int& getPot();
         void setPot(int pot);
 
-        int getBigBlind();
         void setBigBlind(int bigBlind);
+        int getBigBlind();
+        
 
         int getSmallBlind();
         void setSmallBlind(int smallBlind);
@@ -40,7 +43,7 @@ class Game {
     void setup_once_per_game(std::vector<std::unique_ptr<Player>>& players, std::vector<Card>& game_cards, 
         std::vector<int>& used_cards_index, std::vector<Card>& community_cards, int& bigBlindPosition, int& smallBlindPosition);
     
-    void show_game(std::vector<Player> players, std::vector<Card>& community_cards);
+    // void show_game(std::vector<Player> players, std::vector<Card>& community_cards);
 
     void game();
     

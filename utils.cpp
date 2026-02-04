@@ -7,6 +7,18 @@
 #include <memory>
 
 
+void utils::sort_function(std::vector<Card> cards){
+    std::sort(cards.begin(), cards.end(),[](Card& a, Card& b){
+            return a.rank < b.rank;
+    });
+    }
+
+void utils::sort_name(std::vector<Card> cards){
+    std::sort(cards.begin(), cards.end(),[](Card& a, Card& b){
+            return a.name < b.name;
+    });
+    }
+
 
 bool utils::is_valid(int money, int bet_amount){
     if (bet_amount > money) {
@@ -105,8 +117,6 @@ void utils::community_cards_selection(std::vector<Card>& game_cards, std::vector
 }
 
 void utils::blindSelection(std::vector<std::unique_ptr<Player>>& players, int& bigBlindPosition, int& smallBlindPositon){
-    players[bigBlindPosition]->ToggleBigBlind();
-    players[smallBlindPositon]->ToggleSmallBlind();
 
     if (players[bigBlindPosition]->getIsBigBlind() && players[smallBlindPositon]->getIsSmallBlind() )
     {
@@ -120,6 +130,22 @@ void utils::blindSelection(std::vector<std::unique_ptr<Player>>& players, int& b
         players[bigBlindPosition]->ToggleBigBlind();
         players[smallBlindPositon]->ToggleSmallBlind();
     }
+}
+
+std::vector<Card> utils::cards7collection(std::vector<std::unique_ptr<Player>>& players, std::vector<Card>& community_cards){
+    
+    std::vector<Card> map;
+
+    for(size_t i = 0; i < players.size(); i++){
+        for (int j = 0; j < players[i]->getcard2().size(); j++){
+            map.push_back(players[i]->getcard2()[j]);
+        }
+        for (size_t i = 0; i < community_cards.size(); i ++){
+            map.push_back(community_cards[i]);
+        }
+        return map;
+    }
+    return map;
 }
 
 

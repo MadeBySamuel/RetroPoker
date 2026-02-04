@@ -9,6 +9,10 @@
 
 
 namespace utils{
+
+void sort_function(std::vector<Card> cards);
+void sort_name(std::vector<Card> cards);
+
 bool is_valid(int money, int bet_amount);
 
 void shuffle_cards(std::vector<Card>& game_cards);
@@ -40,5 +44,8 @@ void card_selection(std::vector<std::unique_ptr<Player>>& players, std::vector<i
 void community_cards_selection(std::vector<Card>& game_cards, std::vector<int>& used_cards_index, std::vector<Card>& community_cards);
 
 void blindSelection(std::vector<std::unique_ptr<Player>>& players, int& bigBlindPosition, int& smallBlindPositon);
+
+std::vector<Card> cards7collection(std::vector<std::unique_ptr<Player>>& players, std::vector<Card>& community_cards);
+
 
 }

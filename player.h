@@ -13,6 +13,7 @@
 
 #include "constants.h"
 
+
 class Player{
     private:
         
@@ -43,22 +44,12 @@ class Player{
 
         bool getIsBigBlind();
 
-        bool Player::getIsSmallBlind();
+        bool getIsSmallBlind();
 
 
         void ToggleBigBlind();
 
         void ToggleSmallBlind();
-
-        void allin();
-        
-        
-
-        void bet();
-        void call();
-
-        void check();
-        void raise();
 
         ~Player();
     };
