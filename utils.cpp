@@ -7,11 +7,12 @@
 #include <memory>
 
 
-void utils::sort_function(std::vector<Card> cards){
-    std::sort(cards.begin(), cards.end(),[](Card& a, Card& b){
+void utils::sort_function(std::vector<Card>& cards){
+    std::sort(cards.begin(), cards.end(),[](const Card& a,const Card& b){
             return a.rank < b.rank;
     });
-    }
+    
+}
 
 void utils::sort_name(std::vector<Card> cards){
     std::sort(cards.begin(), cards.end(),[](Card& a, Card& b){
@@ -88,23 +89,32 @@ for(int i = 0; i < players.size(); i++){
     } 
 }
 
+void utils::settingInGameStatus(std::vector<std::unique_ptr<Player>>& players){
+    for(size_t i = 0; i < players.size(); i ++){
+        players[i]->setInGame(true);
+    }
+}
+
+
 void utils::card_selection(std::vector<std::unique_ptr<Player>>& players, std::vector<int>& used_cards_index, std::vector<Card>& game_cards){
     
 
     for (auto& player: players){
-        
-        int card1 = rand()% game_cards.size() + 1;
-        int card2 = rand()% game_cards.size() + 1;
-        if (std::find(used_cards_index.begin(), used_cards_index.end(), card1) == used_cards_index.end() &&
-            std::find(used_cards_index.begin(), used_cards_index.end(), card2) == used_cards_index.end())
-        {
-            used_cards_index.push_back(card1);
-            player->getcard2().push_back(game_cards[card1]);
-            used_cards_index.push_back(card2);
-            player->getcard2().push_back(game_cards[card2]);
-        }
+        int card1;
+        int card2;
+        do{
+        card1 = rand()% game_cards.size() + 1;
+        card2 = rand()% game_cards.size() + 1;
+        }while(std::find(used_cards_index.begin(), used_cards_index.end(), card1) != used_cards_index.end()&&
+        std::find(used_cards_index.begin(), used_cards_index.end(), card2) != used_cards_index.end());
+
+        used_cards_index.push_back(card1);
+        player->getcard2().push_back(game_cards[card1]);
+        used_cards_index.push_back(card2);
+        player->getcard2().push_back(game_cards[card2]);
+    }
 }
-}
+
 
 void utils::community_cards_selection(std::vector<Card>& game_cards, std::vector<int>& used_cards_index, std::vector<Card>& community_cards){
     for(std::size_t i = 0; i < 5; i ++){
@@ -132,19 +142,21 @@ void utils::blindSelection(std::vector<std::unique_ptr<Player>>& players, int& b
     }
 }
 
-std::vector<Card> utils::cards7collection(std::vector<std::unique_ptr<Player>>& players, std::vector<Card>& community_cards){
+std::vector<Card> utils::cards7collection(std::vector<std::unique_ptr<Player>>& players, int i, std::vector<Card>& community_cards){
     
     std::vector<Card> map;
 
-    for(size_t i = 0; i < players.size(); i++){
-        for (int j = 0; j < players[i]->getcard2().size(); j++){
+    
+    for (int j = 0; j < players[i]->getcard2().size(); j++){
             map.push_back(players[i]->getcard2()[j]);
-        }
-        for (size_t i = 0; i < community_cards.size(); i ++){
-            map.push_back(community_cards[i]);
-        }
-        return map;
     }
+
+    for (size_t i = 0; i < community_cards.size(); i ++){
+            map.push_back(community_cards[i]);
+    }
+        return map;
+    
+
     return map;
 }
 

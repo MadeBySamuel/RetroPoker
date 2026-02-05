@@ -10,12 +10,11 @@
 class Plays : public Game{
 
 
-    void allin(std::vector<Player>& players, int i);
-    void fold(std::vector<Player>& players, int i);
-    void check(std::vector<Player>& players, int i);
-    void call(std::vector<Player>& players, int i, int raise_amount);
-    int raise(std::vector<Player>& players, int i, std::string& raise_amount);
+    public:
+        void allin(std::vector<Player>& players, int i);
+        void fold(std::vector<Player>& players, int i);
+        void check(std::vector<Player>& players, int i);
+        void call(std::vector<Player>& players, int i, int raise_amount);
+        int raise_bet(std::vector<Player>& players, int i, int raise_amount);
 
-
-    
 };

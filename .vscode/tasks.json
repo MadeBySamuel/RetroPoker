@@ -13,7 +13,8 @@
 				"${workspaceFolder}/utils.cpp",
 				"${workspaceFolder}/constants.cpp",
 				"${workspaceFolder}/handevoluator.cpp",
-
+				"${workspaceFolder}/aiplayer.cpp",
+				"${workspaceFolder}/plays.cpp",
 				"-o",
 				"${fileDirname}\\${fileBasenameNoExtension}.exe"
 			],

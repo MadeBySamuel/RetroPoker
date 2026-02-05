@@ -42,6 +42,14 @@ void Player::ToggleSmallBlind(){
     isSmallBlind = !isSmallBlind;
 }
 
+int Player::getInGame(){
+    return inGame;
+}
+
+void Player::setInGame(bool inGame){
+    this->inGame = inGame;
+}
+
 
 Player::~Player(){
         std::cout << "Player was deleted. " << std::endl;

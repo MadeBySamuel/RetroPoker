@@ -58,7 +58,9 @@ void Game::setCurrentBet(int currentBet){
 void Game::setup_once(std::vector<std::unique_ptr<Player>>& players, std::vector<std::string>& game_names){
     utils::shuffle_players(game_names);
     utils::set_player_position(game_names);
-    utils::createPlayers(game_names, players);                         
+    utils::createPlayers(game_names, players);
+    utils::settingInGameStatus(players);     
+
 }
 
 void Game::setup_once_per_game(std::vector<std::unique_ptr<Player>>& players, std::vector<Card>& game_cards, 
@@ -97,32 +99,32 @@ void Game::setup_once_per_game(std::vector<std::unique_ptr<Player>>& players, st
 
     HandEvoluator handEvo;
 
-    std::vector<Play> game_evoluation; 
+    std::vector<int> game_evoluation; 
+    std::vector<int> map_of_plays(players.size());
     int max_element = 0;
-    
-    std::vector<Play> list;
+
+
     for (int i = 0; i < players.size(); i ++)
     {
+        if (players[i]->getInGame()){
         std::vector<Card> map;
-        std::vector<Play> map_of_plays(3);
-        
         int max_element_of_person = 0;
 
-        map = utils::cards7collection(players, community_cards);
 
-        map_of_plays[i].id = players[i]->getName();
 
-        map_of_plays = handEvo.evoluator(map, i);
+        map = utils::cards7collection(players, i, community_cards);
+        map_of_plays = handEvo.evoluator(map);
 
     
-        max_element_of_person = *std::max_element(map_of_plays[i].numbers.begin(), map_of_plays[i].numbers.end());      // toto vracia iterator čiže * <- need 
-        game_evoluation[i].numbers.push_back(max_element_of_person);
+        max_element_of_person = *std::max_element(map_of_plays.begin(), map_of_plays.end());      // toto vracia iterator čiže * <- need 
+        game_evoluation.push_back(max_element_of_person);
+        }
     }
+    auto iterator = std::max_element(game_evoluation.begin(), game_evoluation.end());
 
+    int winner = *iterator;
 
-
-
-
+    int winnerIndex = std::distance(game_evoluation.begin(), iterator);
 
 
     

@@ -10,7 +10,7 @@
 
 namespace utils{
 
-void sort_function(std::vector<Card> cards);
+void sort_function(std::vector<Card>& cards);
 void sort_name(std::vector<Card> cards);
 
 bool is_valid(int money, int bet_amount);
@@ -35,7 +35,7 @@ void shuffle_function(std::vector<T>& map){
 
 void shuffle_cards(std::vector<Card>& cards);
 void shuffle_players(std::vector<std::string>& players);
-
+void settingInGameStatus(std::vector<std::unique_ptr<Player>>&players);  
 
 void show_my_cards(std::vector<std::unique_ptr<Player>>& players);
 
@@ -45,7 +45,7 @@ void community_cards_selection(std::vector<Card>& game_cards, std::vector<int>& 
 
 void blindSelection(std::vector<std::unique_ptr<Player>>& players, int& bigBlindPosition, int& smallBlindPositon);
 
-std::vector<Card> cards7collection(std::vector<std::unique_ptr<Player>>& players, std::vector<Card>& community_cards);
+std::vector<Card> cards7collection(std::vector<std::unique_ptr<Player>>& players, int i, std::vector<Card>& community_cards);
 
 
 }

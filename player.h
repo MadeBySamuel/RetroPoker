@@ -22,7 +22,7 @@ class Player{
 
         bool isBigBlind = false;
         bool isSmallBlind = false;
-        bool isInGame = true;
+        bool inGame = true;
 
         std::vector<Card> cards2;
     
@@ -50,6 +50,9 @@ class Player{
         void ToggleBigBlind();
 
         void ToggleSmallBlind();
+
+        int getInGame();
+        void setInGame(bool inGame);
 
         ~Player();
     };

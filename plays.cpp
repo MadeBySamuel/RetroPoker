@@ -30,7 +30,7 @@
     void Plays::fold(std::vector<Player>& players, int i){
         
         std::cout << "Player " << players[i].getName() << " is folding." << std::endl;
-        players.erase(players.begin() + i);
+        players[i].setInGame(false);
     
     }
 
@@ -45,12 +45,11 @@
         getPot() += raise_amount;
     }
 
-
-
-    int Plays::raise(std::vector<Player>& players, int i, std::string& raise_amount){
+    int Plays::raise_bet(std::vector<Player>& players, int i, int raise_amount){
 
         if (players[i].getName() == "Player"){
 
+            std::string raise_amount;
             std::cout << "Enter amount of money you want to raise " << std::endl;
             std::cin >> raise_amount; 
             
@@ -85,6 +84,10 @@
                 return 0;
             }
         }
-    
+        else {
+            players[i].getMoney() -= raise_amount;
+            getPot() += raise_amount;
+            return raise_amount;
+        }
     
     }

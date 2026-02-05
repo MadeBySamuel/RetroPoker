@@ -89,7 +89,7 @@
 
         for(int i =0; i <cards.size() - 1; i ++){
             if(cards[i].rank == cards[i+1].rank)
-            i++;
+            counter++;
         }
         if (counter == 2) return 2;
         return 0;
@@ -108,19 +108,19 @@
     }
 
 
-    std::vector<Play> HandEvoluator::evoluator(std::vector<Card> &cards, int i){
+    std::vector<int> HandEvoluator::evoluator(std::vector<Card> &cards){
         
-        std::vector<Play> list(9); 
+        std::vector<int> list; 
 
-        list[i].numbers.push_back(OnePair(cards));
-        list[i].numbers.push_back(TwoPairs(cards));
-        list[i].numbers.push_back(ThreeOfKind(cards));
-        list[i].numbers.push_back(Straight(cards));
-        list[i].numbers.push_back(Flush(cards));
-        list[i].numbers.push_back(FullHouse(cards));
-        list[i].numbers.push_back(FourOfKind(cards));
-        list[i].numbers.push_back(StraightFlush(cards));
-        list[i].numbers.push_back(RoyalFlush(cards));
+        list.emplace_back(HandEvoluator::OnePair(cards));
+        list.emplace_back(HandEvoluator::TwoPairs(cards));
+        list.emplace_back(HandEvoluator::ThreeOfKind(cards));
+        list.emplace_back(HandEvoluator::Straight(cards));
+        list.emplace_back(HandEvoluator::Flush(cards));
+        list.emplace_back(HandEvoluator::FullHouse(cards));
+        list.emplace_back(HandEvoluator::FourOfKind(cards));
+        list.emplace_back(HandEvoluator::StraightFlush(cards));
+        list.emplace_back(HandEvoluator::RoyalFlush(cards));
 
         return list;
     }

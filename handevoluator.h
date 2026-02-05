@@ -4,10 +4,7 @@
 #include "player.h"
 #include "utils.h"
 
-struct Play{
-    std::string id;
-    std::vector<int> numbers;
-};
+
 
 class HandEvoluator : public Player{
 
@@ -21,6 +18,6 @@ class HandEvoluator : public Player{
     int ThreeOfKind(std::vector<Card>& cards);
     int TwoPairs(std::vector<Card>& cards);
     int OnePair(std::vector<Card>& cards);
-    std::vector<Play> evoluator(std::vector<Card>& cards, int i);
+    std::vector<int> evoluator(std::vector<Card>& cards);
 
 };
