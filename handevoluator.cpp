@@ -108,7 +108,7 @@
     }
 
 
-    std::vector<int> HandEvoluator::evoluator(std::vector<Card> &cards){
+    void HandEvoluator::evoluator(std::vector<Card> &cards, std::vector<std::unique_ptr<Player>>& players, std::vector<Card> community_cards){
         
         std::vector<int> list; 
 
@@ -123,6 +123,34 @@
         list.emplace_back(HandEvoluator::RoyalFlush(cards));
 
         return list;
+
+    std::vector<int> game_evoluation; 
+    std::vector<int> map_of_plays(players.size());
+    
+    int max_element = 0;
+
+
+    for (int i = 0; i < players.size(); i ++)
+    {
+        if (players[i]->getInGame()){
+        std::vector<Card> map;
+        int max_element_of_person = 0;
+
+
+
+        map = utils::cards7collection(players, i, community_cards);
+        map_of_plays = handEvo.evoluator(map);
+
+    
+        max_element_of_person = *std::max_element(map_of_plays.begin(), map_of_plays.end());      // toto vracia iterator čiže * <- need 
+        game_evoluation.push_back(max_element_of_person);
+        }
+    }
+    auto iterator = std::max_element(game_evoluation.begin(), game_evoluation.end());
+
+    int winner = *iterator;
+
+    int winnerIndex = std::distance(game_evoluation.begin(), iterator);
     }
     
 

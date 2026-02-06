@@ -59,15 +59,11 @@ void Game::setup_once(std::vector<std::unique_ptr<Player>>& players, std::vector
     utils::shuffle_players(game_names);
     utils::set_player_position(game_names);
     utils::createPlayers(game_names, players);
-    utils::settingInGameStatus(players);     
 
 }
 
 void Game::setup_once_per_game(std::vector<std::unique_ptr<Player>>& players, std::vector<Card>& game_cards, 
     std::vector<int>& used_cards_index, std::vector<Card>& community_cards, int& bigBlindPosition, int& smallBlindPosition){
-    setSmallBlind(1);
-    setBigBlind(2);
-    
 
     
     used_cards_index.clear();                                                             
@@ -76,6 +72,8 @@ void Game::setup_once_per_game(std::vector<std::unique_ptr<Player>>& players, st
     utils::card_selection(players, used_cards_index, game_cards);
     utils::community_cards_selection(game_cards, used_cards_index, community_cards);
     utils::blindSelection(players, bigBlindPosition, smallBlindPosition);
+    utils::settingInGameStatus(players);     
+
     
 
 
@@ -98,36 +96,8 @@ void Game::setup_once_per_game(std::vector<std::unique_ptr<Player>>& players, st
     }
 
     HandEvoluator handEvo;
-
-    std::vector<int> game_evoluation; 
-    std::vector<int> map_of_plays(players.size());
-    int max_element = 0;
-
-
-    for (int i = 0; i < players.size(); i ++)
-    {
-        if (players[i]->getInGame()){
-        std::vector<Card> map;
-        int max_element_of_person = 0;
-
-
-
-        map = utils::cards7collection(players, i, community_cards);
-        map_of_plays = handEvo.evoluator(map);
-
     
-        max_element_of_person = *std::max_element(map_of_plays.begin(), map_of_plays.end());      // toto vracia iterator čiže * <- need 
-        game_evoluation.push_back(max_element_of_person);
-        }
-    }
-    auto iterator = std::max_element(game_evoluation.begin(), game_evoluation.end());
-
-    int winner = *iterator;
-
-    int winnerIndex = std::distance(game_evoluation.begin(), iterator);
-
-
-    
+}
 }
 
 /*
@@ -157,7 +127,6 @@ void Game::game(){
     }
 
 
-
     std::vector<std::unique_ptr<Player>> players;
     std::vector<std::string> game_names = Constants::NAMES;
     
@@ -167,26 +136,25 @@ void Game::game(){
     std::vector<bool> card_evoluator;
     std::vector<std::string> cards7;
 
-
+    int position = 1; 
     
-
     Game::setup_once(players, game_names);
+
+    while(players.size()){
 
     int smallBlindPosition = players.size() - 1;
     int bigBlindPosition = players.size() - 2;
+    
+    Game::setup_once_per_game(players, game_cards, used_cards_index, community_cards, smallBlindPosition, bigBlindPosition);
 
-    // test 
-    if (players.size() != 1){
-
-        Game::setup_once_per_game(players, game_cards, used_cards_index, community_cards, smallBlindPosition, bigBlindPosition);
+    for(int i = 0; i < players.size(); i++){
         
-
-    }
-    else{
-        for (int i = 0; i < players.size(); i ++){
-        std::cout << "Congratulations " << players[i]->getName();
+        if (i == winnerIndex){
+            std::cout << "Player " << players[winnerIndex]->getName() << " has won !" << std::endl;
         }
     }
+
+    
 
     std::cout << players.size();
 
