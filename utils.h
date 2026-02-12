@@ -6,11 +6,17 @@
 #include <memory>
 
 
+struct HandScore {
+    int rank;
+    int sum_for_tie;
+};
 
 
 namespace utils{
 
+HandScore max_if_tie(std::vector<HandScore>& cards); 
 void sort_function(std::vector<Card>& cards);
+void sort_function_hand_score(std::vector<HandScore>& hand_cards);
 void sort_name(std::vector<Card> cards);
 
 bool is_valid(int money, int bet_amount);

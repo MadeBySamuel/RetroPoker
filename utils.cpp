@@ -14,6 +14,24 @@ void utils::sort_function(std::vector<Card>& cards){
     
 }
 
+void utils::sort_function_hand_score(std::vector<HandScore>& hand_cards){
+    std::sort(hand_cards.begin(), hand_cards.end(),[](const HandScore& a,const HandScore& b){
+            return a.sum_for_tie < b.sum_for_tie;
+    });
+}
+
+
+HandScore utils::max_if_tie(std::vector<HandScore>& cards){
+    auto max_it = std::max_element(cards.begin(), cards.end(),[](const HandScore &a, const HandScore &b) {
+        return a.sum_for_tie < b.sum_for_tie;  // vracia true, ak a < b
+    });
+
+if (max_it == cards.end()) {
+    return *max_it;
+}
+}
+
+
 void utils::sort_name(std::vector<Card> cards){
     std::sort(cards.begin(), cards.end(),[](Card& a, Card& b){
             return a.name < b.name;

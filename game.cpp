@@ -10,11 +10,6 @@
 #include "constants.h"
 
 
-
-
-
-
-
 int& Game::getPot(){
     return pot;
 }
@@ -98,7 +93,7 @@ void Game::setup_once_per_game(std::vector<std::unique_ptr<Player>>& players, st
     HandEvoluator handEvo;
     
 }
-}
+
 
 /*
 void Game::show_game(std::vector<Player> players, std::vector<Card>& community_cards){
@@ -113,6 +108,8 @@ void Game::show_game(std::vector<Player> players, std::vector<Card>& community_c
 
 
 void Game::game(){
+    HandEvoluator handevoluator;
+
 
     std::vector<std::string> suits = {"♥️", "♦️", "♣️", "♠️"};
     std::vector<Card> game_cards;
@@ -126,7 +123,6 @@ void Game::game(){
         }
     }
 
-
     std::vector<std::unique_ptr<Player>> players;
     std::vector<std::string> game_names = Constants::NAMES;
     
@@ -135,65 +131,37 @@ void Game::game(){
     std::vector<int> used_cards_index;
     std::vector<bool> card_evoluator;
     std::vector<std::string> cards7;
-
-    int position = 1; 
     
     Game::setup_once(players, game_names);
 
+    int x = 1;
+    int y = x+1;
+
+
     while(players.size()){
-
-    int smallBlindPosition = players.size() - 1;
-    int bigBlindPosition = players.size() - 2;
     
+    int smallBlindPosition = players.size() - x;
+    int bigBlindPosition = players.size() - y;
+
+    std::vector<Card> cards;
+
     Game::setup_once_per_game(players, game_cards, used_cards_index, community_cards, smallBlindPosition, bigBlindPosition);
-
-    for(int i = 0; i < players.size(); i++){
-        
-        if (i == winnerIndex){
-            std::cout << "Player " << players[winnerIndex]->getName() << " has won !" << std::endl;
-        }
+    for (size_t i = 0; i < players.size(); i++)
+    {
+        cards = utils::cards7collection(players, i, community_cards);    
+        handevoluator.evoluator(cards, players, community_cards);
     }
 
-    
-
-    std::cout << players.size();
-
-    
-
-
-/*
-
-    for (size_t i = 0; i < players.size(); i++){
-        for(size_t j = 0; j < 2; j++){
-            cards7.push_back(players[i]->getcard2()[j]);
-        }
-        
-        for (size_t j = 0; j < 2; j ++){
-            cards7.push_back(community_cards[j]);
-        }
-    
+    x++, y++;
     }
 
-*/
-        
-
-    /*
-    players.shrink_to_fit();
-    game_names.shrink_to_fit();
-    game_cards.shrink_to_fit();
-
-    setup_once(players,game_names);
-    setup_once_per_game(players, game_cards, used_cards_index, community_cards);
-    */
 }
 
-Game::~Game(){
-    std::cout << "Game was killed" << std::endl;
-}
-    
+
 
 
 int main(int argc, char const *argv[]){
+    
     std::unique_ptr<Game> game = std::make_unique<Game>();  //!!!!!
     game->Game::game();
 

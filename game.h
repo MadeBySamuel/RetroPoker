@@ -46,9 +46,7 @@ class Game {
     // void show_game(std::vector<Player> players, std::vector<Card>& community_cards);
 
     void game();
-    
 
-    ~Game();
     
 };
 

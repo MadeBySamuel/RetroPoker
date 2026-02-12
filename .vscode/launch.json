@@ -13,6 +13,11 @@
       "MIMode": "gdb",
       "miDebuggerPath": "C:/mingw64/bin/gdb.exe",
       "preLaunchTask": "build TerminalPoker"
-    }
-  ]
+
+    }   
+  ],
+  "skipFiles": ["C:/mingw64/include/c++**"
+    
+]
+  
 }
