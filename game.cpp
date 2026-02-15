@@ -144,13 +144,73 @@ void Game::game(){
     int bigBlindPosition = players.size() - y;
 
     std::vector<Card> cards;
+    std::vector<HandScore> evoluation_cards;
+
 
     Game::setup_once_per_game(players, game_cards, used_cards_index, community_cards, smallBlindPosition, bigBlindPosition);
     for (size_t i = 0; i < players.size(); i++)
     {
         cards = utils::cards7collection(players, i, community_cards);    
-        handevoluator.evoluator(cards, players, community_cards);
+        evoluation_cards.push_back(handevoluator.evoluator(cards, players, community_cards, i));
     }
+
+
+    for (size_t i = 0; i < players.size(); i ++){
+        
+    }
+
+
+
+        utils::sort_function_hand_score(evoluation_cards);
+
+    std::vector<HandScore> ties; 
+    std::vector<HandScore> winner_ties;
+
+
+    for (int i = 0; i < evoluation_cards.size() - 1; i ++){
+        if (evoluation_cards[i].rank == evoluation_cards[i+1].rank && evoluation_cards[i].sum_for_tie == evoluation_cards[i+1].sum_for_tie){
+        ties.push_back(evoluation_cards[i]);
+        ties.push_back(evoluation_cards[i+1]);
+        }
+
+
+    } 
+
+
+    HandScore winner = utils::max(evoluation_cards);
+    HandScore tieswinner = utils::max(ties);
+
+
+    if (ties.empty() == 0  || (winner.sum_for_tie > tieswinner.sum_for_tie && winner.rank > tieswinner.rank)){
+        std::cout << "Winner of round is " << winner.name;
+        for (size_t i = 0; i < players.size(); i++){
+            if (winner.name == players[i]->getName()){
+                players[i]->getMoney() += this->getPot();
+            }
+        }
+    }
+    else{
+        int counter = 0; 
+        utils::sort_function_rank(ties);
+
+        for (int i = 0; i < ties.size() -1; i++){
+            if (ties[i].rank == ties[i+1].rank){
+                counter += 2;
+            }
+        }
+        int part = this->getPot() / counter;
+
+        for (size_t i = 0; i < counter; i++){
+            winner_ties.push_back(ties[i]);
+        }
+
+        for (size_t i = 0; i < players.size(); i ++){
+            if (winner_ties[i].name == players[i]->getName()){
+                players[i]->getMoney() += part;
+            }
+        }   
+    }
+    
 
     x++, y++;
     }

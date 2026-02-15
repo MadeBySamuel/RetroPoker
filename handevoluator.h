@@ -18,6 +18,6 @@ class HandEvoluator : public Player{
     int ThreeOfKind(std::vector<Card>& cards, int& sum);
     int TwoPairs(std::vector<Card>& cards, int& sum);
     int OnePair(std::vector<Card>& cards, int& sum);
-    void evoluator(std::vector<Card> &cards, std::vector<std::unique_ptr<Player>>& players, std::vector<Card> community_cards);
+    HandScore evoluator(std::vector<Card> &cards, std::vector<std::unique_ptr<Player>>& players, std::vector<Card> community_cards, int i);
 
 };

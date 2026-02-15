@@ -9,12 +9,13 @@
 struct HandScore {
     int rank;
     int sum_for_tie;
+    std::string name;
 };
 
 
 namespace utils{
 
-HandScore max_if_tie(std::vector<HandScore>& cards); 
+HandScore max(std::vector<HandScore>& cards); 
 void sort_function(std::vector<Card>& cards);
 void sort_function_hand_score(std::vector<HandScore>& hand_cards);
 void sort_name(std::vector<Card> cards);
@@ -27,6 +28,7 @@ void shuffle_players(std::vector<std::string>& names);
 
 int set_player_position(std::vector<std::string>& game_names);
 
+void sort_function_rank(std::vector<HandScore>& hand_cards);
 
 std::vector<std::unique_ptr<Player>>& createPlayers(std::vector<std::string>& game_names, std::vector<std::unique_ptr<Player>>& players);
 

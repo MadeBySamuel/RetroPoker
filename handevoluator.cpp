@@ -3,9 +3,6 @@
 
 
 
-
-
-
     int HandEvoluator::RoyalFlush(std::vector<Card>& cards, int& sum){
         utils::sort_function(cards);
         
@@ -18,7 +15,8 @@
         }
         return 0;
     }
-    
+
+        
     int HandEvoluator::StraightFlush(std::vector<Card>& cards, int& sum){
         utils::sort_function(cards);
         
@@ -84,12 +82,15 @@
         utils::sort_function(cards);
         
         for (int i = 0; i < cards.size() - 4; i++){
-            if (cards[i].rank == (cards[i+1].rank - 1)  && cards[i+1].rank == (cards[i+2].rank - 2) && cards[i+2].rank == (cards[i+3].rank -3) && cards[i+3].rank == (cards[i+4].rank - 4))
+            if (cards[i].rank + 1 == cards[i+1].rank && cards[i+1].rank + 1 == cards[i+2].rank && cards[i+2].rank + 1 == cards[i+3].rank &&cards[i+3].rank + 1 == cards[i+4].rank)
+            {
                 sum = (cards[i+4].rank + 4); 
                 return 4;
         }
-        return 0;
     }
+        return 0;
+}
+
     int HandEvoluator::ThreeOfKind(std::vector<Card>& cards, int& sum){
 
         sum = 0;
@@ -144,57 +145,37 @@
     }
 
 
-    void HandEvoluator::evoluator(std::vector<Card> &cards, std::vector<std::unique_ptr<Player>>& players, std::vector<Card> community_cards){
+    HandScore HandEvoluator::evoluator(std::vector<Card> &cards, std::vector<std::unique_ptr<Player>>& players, std::vector<Card> community_cards, int i){
     
     std::vector<HandScore> game_evoluation;
     int sum = 0;
 
+
     std::vector<std::vector<Card>> all_cards;
+    std::vector<HandScore> list;
 
-    for (int i = 0; i < players.size(); i++)
-    {
-        cards = utils::cards7collection(players, i, community_cards);
+    if(players[i]->getInGame()){
+ 
 
-        if(players[i]->getInGame()){
-        
-        std::vector<HandScore> list;
+    list.emplace_back(HandScore{HandEvoluator::OnePair(cards, sum), sum, players[i]->getName()});
+    list.emplace_back(HandScore{HandEvoluator::TwoPairs(cards, sum), sum,  players[i]->getName()});
+    list.emplace_back(HandScore{HandEvoluator::ThreeOfKind(cards, sum), sum,  players[i]->getName()});
+    list.emplace_back(HandScore{HandEvoluator::Straight(cards, sum), sum,  players[i]->getName()});
+    list.emplace_back(HandScore{HandEvoluator::Flush(cards,sum ), sum,  players[i]->getName()});
+    list.emplace_back(HandScore{HandEvoluator::FullHouse(cards,sum), sum,  players[i]->getName()});
+    list.emplace_back(HandScore{HandEvoluator::FourOfKind(cards, sum),sum,  players[i]->getName()});
+    list.emplace_back(HandScore{HandEvoluator::StraightFlush(cards,sum),sum,  players[i]->getName()});
+    list.emplace_back(HandScore{HandEvoluator::RoyalFlush(cards,sum),sum,  players[i]->getName()});
 
-        list.emplace_back(HandScore{HandEvoluator::OnePair(cards, sum), sum});
-        list.emplace_back(HandScore{HandEvoluator::TwoPairs(cards, sum), sum});
-        list.emplace_back(HandScore{HandEvoluator::ThreeOfKind(cards, sum), sum});
-        list.emplace_back(HandScore{HandEvoluator::Straight(cards, sum), sum});
-        list.emplace_back(HandScore{HandEvoluator::Flush(cards,sum ), sum});
-        list.emplace_back(HandScore{HandEvoluator::FullHouse(cards,sum), sum});
-        list.emplace_back(HandScore{HandEvoluator::FourOfKind(cards, sum),sum});
-        list.emplace_back(HandScore{HandEvoluator::StraightFlush(cards,sum),sum});
-        list.emplace_back(HandScore{HandEvoluator::RoyalFlush(cards,sum),sum});
-
-
-
-        int max_element = 0;
-        int max_element_of_person = 0;
-
-        
-        HandScore best_hand = utils::max_if_tie(list);  
-    
-        game_evoluation.push_back(best_hand);
-
-        }
-    }
-
-    utils::sort_function_hand_score(game_evoluation);
-
+    int max_element = 0;
+    int max_element_of_person = 0;
 
     
-    for (size_t i = 0; i < players.size(); i ++){
-        if (game_evoluation[i].rank == game_evoluation[i+1].rank){
-            utils::sort_function_hand_score(game_evoluation);
-            for (size_t j = 0; j < game_evoluation.size(); j++){
-                HandScore hand = utils::max_if_tie(game_evoluation);
-            }    
-        }
     }
-    }
+    HandScore best_hand = utils::max(list);  
+    return best_hand;
     
+}
+
 
 
