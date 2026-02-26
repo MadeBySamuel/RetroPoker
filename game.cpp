@@ -14,8 +14,8 @@ int& Game::getPot(){
     return pot;
 }
 
-void Game::setPot(int pot){
-    this->pot = pot;
+void Game::setPot(int amount){
+    pot =+ amount;
 }
 
 int Game::getBigBlind(){
@@ -75,8 +75,8 @@ void Game::setup_once_per_game(std::vector<std::unique_ptr<Player>>& players, st
     for (int i = 0; i < players.size(); i ++){
             if (players[i]->getIsSmallBlind()){
                 players[i]->getMoney() -= getSmallBlind();
-                pot += players[i]->getIsSmallBlind();
-                std::cout << players[smallBlindPosition]->getName() << " set SmallBlind to: " << getSmallBlind(); 
+                setPot(getSmallBlind());
+                std::cout << players[smallBlindPosition]->getName() << " set SmallBlind to: " << getSmallBlind() << std::endl; 
                 break;
         }
     }
@@ -85,8 +85,9 @@ void Game::setup_once_per_game(std::vector<std::unique_ptr<Player>>& players, st
     {
         if (players[i]->getIsBigBlind()){
             players[i]->getMoney() -= getBigBlind();
-            pot += players[i]->getIsBigBlind();
-            std::cout << players[smallBlindPosition]->getName() << " set Big Blind to " << getBigBlind();
+            setPot(getBigBlind());
+
+            std::cout << players[smallBlindPosition]->getName() << " set Big Blind to " << getBigBlind() << std::endl;
         }
     }
 
@@ -146,6 +147,7 @@ void Game::game(){
     std::vector<Card> cards;
     std::vector<HandScore> evoluation_cards;
 
+    std::cout << "$$PRE-FLOP STAGE $$" << std::endl;
 
     Game::setup_once_per_game(players, game_cards, used_cards_index, community_cards, smallBlindPosition, bigBlindPosition);
     for (size_t i = 0; i < players.size(); i++)
@@ -153,11 +155,56 @@ void Game::game(){
         cards = utils::cards7collection(players, i, community_cards);    
         evoluation_cards.push_back(handevoluator.evoluator(cards, players, community_cards, i));
     }
+    std::cout << "Your cards: " << std::endl;
+
+    utils::show_my_cards(players);
+    
+    for (size_t i = bigBlindPosition + 1; i < players.size(); i ++){
+        if (players[i]->getName() == "Player"){
+            
+        }
+        else {
+
+        }
+    }
+    
+    
+
+    for (size_t i = 0; i < 3; i ++){
+        std::cout << community_cards[i].write_name() << std::endl;
+    }
 
 
     for (size_t i = 0; i < players.size(); i ++){
-        
+        if (players[i]->getName() == "Player"){
+            
+        }
+        else {
+
+        }
     }
+
+
+    std::cout << community_cards[3].write_name() << std::endl;
+
+
+    for (size_t i = 0; i < players.size(); i ++){
+        if (players[i]->getName() == "Player" && players[i]->getInGame() == true){
+        }
+        else if (players[i]->getName() != "Player" && players[i]->getInGame() == true) {
+
+        }
+    }
+
+    std::cout << community_cards[4].write_name() << std::endl;
+
+
+
+
+
+
+
+
 
 
 

@@ -91,3 +91,20 @@
         }
     
     }
+
+    void player_choosing(){
+        int choice; 
+        
+        std::cout << "Choose one option: " << std::endl;
+        
+        std::cout<< "1. Call" << std::endl;
+        std::cout<< "2. Fold" << std::endl;
+        std::cout<< "3. Check" << std::endl;
+        std::cout<< "4. Raise" << std::endl;
+        std::cout<< "" << std::endl;
+        std::cin >> choice;
+
+        if(choice == 1){
+            
+        }
+    }
