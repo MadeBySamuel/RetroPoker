@@ -1,6 +1,8 @@
+#include <cstddef>
+#include <vector>
+#include <string>
+
 #include "constants.h"
-
-
 
 namespace Constants {
     std::vector <std::string> NAMES = {"Peter", "Paul", "Morgan", "Samuel", "Jacub", "Sabrina"};

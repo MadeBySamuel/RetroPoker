@@ -65,7 +65,12 @@ bool utils::is_valid(int money, int bet_amount){
 
 
 void utils::shuffle_cards(std::vector<Card>& cards){
-    utils::shuffle_function(cards);
+    if (cards.empty ()) {
+        return;
+    }
+    else{
+        utils::shuffle_function(cards);
+    } 
 }
 
 void utils::shuffle_players(std::vector<std::string>& names){

@@ -1,0 +1,10 @@
+compilation_database_dir: build
+output_directory: diagrams
+
+diagrams:
+  poker_classes:
+    type: class
+    plantuml:
+      before:
+        - left to right direction
+    

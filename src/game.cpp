@@ -1,13 +1,12 @@
 #include <iostream>
 #include <memory>
 
-
-#include "player.h"
 #include "game.h"
 #include "utils.h"
 #include "handevoluator.h"
 #include "constants.h"
-
+#include "logger.h"
+#include "player.h"
 
 int& Game::getPot(){
     return pot;
@@ -136,10 +135,18 @@ void Game::game(){
     Game::setup_once(players, game_names);
 
     int blindOffset = 0;
+    int round_count = 1;
 
 
-    while(!players.empty()){
-    
+
+
+
+    // while(!players.empty()){
+
+    std::cout << "------------------" << std::endl;
+    std::cout << "Round ---------- " << round_count << std::endl;
+    std::cout << "------------------" << std::endl;
+
     const int playerCount = static_cast<int>(players.size());
     int smallBlindPosition = (playerCount - 1 - blindOffset + playerCount) % playerCount;
     int bigBlindPosition = (playerCount - 2 - blindOffset + playerCount) % playerCount;
@@ -147,7 +154,7 @@ void Game::game(){
     std::vector<Card> cards;
     std::vector<HandScore> evoluation_cards;
 
-    std::cout << "$$PRE-FLOP STAGE $$" << std::endl;
+    std::cout << "$$ PRE-FLOP STAGE $$" << std::endl;
 
     Game::setup_once_per_game(players, game_cards, used_cards_index, community_cards, smallBlindPosition, bigBlindPosition);
     for (size_t i = 0; i < players.size(); i++)
@@ -242,7 +249,7 @@ void Game::game(){
                 }
             }
             blindOffset = (blindOffset + 1) % playerCount;
-            continue;
+            //continue;
         }
 
         std::vector<std::string> tied_names;
@@ -254,7 +261,7 @@ void Game::game(){
 
         if (tied_names.empty()) {
             blindOffset = (blindOffset + 1) % playerCount;
-            continue;
+            //continue;
         }
 
         int part = this->getPot() / static_cast<int>(tied_names.size());
@@ -268,9 +275,10 @@ void Game::game(){
     
 
     blindOffset = (blindOffset + 1) % playerCount;
+    round_count++;
     }
 
-}
+// }
 
 
 

@@ -1,5 +1,8 @@
-#include "handevoluator.h"
 #include <vector>
+
+#include "handevoluator.h"
+#include "player.h"
+#include "utils.h"
 
 
 

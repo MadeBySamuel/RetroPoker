@@ -1,9 +1,10 @@
 #pragma once
 
 
+#include "handevoluator.h"
+#include "constants.h"
 #include "player.h"
 #include "utils.h"
-
 
 
 class HandEvoluator : public Player{

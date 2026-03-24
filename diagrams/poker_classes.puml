@@ -1,0 +1,151 @@
+@startuml
+left to right direction
+class "std::string" as C_0015070288861779828488
+class C_0015070288861779828488 {
+__
+}
+class "std::vector<Card>" as C_0015729778456961512543
+class C_0015729778456961512543 {
+__
+}
+class "std::unique_ptr<Player>" as C_0000689895532328766071
+class C_0000689895532328766071 {
+__
+}
+class "std::vector<std::unique_ptr<Player>>" as C_0005662157712334798668
+class C_0005662157712334798668 {
+__
+}
+class "std::vector<std::string>" as C_0009022090272135344009
+class C_0009022090272135344009 {
+__
+}
+class "std::vector<int>" as C_0008323472731110618765
+class C_0008323472731110618765 {
+__
+}
+class "Card" as C_0007520270516162337768
+class C_0007520270516162337768 {
++rank_to_string(int rank) : std::string
++write_name() : std::string
+__
++name : std::string
++rank : int
+}
+class "Player" as C_0002266570548022005113
+class C_0002266570548022005113 {
++Player() : void
++~Player() : void
+..
++ToggleBigBlind() : void
++ToggleSmallBlind() : void
++getInGame() : int
++getIsBigBlind() : bool
++getIsSmallBlind() : bool
++getMoney() : int &
++getName() : std::string
++getcard2() : std::vector<Card> &
++setInGame(bool inGame) : void
++setMoney(int money) : void
++setName(std::string name) : void
+__
+-cards2 : std::vector<Card>
+-inGame : bool
+-isBigBlind : bool
+-isSmallBlind : bool
+-money : int
+-name : std::string
+}
+class "Game" as C_0005063145795877447127
+class C_0005063145795877447127 {
++game() : void
++getBigBlind() : int
++getCurrentBet() : int
++getPot() : int &
++getSmallBlind() : int
++setBigBlind(int bigBlind) : void
++setCurrentBet(int currentBet) : void
++setPot(int pot) : void
++setSmallBlind(int smallBlind) : void
++setup_once(std::vector<std::unique_ptr<Player>> & players, std::vector<std::string> & game_names) : void
++setup_once_per_game(std::vector<std::unique_ptr<Player>> & players, std::vector<Card> & game_cards, std::vector<int> & used_cards_index, std::vector<Card> & community_cards, int & bigBlindPosition, int & smallBlindPosition) : void
+__
+-bigBlind : int
+-currentBet : int
+-pot : int
+-smallBlind : int
+}
+class "Plays" as C_0008842142501560713734
+class C_0008842142501560713734 {
++allin(std::vector<std::unique_ptr<Player>> & players, int i) : void
++call(std::vector<std::unique_ptr<Player>> & players, int i, int raise_amount) : void
++check(std::vector<std::unique_ptr<Player>> & players, int i) : void
++fold(std::vector<std::unique_ptr<Player>> & players, int i) : void
++raise_bet(std::vector<std::unique_ptr<Player>> & players, int i, int raise_amount) : int
+__
+}
+class "AIPlayer" as C_0001442565886154155664
+class C_0001442565886154155664 {
+-ai_moves(std::vector<std::unique_ptr<Player>> & players, int i, int raise_amount) : void
+__
+}
+class "Logger" as C_0000062870241899871654
+class C_0000062870241899871654 {
++~Logger() : void
+..
++log(const std::string & message, const std::string & type) : void
+__
+}
+class "HandScore" as C_0013738582348355756728
+class C_0013738582348355756728 {
+__
++name : std::string
++rank : int
++sum_for_tie : int
+}
+class "HandEvoluator" as C_0002524316523694726164
+class C_0002524316523694726164 {
++Flush(std::vector<Card> & cards, int & sum) : int
++FourOfKind(std::vector<Card> & cards, int & sum) : int
++FullHouse(std::vector<Card> & cards, int & sum) : int
++OnePair(std::vector<Card> & cards, int & sum) : int
++RoyalFlush(std::vector<Card> & cards, int & sum) : int
++Straight(std::vector<Card> & cards, int & sum) : int
++StraightFlush(std::vector<Card> & cards, int & sum) : int
++ThreeOfKind(std::vector<Card> & cards, int & sum) : int
++TwoPairs(std::vector<Card> & cards, int & sum) : int
++evoluator(std::vector<Card> & cards, std::vector<std::unique_ptr<Player>> & players, std::vector<Card> community_cards, int i) : HandScore
+__
+}
+C_0015729778456961512543 ..> C_0007520270516162337768
+C_0000689895532328766071 ..> C_0002266570548022005113
+C_0005662157712334798668 ..> C_0000689895532328766071
+C_0009022090272135344009 ..> C_0015070288861779828488
+C_0007520270516162337768 o-- C_0015070288861779828488 : +name
+C_0002266570548022005113 ..> C_0007520270516162337768
+C_0002266570548022005113 o-- C_0015070288861779828488 : -name
+C_0002266570548022005113 o-- C_0015729778456961512543 : -cards2
+C_0005063145795877447127 ..> C_0005662157712334798668
+C_0005063145795877447127 ..> C_0002266570548022005113
+C_0005063145795877447127 ..> C_0009022090272135344009
+C_0005063145795877447127 ..> C_0015729778456961512543
+C_0005063145795877447127 ..> C_0007520270516162337768
+C_0005063145795877447127 ..> C_0008323472731110618765
+C_0008842142501560713734 ..> C_0005662157712334798668
+C_0008842142501560713734 ..> C_0002266570548022005113
+C_0005063145795877447127 <|-- C_0008842142501560713734
+C_0001442565886154155664 ..> C_0005662157712334798668
+C_0001442565886154155664 ..> C_0002266570548022005113
+C_0008842142501560713734 <|-- C_0001442565886154155664
+C_0000062870241899871654 ..> C_0015070288861779828488
+C_0013738582348355756728 o-- C_0015070288861779828488 : +name
+C_0002524316523694726164 ..> C_001572977ą8456961512543
+C_0002524316523694726164 ..> C_0007520270516162337768
+C_0002524316523694726164 ..> C_0005662157712334798668
+C_0002524316523694726164 ..> C_0013738582348355756728
+C_0002266570548022005113 <|-- C_0002524316523694726164
+
+'Generated with clang-uml, version 0.6.2
+'LLVM version Homebrew clang version 21.1.8
+@enduml
+
