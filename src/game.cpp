@@ -1,12 +1,12 @@
 #include <iostream>
 #include <memory>
 
-#include "game.h"
-#include "utils.h"
-#include "handevoluator.h"
-#include "constants.h"
-#include "logger.h"
-#include "player.h"
+#include "game.hpp"
+#include "utils.hpp"
+#include "handevoluator.hpp"
+#include "constants.hpp"
+#include "logger.hpp"
+#include "player.hpp"
 
 int& Game::getPot(){
     return pot;
@@ -34,9 +34,6 @@ int Game::getSmallBlind(){
 }
 
 
-
-
-
 int Game::getCurrentBet(){
     return currentBet;
 }
@@ -44,8 +41,6 @@ int Game::getCurrentBet(){
 void Game::setCurrentBet(int currentBet){
     this->currentBet = currentBet;
 }
-
-
 
 
 void Game::setup_once(std::vector<std::unique_ptr<Player>>& players, std::vector<std::string>& game_names){
@@ -109,6 +104,8 @@ void Game::show_game(std::vector<Player> players, std::vector<Card>& community_c
 
 void Game::game(){
     HandEvoluator handevoluator;
+    Logger logger;
+
 
 
     std::vector<std::string> suits = {"♥️", "♦️", "♣️", "♠️"};
@@ -134,10 +131,11 @@ void Game::game(){
     
     Game::setup_once(players, game_names);
 
+
+    logger.log("number of players: " + std::to_string(players.size()) , "DEBUG");
+    
     int blindOffset = 0;
     int round_count = 1;
-
-
 
 
 

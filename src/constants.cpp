@@ -2,7 +2,7 @@
 #include <vector>
 #include <string>
 
-#include "constants.h"
+#include "constants.hpp"
 
 namespace Constants {
     std::vector <std::string> NAMES = {"Peter", "Paul", "Morgan", "Samuel", "Jacub", "Sabrina"};

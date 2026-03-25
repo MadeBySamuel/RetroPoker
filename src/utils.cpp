@@ -1,8 +1,8 @@
-#include "player.h"
-#include "constants.h"
+#include "player.hpp"
+#include "constants.hpp"
 
-#include "utils.h"
-#include "game.h"
+#include "utils.hpp"
+#include "game.hpp"
 
 #include <memory>
 

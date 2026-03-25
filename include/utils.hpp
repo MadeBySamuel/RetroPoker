@@ -1,9 +1,8 @@
 #pragma once
 
-#include "player.h"
-#include "constants.h"
+#include "player.hpp"
+#include "constants.hpp"
 
-#include <memory>
 
 
 struct HandScore {

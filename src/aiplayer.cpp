@@ -1,9 +1,9 @@
 #include <functional>
 #include <random>
 
-#include "aiplayer.h"
-#include "player.h"
-#include "plays.h"
+#include "aiplayer.hpp"
+#include "player.hpp"
+#include "plays.hpp"
 
 
 

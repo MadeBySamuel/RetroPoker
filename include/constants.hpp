@@ -1,7 +1,5 @@
 #pragma once
 
-
-
 struct Card{
     int rank;
     std::string name;

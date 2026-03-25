@@ -1,10 +1,10 @@
 #pragma once
 
 
-#include "handevoluator.h"
-#include "constants.h"
-#include "player.h"
-#include "utils.h"
+#include "handevoluator.hpp"
+#include "constants.hpp"
+#include "player.hpp"
+#include "utils.hpp"
 
 
 class HandEvoluator : public Player{

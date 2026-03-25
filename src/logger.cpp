@@ -4,34 +4,43 @@
 #include <sstream>
 #include <string>
 
-#include "logger.h"
+#include "logger.hpp"
+
+#define FILELOG(file, timestamp, message, function) myfile << "[FILE] " << file << " - [FUNCTION] " << function << " - [TIME] " << ctime(&timestamp) << " - [MESSAGE] " << message << std::endl << std::endl;
 
 
-void Logger::log(const std::string& message, const std::string& type){
+Logger::Logger(const std::string filename){
+    myfile.open(filename, std::ios::out);
+    if (!myfile.is_open()){
+        log("Error opening file ", "ERROR", __FILE__, __func__);
+    }
+}
 
+int Logger::iterate(){
+    return iterator++;
+}
+
+
+void Logger::log(const std::string& message, const std::string& type, const std::string& file, const std::string& function){    
     time_t timestamp;
-
-    std::cout << time(&timestamp);
-    std::cout << std::endl;
-
-    if (type == "DEBUG"){
-
+    if (type == "ERROR"){
+        myfile << iterate() << ". [" << "ERROR" << "] - ";
+        FILELOG(file,timestamp, message, function);
     }
-    else if (type == "INFO"){
-
+    else if (type == "DEBUG"){
+        myfile << iterate() << ". [" << "DEBUG" << "] - ";
+        FILELOG(file, timestamp, message, function);
     }
-    else if (type == "WARNING"){
-
+    else {
+        myfile << iterate() << "INVALID TYPE" << std::endl;
     }
-    else { // type == "ERROR"
-
-
-    }
-
 
 }
 
+
+
 Logger::~Logger(){
+    myfile.close();
     std::cout << "-" << std::endl;
 }
 

@@ -1,8 +1,8 @@
 
-#include "utils.h"
-#include "game.h"
-#include "player.h"
-#include "plays.h"
+#include "utils.hpp"
+#include "game.hpp"
+#include "player.hpp"
+#include "plays.hpp"
 
 
 
