@@ -17,7 +17,7 @@ add_executable(retro_poker
     src/player.cpp
     src/plays.cpp
     src/utils.cpp
-    src/gui/main.cpp
+    src/gui/gui_main.cpp
 )
 
 target_include_directories(retro_poker PRIVATE include)

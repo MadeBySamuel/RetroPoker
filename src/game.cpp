@@ -279,9 +279,7 @@ void Game::game(){
 // }
 
 
-
-
-int main(int argc, char const *argv[]){
+int game(){
     
     std::unique_ptr<Game> game = std::make_unique<Game>();  //!!!!!
     game->Game::game();
