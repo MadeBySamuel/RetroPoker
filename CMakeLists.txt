@@ -6,7 +6,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(external/SFML)
-
+set(TGUI_BACKEND SFML_GRAPHICS)
+add_subdirectory(external/TGUI)
 
 add_executable(retro_poker
     src/aiplayer.cpp
@@ -22,7 +23,9 @@ add_executable(retro_poker
 
 target_include_directories(retro_poker PRIVATE include)
 
+
 target_link_libraries(retro_poker PRIVATE
+    TGUI::TGUI      
     SFML::Graphics
     SFML::Window
     SFML::System
