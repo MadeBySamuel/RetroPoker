@@ -23,12 +23,12 @@ int main (){
 
    // root 
     auto root = tgui::Panel::create({"100%", "100%"});
-    root->getRenderer()->setBackgroundColor({66, 32, 32});
+    root->getRenderer()->setBackgroundColor({12, 17, 23});
     gui.add(root);
 
     // bars 
 
-    // auto color_picker =rgb(17, 18, 35));
+    // auto color_picker =rgb(86, 128, 91));
 
     /*
     
@@ -46,14 +46,14 @@ int main (){
     */
 
     auto topBar = tgui::Panel::create({"100%", "7%"});
-    topBar->getRenderer()-> setBackgroundColor({18, 24, 32});
+    topBar->getRenderer()-> setBackgroundColor({16, 22, 29});
     topBar->setPosition({"0%", "0%"});
     root->add(topBar);
 
 
     auto sideBar = tgui::Panel::create({"18%", "90%"});
     sideBar->setPosition({"0%", "10%" });
-    sideBar->getRenderer()->setBackgroundColor({22, 28, 36});
+    sideBar->getRenderer()->setBackgroundColor({20, 26, 34});
     sideBar->getRenderer()->setRoundedBorderRadius(20.0);
     root->add(sideBar);
 
@@ -70,12 +70,15 @@ int main (){
     // titles
     auto title = tgui::Label::create("RetroPoker");
     title->getRenderer()->setFont("assets/fonts/AncientMedium.ttf");
+
+    title->getRenderer()->setTextColor({255,255,255});
     title->setPosition({"2%","2%"});
     title->setTextSize(50);
     sideBar->add(title);
 
 
     // pictures
+    
 
     auto table_icon = tgui::Picture::create("assets/images/table_icon.png");
     table_icon->setPosition({"1%","10%"});
@@ -84,11 +87,37 @@ int main (){
 
 
 
+
     // button 
     auto buttonPlay = tgui::Button::create("Play");
     buttonPlay->setPosition({"5%","10%"});
-    buttonPlay->setTextSize(20);
+    buttonPlay->setTextSize(18);
     sideBar->add(buttonPlay);
+
+
+
+    using namespace std::chrono_literals;
+
+    buttonPlay->getRenderer()->setBackgroundColor({28, 36, 46});
+    buttonPlay->getRenderer()->setBackgroundColorHover({36, 46, 58});
+    buttonPlay->getRenderer()->setBackgroundColorDown({46, 204, 113});
+    buttonPlay->getRenderer()->setBackgroundColorDisabled({60, 60, 60});
+    buttonPlay->getRenderer()->setTextureHover("assets/images/poker.png");
+
+    buttonPlay->getRenderer()->setTextColor({235, 239, 244});
+    buttonPlay->getRenderer()->setTextColorHover({255, 255, 255});
+    buttonPlay->getRenderer()->setTextColorDown({12, 17, 23});
+    buttonPlay->getRenderer()->setTextColorDisabled({140, 140, 140});
+
+    buttonPlay->getRenderer()->setBorders(0);
+
+
+    buttonPlay->setPosition({"5%","10%"});
+    buttonPlay->setTextSize(20);
+
+    sideBar->add(buttonPlay);
+
+
 
     auto buttonSettings = tgui::Button::create("Settings");
     buttonSettings->setPosition({"5%","15%"});
@@ -108,13 +137,54 @@ int main (){
     buttons.emplace_back(buttonSettings);
     buttons.emplace_back(quitButton);
 
+    
+
     for (int i = 0; i < buttons.size(); i++){
+
+
+        auto button = buttons[i];
+        button->onMouseEnter([button] {
+            button->resizeWithAnimation({"92%", 100}, 120ms);
+        });
+
+        button->onMouseLeave([button] {
+            button->resizeWithAnimation({"88%", 44}, 120ms);
+        });
+
         buttons[i]->getRenderer()-> setBackgroundColor({0, 0, 0});
-        buttons[i]->getRenderer()-> setTextColor({255,255,255});
-        buttons[i]->setSize({"88%","4%"});
-        buttons[i]->getRenderer()->setBorders(0);
-        buttons[i]->getRenderer()->setBackgroundColorHover({55, 194, 64});
+        buttons[i]->getRenderer()-> setTextColor({153, 160, 157});
+        buttons[i]->setSize({"84%","4%"});
+        buttons[i]->getRenderer()->setBackgroundColorHover({86, 128, 91});
+        buttons[i]->getRenderer()->setTextColorHover({0, 0, 0});
+        buttons[i]->getRenderer()->setRoundedBorderRadius(10);
     }
+
+
+        buttonPlay->onMouseEnter([buttonPlay,buttonSettings, quitButton] {
+            buttonPlay->resizeWithAnimation({"92%", 100}, 120ms);
+            buttonSettings->moveWithAnimation({"5%", "20%"}, 120ms);
+            quitButton->moveWithAnimation({"5%", "25%"}, 120ms);
+        });
+
+        buttonPlay->onMouseLeave([buttonPlay,buttonSettings, quitButton] {
+            buttonPlay->resizeWithAnimation({"92%", 44}, 120ms);
+            buttonSettings->moveWithAnimation({"5%", "15%"}, 120ms);
+            quitButton->moveWithAnimation({"5%", "20%"}, 120ms);
+        });
+
+
+        buttonSettings->onMouseEnter([buttonSettings, quitButton] {
+            buttonSettings->resizeWithAnimation({"92%", 100}, 120ms);
+            quitButton->moveWithAnimation({"5%", "25%"}, 120ms);
+        });
+
+        buttonSettings->onMouseLeave([buttonSettings, quitButton] {
+            buttonSettings->resizeWithAnimation({"92%", 44}, 120ms);
+            quitButton->moveWithAnimation({"5%", "20%"}, 120ms);
+        });
+
+
+
 
 
 
