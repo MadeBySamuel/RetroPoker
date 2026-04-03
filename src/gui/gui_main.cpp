@@ -7,6 +7,7 @@
 
 #include <iostream>
 int main (){
+    using namespace std::chrono_literals;
 
 
     sf::ContextSettings settings;
@@ -28,7 +29,7 @@ int main (){
 
     // bars 
 
-    // auto color_picker =rgb(86, 128, 91));
+    // auto color_picker =rgb(94, 171, 212));
 
     /*
     
@@ -71,7 +72,7 @@ int main (){
     auto title = tgui::Label::create("RetroPoker");
     title->getRenderer()->setFont("assets/fonts/AncientMedium.ttf");
 
-    title->getRenderer()->setTextColor({255,255,255});
+    title->getRenderer()->setTextColor({94, 171, 212});
     title->setPosition({"2%","2%"});
     title->setTextSize(50);
     sideBar->add(title);
@@ -88,6 +89,10 @@ int main (){
 
 
 
+
+
+
+
     // button 
     auto buttonPlay = tgui::Button::create("Play");
     buttonPlay->setPosition({"5%","10%"});
@@ -95,21 +100,6 @@ int main (){
     sideBar->add(buttonPlay);
 
 
-
-    using namespace std::chrono_literals;
-
-    buttonPlay->getRenderer()->setBackgroundColor({28, 36, 46});
-    buttonPlay->getRenderer()->setBackgroundColorHover({36, 46, 58});
-    buttonPlay->getRenderer()->setBackgroundColorDown({46, 204, 113});
-    buttonPlay->getRenderer()->setBackgroundColorDisabled({60, 60, 60});
-    buttonPlay->getRenderer()->setTextureHover("assets/images/poker.png");
-
-    buttonPlay->getRenderer()->setTextColor({235, 239, 244});
-    buttonPlay->getRenderer()->setTextColorHover({255, 255, 255});
-    buttonPlay->getRenderer()->setTextColorDown({12, 17, 23});
-    buttonPlay->getRenderer()->setTextColorDisabled({140, 140, 140});
-
-    buttonPlay->getRenderer()->setBorders(0);
 
 
     buttonPlay->setPosition({"5%","10%"});
@@ -137,30 +127,28 @@ int main (){
     buttons.emplace_back(buttonSettings);
     buttons.emplace_back(quitButton);
 
-    
 
     for (int i = 0; i < buttons.size(); i++){
+        buttons[i]->getRenderer()->setBackgroundColor({28, 36, 46});
+        buttons[i]->getRenderer()->setBackgroundColorHover({36, 46, 58});
+        buttons[i]->getRenderer()->setBackgroundColorDown({46, 204, 113});
+        buttons[i]->getRenderer()->setBackgroundColorDisabled({60, 60, 60});
 
+        buttons[i]->getRenderer()->setTextColor({235, 239, 244});
+        buttons[i]->getRenderer()->setTextColorHover({255, 255, 255});
+        buttons[i]->getRenderer()->setTextColorDown({12, 17, 23});
+        buttons[i]->getRenderer()->setTextColorDisabled({140, 140, 140});
 
-        auto button = buttons[i];
-        button->onMouseEnter([button] {
-            button->resizeWithAnimation({"92%", 100}, 120ms);
-        });
+        buttons[i]->getRenderer()->setBorders(1);
 
-        button->onMouseLeave([button] {
-            button->resizeWithAnimation({"88%", 44}, 120ms);
-        });
-
-        buttons[i]->getRenderer()-> setBackgroundColor({0, 0, 0});
-        buttons[i]->getRenderer()-> setTextColor({153, 160, 157});
-        buttons[i]->setSize({"84%","4%"});
-        buttons[i]->getRenderer()->setBackgroundColorHover({86, 128, 91});
-        buttons[i]->getRenderer()->setTextColorHover({0, 0, 0});
+        buttons[i]->setSize({"92%","4%"});
         buttons[i]->getRenderer()->setRoundedBorderRadius(10);
+
     }
 
 
         buttonPlay->onMouseEnter([buttonPlay,buttonSettings, quitButton] {
+            buttonPlay->getRenderer()->setTextureHover("assets/images/poker.png");
             buttonPlay->resizeWithAnimation({"92%", 100}, 120ms);
             buttonSettings->moveWithAnimation({"5%", "20%"}, 120ms);
             quitButton->moveWithAnimation({"5%", "25%"}, 120ms);
@@ -174,6 +162,7 @@ int main (){
 
 
         buttonSettings->onMouseEnter([buttonSettings, quitButton] {
+            buttonSettings->getRenderer()->setTextureHover("assets/images/settings_icon.png"); 
             buttonSettings->resizeWithAnimation({"92%", 100}, 120ms);
             quitButton->moveWithAnimation({"5%", "25%"}, 120ms);
         });
@@ -184,9 +173,42 @@ int main (){
         });
 
 
+        quitButton->onMouseEnter([quitButton] {
+            quitButton->getRenderer()->setTextureHover("assets/images/quit_icon.png"); 
+            quitButton->resizeWithAnimation({"92%", 100}, 120ms);
+        });
+
+        quitButton->onMouseLeave([quitButton] {
+            quitButton->resizeWithAnimation({"92%", 44}, 120ms);
+        });
+
+        quitButton->onClick([&window,&sideBar,&quitButton] {
+            quitButton->setVisible(false);
+            auto yes_button = tgui::Button::create("Yes");
+            auto no_button = tgui::Button::create("No");
 
 
 
+            yes_button->setPosition({"30","20%"});
+            no_button->setPosition({"70%","20%"});
+
+
+            yes_button->onClick([&window]
+            {
+                window.close();
+            });
+
+
+            no_button->onClick([&sideBar, yes_button, no_button]
+            {
+                sideBar->remove(yes_button);
+                sideBar->remove(no_button);
+
+            });
+
+            sideBar->add(yes_button);
+            sideBar->add(no_button);
+        });
 
     while(window.isOpen()){
         while(const auto event = window.pollEvent()){
@@ -208,4 +230,4 @@ int main (){
         window.display();
     }
     return 0;
-}
+    }
