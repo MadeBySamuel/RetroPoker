@@ -4,12 +4,22 @@
 #include <TGUI/Backend/SFML-Graphics.hpp>
 #include <vector>
 
+#include "game.hpp"
 
 
 #include <iostream>
+
+
+
+
+
 int main (){
     using namespace std::chrono_literals;
 
+
+    sf::Music music("assets/sound/western_music.ogg");
+
+    music.play();
     sf::ContextSettings settings;
     settings.antiAliasingLevel = 8;
 
@@ -22,7 +32,7 @@ int main (){
 
     tgui::Font::setGlobalFont("assets/fonts/Shelten.ttf");
 
-    // auto color_picker =rgb(212, 160, 23));
+    // auto color_picker =rgb(212, 152, 23));
 
 
     tgui::Color bg(28, 24, 20);        
@@ -37,21 +47,25 @@ int main (){
     tgui::Color yes_quit(133, 22, 22);
 
 
+    
+
+
     auto root = tgui::Panel::create({"100%", "100%"});
     root->getRenderer()->setBackgroundColor(panel);
+    root->getRenderer()->setTextureBackground("assets/images/main_menu4.jpg");
     gui.add(root);
 
-    auto topBar = tgui::Panel::create({"100%", "7%"});
+    auto topBar = tgui::Panel::create({"100%", "5%"});
     topBar->setPosition({"0%", "0%"});
     topBar->getRenderer()-> setBackgroundColor(bg);
     topBar->getRenderer()->setRoundedBorderRadius(20.0);
     root->add(topBar);
 
-
-    auto sideBar = tgui::Panel::create({"18%", "90%"});
-    sideBar->setPosition({"0%", "10%" });
-    sideBar->getRenderer()->setBackgroundColor(bg);
+    auto sideBar = tgui::Panel::create({"15%", "40%"});
+    sideBar->setPosition({"0%", "60%" });
+    sideBar->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
     sideBar->getRenderer()->setRoundedBorderRadius(20.0);
+    sideBar->setVisible(true);
     root->add(sideBar);
 
 
@@ -59,12 +73,14 @@ int main (){
     centerPanel->setPosition({"20%", "15%"});
     centerPanel->getRenderer()->setBackgroundColor(bg);
     centerPanel->getRenderer()->setRoundedBorderRadius(20.0);
+    centerPanel->setVisible(false);
     root->add(centerPanel);
 
     auto rightPanel = tgui::Panel::create({"24%", "75%"});
     rightPanel->setPosition({"74%", "15%"});
     rightPanel->getRenderer()->setBackgroundColor(bg);
     rightPanel->getRenderer()->setRoundedBorderRadius(20.0);
+    rightPanel->setVisible(false);
     root->add(rightPanel);
 
 
@@ -72,41 +88,73 @@ int main (){
     auto title = tgui::Label::create("RetroPoker");
     title->getRenderer()->setFont("assets/fonts/AncientMedium.ttf");
 
-    title->getRenderer()->setTextColor({244, 230, 200});
-    title->setPosition({"17%","2%"});
-    title->setTextSize(50);
-    sideBar->add(title);
+    title->getRenderer()->setTextColor(bg);
+    title->setPosition({"28%","30%"});
+    title->getRenderer()->setTextOutlineColor(tgui::Color(42, 26, 18));
+    title->getRenderer()->setTextOutlineThickness(2.f);                
+    title->setTextSize(200);
+    root->add(title);
+
+    auto money_lay = tgui::Panel::create({"10%","100%"});
+    money_lay->setPosition({"0%", "0%"});
+    money_lay->getRenderer()->setBackgroundColor(border);
+    money_lay->getRenderer()->setRoundedBorderRadius(10);
+    topBar->add(money_lay);
+
+
+    std::unique_ptr<Game> game = std::make_unique<Game>();
+    game->game();
+    game->getPlayers();
+
+    auto& players = game->getPlayers();
+    int money = 0;
+
+    for(size_t i = 0; i < players.size();i++){
+        if(players[i]->getName() == "Player"){
+            money = players[i]->getMoney();
+        } 
+    }
+
+
+
+    auto money_show = tgui::Label::create("Balance: " + std::to_string(money) + "$" );
+    money_show->getRenderer()->setTextColor(text);
+    money_show->getRenderer()->setFont("assets/fonts/Shelten.ttf");
+    money_show->setPosition({"40","40%"});
+    money_show->setTextSize(20);
+    money_lay->add(money_show);
+
+
+
+
+
+
 
 
     // pictures
     
-
+/*
     auto table_icon = tgui::Picture::create("assets/images/retro_icon.png");
     table_icon->setPosition({"-50%","70%"});
     table_icon->setSize({700,300});
     sideBar->add(table_icon);
-
+    */
 
     // button 
     auto buttonPlay = tgui::Button::create("Play");
-    buttonPlay->setPosition({"5%","10%"});
-
-
-    buttonPlay->setPosition({"5%","10%"});
-    buttonPlay->setTextSize(20);
+    buttonPlay->setPosition({"10%","50%"});
+    buttonPlay->setTextSize(33);
 
     sideBar->add(buttonPlay);
 
-
-
     auto buttonSettings = tgui::Button::create("Settings");
-    buttonSettings->setPosition({"5%","15%"});
-    buttonSettings->setTextSize(18);
+    buttonSettings->setPosition({"10%","60%"});
+    buttonSettings->setTextSize(30);
     sideBar->add(buttonSettings);
 
     auto quitButton = tgui::Button::create("Quit");
-    quitButton->setPosition({"5%","20%"});
-    quitButton->setTextSize(18);
+    quitButton->setPosition({"10%","70%"});
+    quitButton->setTextSize(30);
     sideBar->add(quitButton);
 
 
@@ -118,63 +166,34 @@ int main (){
     buttons.emplace_back(quitButton);
 
 
-    for (int i = 0; i < buttons.size(); i++){
-        buttons[i]->getRenderer()->setBackgroundColor(panel);
-        buttons[i]->getRenderer()->setBackgroundColorHover(panel);
-        buttons[i]->getRenderer()->setBackgroundColorDown(down);
-        buttons[i]->getRenderer()->setBackgroundColorDisabled(disabled);
+    for (size_t i = 0; i < buttons.size(); i++){
+        buttons[i]->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
+        buttons[i]->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
+        buttons[i]->getRenderer()->setBackgroundColorDown(tgui::Color::Transparent);
+        buttons[i]->getRenderer()->setBackgroundColorDisabled(tgui::Color::Transparent);
+
+
+        buttons[i]->getRenderer()->setTextStyleHover(tgui::TextStyle::Underlined);
 
         buttons[i]->getRenderer()->setTextColor(text);
-        buttons[i]->getRenderer()->setTextColorHover(text);
-        buttons[i]->getRenderer()->setTextColorDown(bg);
+        buttons[i]->getRenderer()->setTextColorHover(down);
+        buttons[i]->getRenderer()->setTextColorDown(down);
         buttons[i]->getRenderer()->setTextColorDisabled(tgui::Color(160, 150, 130));
 
 
         buttons[i]->getRenderer()->setBorders(0);
 
-        buttons[i]->setSize({"92%","4%"});
-        buttons[i]->getRenderer()->setRoundedBorderRadius(10);
+        if(buttons[i] != buttonPlay ){
+            buttons[i]->setSize({"92%","4%"});
+        }
+        else{
+           buttons[i]->setSize({"92%","6%"}); 
+        }
+        buttons[i]->getRenderer()->setRoundedBorderRadius(0);
 
     }
 
 
-        buttonPlay->onMouseEnter([buttonPlay, buttonSettings, quitButton] {
-            buttonPlay->setTextSize(30);
-            buttonPlay->resizeWithAnimation({"92%", 100}, 120ms);
-            buttonSettings->moveWithAnimation({"5%", "20%"}, 120ms);
-            quitButton->moveWithAnimation({"5%", "25%"}, 120ms);
-        });
-
-        buttonPlay->onMouseLeave([buttonPlay,buttonSettings, quitButton] {
-            buttonPlay->setTextSize(20);
-            buttonPlay->resizeWithAnimation({"92%", 44}, 120ms);
-            buttonSettings->moveWithAnimation({"5%", "15%"}, 120ms);
-            quitButton->moveWithAnimation({"5%", "20%"}, 120ms);
-        });
-
-
-        buttonSettings->onMouseEnter([buttonSettings, quitButton] {
-            buttonSettings->setTextSize(30);
-            buttonSettings->resizeWithAnimation({"92%", 100}, 120ms);
-            quitButton->moveWithAnimation({"5%", "25%"}, 120ms);
-        });
-
-        buttonSettings->onMouseLeave([buttonSettings, quitButton] {
-            buttonSettings->setTextSize(20);
-            buttonSettings->resizeWithAnimation({"92%", 44}, 120ms);
-            quitButton->moveWithAnimation({"5%", "20%"}, 120ms);
-        });
-
-
-        quitButton->onMouseEnter([quitButton] {
-            quitButton->setTextSize(30);
-            quitButton->resizeWithAnimation({"92%", 100}, 120ms);
-        });
-
-        quitButton->onMouseLeave([quitButton] {
-            quitButton->setTextSize(20);
-            quitButton->resizeWithAnimation({"92%", 44}, 120ms);
-        });
 
         quitButton->onClick([&gui,&window,&sideBar,&quitButton,&buttonSettings, &buttonPlay, panel,down,disabled,text,bg, yes_quit] {
             auto overlay = tgui::Panel::create({"100%", "100%"});
@@ -213,6 +232,7 @@ int main (){
                 yes_no_buttons[i]->setSize({"35%","50%"});
                 yes_no_buttons[i]->getRenderer()->setBackgroundColor(panel);
                 yes_no_buttons[i]->getRenderer()->setBackgroundColorHover(panel);
+
                 if (yes_no_buttons[i] == no_button){
                     yes_no_buttons[i]->getRenderer()->setBackgroundColorDown(down);
                 }
@@ -227,8 +247,6 @@ int main (){
                 yes_no_buttons[i]->getRenderer()->setTextColorDown(bg);
 
     
-
-
                 yes_no_buttons[i]->getRenderer()->setBorders(0);
 
                 yes_no_buttons[i]->getRenderer()->setRoundedBorderRadius(10);
@@ -262,21 +280,26 @@ int main (){
 
         });
 
+
+        auto label = tgui::Label::create("");
+        topBar->add(label);
+        label->setTextSize(20);
+        label->setPosition({"90%","20%"});
+
+
     while(window.isOpen()){
         while(const auto event = window.pollEvent()){
-
             gui.handleEvent(*event);
-
-
             if(event->is<sf::Event::Closed>()){
                 window.close();
             }
         }
-
+            auto now = std::chrono::system_clock::now();
+            std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+            label->setText(std::ctime(&now_time));
         
     
 
-        
 
         gui.draw();
         window.display();

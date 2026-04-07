@@ -29,5 +29,6 @@ target_link_libraries(retro_poker PRIVATE
     SFML::Graphics
     SFML::Window
     SFML::System
+    SFML::Audio
 )
 

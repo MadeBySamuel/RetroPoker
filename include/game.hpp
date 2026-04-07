@@ -8,7 +8,8 @@ class Game {
         int currentBet = 0;
         int smallBlind = 0;
         int bigBlind = 0;
-         
+        std::vector<std::unique_ptr<Player>> players;
+ 
 
     public:
         int& getPot();
@@ -24,8 +25,8 @@ class Game {
         int getCurrentBet();
 
         void setCurrentBet(int currentBet);
+        std::vector<std::unique_ptr<Player>>& getPlayers();
         
-
 
     void setup_once(std::vector<std::unique_ptr<Player>>& players, std::vector<std::string>& game_names);
 

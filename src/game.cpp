@@ -42,6 +42,9 @@ void Game::setCurrentBet(int currentBet){
     this->currentBet = currentBet;
 }
 
+std::vector<std::unique_ptr<Player>>& Game::getPlayers(){
+    return players;
+}
 
 void Game::setup_once(std::vector<std::unique_ptr<Player>>& players, std::vector<std::string>& game_names){
     utils::shuffle_players(game_names);
@@ -108,6 +111,8 @@ void Game::game(){
 
 
 
+
+
     std::vector<std::string> suits = {"♥️", "♦️", "♣️", "♠️"};
     std::vector<Card> game_cards;
 
@@ -120,7 +125,7 @@ void Game::game(){
         }
     }
 
-    std::vector<std::unique_ptr<Player>> players;
+
     std::vector<std::string> game_names = Constants::NAMES;
     
     std::vector<Card> community_cards;
@@ -129,7 +134,7 @@ void Game::game(){
     std::vector<bool> card_evoluator;
     std::vector<std::string> cards7;
     
-    Game::setup_once(players, game_names);
+    Game::setup_once(this->players, game_names);
 
 
     logger.log("number of players: " + std::to_string(players.size()) , "DEBUG");
@@ -145,7 +150,8 @@ void Game::game(){
     std::cout << "Round ---------- " << round_count << std::endl;
     std::cout << "------------------" << std::endl;
 
-    const int playerCount = static_cast<int>(players.size());
+    const int playerCount = static_cast<int>(this->players.size());
+
     int smallBlindPosition = (playerCount - 1 - blindOffset + playerCount) % playerCount;
     int bigBlindPosition = (playerCount - 2 - blindOffset + playerCount) % playerCount;
 
@@ -154,60 +160,33 @@ void Game::game(){
 
     std::cout << "$$ PRE-FLOP STAGE $$" << std::endl;
 
-    Game::setup_once_per_game(players, game_cards, used_cards_index, community_cards, smallBlindPosition, bigBlindPosition);
-    for (size_t i = 0; i < players.size(); i++)
+    Game::setup_once_per_game(this->players, game_cards, used_cards_index, community_cards, smallBlindPosition, bigBlindPosition);
+    for (size_t i = 0; i < this->players.size(); i++)
     {
-        cards = utils::cards7collection(players, i, community_cards);    
-        evoluation_cards.push_back(handevoluator.evoluator(cards, players, community_cards, i));
+        cards = utils::cards7collection(this->players, i, community_cards);    
+        evoluation_cards.push_back(handevoluator.evoluator(cards, this->players, community_cards, i));
     }
     std::cout << "Your cards: " << std::endl;
 
-    utils::show_my_cards(players);
-    
-    for (size_t i = bigBlindPosition + 1; i < players.size(); i ++){
-        if (players[i]->getName() == "Player"){
-            
-        }
-        else {
-
-        }
-    }
+    utils::show_my_cards(this->players);
     
     
-
     for (size_t i = 0; i < 3; i ++){
         std::cout << community_cards[i].write_name() << std::endl;
     }
 
-
-    for (size_t i = 0; i < players.size(); i ++){
-        if (players[i]->getName() == "Player"){
-            
-        }
-        else {
-
-        }
-    }
-
-
     std::cout << community_cards[3].write_name() << std::endl;
 
 
-    for (size_t i = 0; i < players.size(); i ++){
-        if (players[i]->getName() == "Player" && players[i]->getInGame() == true){
+    for (size_t i = 0; i < this->players.size(); i ++){
+        if (this->players[i]->getName() == "Player" && this->players[i]->getInGame() == true){
         }
-        else if (players[i]->getName() != "Player" && players[i]->getInGame() == true) {
+        else if (this->players[i]->getName() != "Player" && this->players[i]->getInGame() == true) {
 
         }
     }
 
     std::cout << community_cards[4].write_name() << std::endl;
-
-
-
-
-
-
 
 
 
@@ -230,9 +209,9 @@ void Game::game(){
 
     if (ties.empty()){
         std::cout << "Winner of round is " << winner.name;
-        for (size_t i = 0; i < players.size(); i++){
-            if (winner.name == players[i]->getName()){
-                players[i]->getMoney() += this->getPot();
+        for (size_t i = 0; i < this->players.size(); i++){
+            if (winner.name == this->players[i]->getName()){
+                this->players[i]->getMoney() += this->getPot();
             }
         }
     }
@@ -241,9 +220,9 @@ void Game::game(){
 
         if (winner.sum_for_tie > tieswinner.sum_for_tie && winner.rank > tieswinner.rank) {
             std::cout << "Winner of round is " << winner.name;
-            for (size_t i = 0; i < players.size(); i++){
-                if (winner.name == players[i]->getName()){
-                    players[i]->getMoney() += this->getPot();
+            for (size_t i = 0; i < this->players.size(); i++){
+                if (winner.name == this->players[i]->getName()){
+                    this->players[i]->getMoney() += this->getPot();
                 }
             }
             blindOffset = (blindOffset + 1) % playerCount;
@@ -264,9 +243,9 @@ void Game::game(){
 
         int part = this->getPot() / static_cast<int>(tied_names.size());
 
-        for (size_t i = 0; i < players.size(); i ++){
-            if (std::find(tied_names.begin(), tied_names.end(), players[i]->getName()) != tied_names.end()) {
-                players[i]->getMoney() += part;
+        for (size_t i = 0; i < this->players.size(); i ++){
+            if (std::find(tied_names.begin(), tied_names.end(), this->players[i]->getName()) != tied_names.end()) {
+                this->players[i]->getMoney() += part;
             }
         }
     }
