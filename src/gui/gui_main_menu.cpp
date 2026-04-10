@@ -19,10 +19,11 @@ class MainMenu{
         MainMenu(tgui::Gui& gui, sf::RenderWindow& window) : gui(gui), window(window) {} 
 
     void showMainMenu(){
+    gui.removeAllWidgets();
 
     tgui::Font::setGlobalFont("assets/fonts/Shelten.ttf");
 
-    // auto color_picker =rgb(212, 152, 23));
+    // auto color_picker =rgb(160, 42, 16));
 
 
     
@@ -183,7 +184,8 @@ class MainMenu{
 
     }
 
-        quitButton->onClick([this,&sideBar,&quitButton,&buttonSettings, &buttonPlay, panel,down,disabled,text,bg, yes_quit] {
+
+        quitButton->onClick([this, quitButton, buttonSettings, buttonPlay, panel, down, disabled, text, bg, yes_quit] {
             auto overlay = tgui::Panel::create({"100%", "100%"});
             overlay->getRenderer()->setBackgroundColor(tgui::Color(0, 0, 0, 220));
             gui.add(overlay);
@@ -256,7 +258,7 @@ class MainMenu{
             quit_label->add(no_button);
 
 
-            no_button->onClick([overlay,this, quit_label, &sideBar, yes_button, no_button, &quitButton, &buttonSettings, &buttonPlay]
+            no_button->onClick([this, overlay, quit_label, quitButton, buttonSettings, buttonPlay]
             {
                 gui.remove(overlay);
                 gui.remove(quit_label);

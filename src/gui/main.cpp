@@ -44,20 +44,17 @@ int main(){
     
     music.play();
 
-    enum ScreenState screen = ScreenState::Login;
-    Login login(gui);
     MainMenu mainmenu(gui, window);
+    ScreenState screen = ScreenState::Login;
+    Login login(gui, [&] {
+        screen = ScreenState::MainMenu;
+        mainmenu.showMainMenu();
+    });
 
     if (screen == ScreenState::Login){
         login.login_screen();
     }
-
-    screen = ScreenState::MainMenu;
-
-       if (screen == ScreenState::MainMenu){
-        
-       }
-
+    
     while(window.isOpen()){
         while(const auto event = window.pollEvent()){
             gui.handleEvent(*event);
