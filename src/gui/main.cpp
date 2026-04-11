@@ -44,12 +44,13 @@ int main(){
     
     music.play();
 
+
     MainMenu mainmenu(gui, window);
     ScreenState screen = ScreenState::Login;
-    Login login(gui, [&] {
+    Login login(gui,[&]{
         screen = ScreenState::MainMenu;
         mainmenu.showMainMenu();
-    });
+    },music);
 
     if (screen == ScreenState::Login){
         login.login_screen();

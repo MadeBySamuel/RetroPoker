@@ -24,6 +24,27 @@ add_executable(retro_poker
     
 )
 
+
+
+add_library(argon2 STATIC
+    external/argon2-hashing/src/argon2.c
+    external/argon2-hashing/src/core.c
+    external/argon2-hashing/src/encoding.c
+    external/argon2-hashing/src/thread.c
+    external/argon2-hashing/src/ref.c
+    external/argon2-hashing/src/blake2/blake2b.c
+)
+
+target_include_directories(argon2 PUBLIC
+    external/argon2-hashing/include
+    external/argon2-hashing/src
+)
+
+target_include_directories(retro_poker PRIVATE
+    include
+    external/argon2-hashing/include
+)
+
 target_include_directories(retro_poker PRIVATE include)
 
 

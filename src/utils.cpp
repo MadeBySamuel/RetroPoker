@@ -3,6 +3,8 @@
 
 #include "utils.hpp"
 #include "game.hpp"
+#include <argon2.h>
+
 
 #include <memory>
 
@@ -205,3 +207,5 @@ std::vector<Card> utils::cards7collection(std::vector<std::unique_ptr<Player>>& 
 
     return map;
 }
+
+
