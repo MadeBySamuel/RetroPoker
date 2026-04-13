@@ -217,9 +217,9 @@ class Login {
 
 
 
-        auto volume_icon = tgui::Picture::create("assets/images/volume/volume_full.png");
+        auto volume_icon = tgui::Picture::create(tgui::Texture("assets/images/volume/volume_full.png", {}, {}, true));
         volume_icon->setPosition("96%", "3%");
-        volume_icon->setSize("2%", "2%");
+        volume_icon->setSize(40,31);
         root->add(volume_icon);
         
 

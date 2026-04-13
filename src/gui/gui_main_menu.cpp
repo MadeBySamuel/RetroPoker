@@ -13,6 +13,9 @@ class MainMenu{
     private:
         tgui::Gui& gui;
         sf::RenderWindow& window;
+        tgui::Label::Ptr time_label;
+        std::string last_time_text;
+
 
 
     public:
@@ -271,12 +274,29 @@ class MainMenu{
         });
 
 
-        auto label = tgui::Label::create("");
-        topBar->add(label);
-        label->setTextSize(20);
-        label->setPosition({"90%","30%"});
-        label->getRenderer()->setTextColor(text);
-
+        time_label = tgui::Label::create("");
+        time_label->setTextSize(30);
+        time_label->setPosition({"90%","50%"});
+        time_label->getRenderer()->setTextColor(text);
+        
+        topBar->add(time_label);
 
 }
+
+  void time(){
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+    std::tm* local_time = std::localtime(&now_c);
+
+    std::ostringstream oss;
+    oss << std::put_time(local_time, "%H:%M:%S");
+
+    std::string currentTimeText = oss.str();
+
+    if (currentTimeText != last_time_text && time_label) {
+        time_label->setText(currentTimeText);
+        last_time_text = currentTimeText;
+    }
+    }
 };
+

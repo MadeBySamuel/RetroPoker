@@ -9,6 +9,19 @@ enum class ScreenState{
 };  
 
 
+
+std::string getCurrentTimeString() {
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+    std::tm* local_time = std::localtime(&now_c);
+
+    std::ostringstream oss;
+    oss << std::put_time(local_time, "%H:%M:%S");
+    return oss.str();
+}
+
+
+
 int main(){
 
 
@@ -45,6 +58,11 @@ int main(){
     music.play();
 
 
+    auto time_label = tgui::Label::create("");
+    time_label->getRenderer()->setTextColor(down);
+    time_label->setPosition("90%", "4%");
+    time_label->setTextSize(20);
+
     MainMenu mainmenu(gui, window);
     ScreenState screen = ScreenState::Login;
     Login login(gui,[&]{
@@ -56,6 +74,11 @@ int main(){
         login.login_screen();
     }
     
+
+
+    std::string last_time_text;
+
+
     while(window.isOpen()){
         while(const auto event = window.pollEvent()){
             gui.handleEvent(*event);
@@ -63,6 +86,10 @@ int main(){
                 window.close();
             }
         }
+
+    if(screen == ScreenState::MainMenu) {
+        mainmenu.time();
+    }
         gui.draw();
         window.display();
     }

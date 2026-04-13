@@ -8,6 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_subdirectory(external/SFML)
 set(TGUI_BACKEND SFML_GRAPHICS)
 add_subdirectory(external/TGUI)
+find_package(SQLite3 REQUIRED)
 
 add_executable(retro_poker
     src/aiplayer.cpp
@@ -21,7 +22,7 @@ add_executable(retro_poker
     src/gui/gui_login.cpp
     src/gui/gui_main_menu.cpp
     src/gui/main.cpp
-    
+    src/auth.cpp
 )
 
 
@@ -45,6 +46,7 @@ target_include_directories(retro_poker PRIVATE
     external/argon2-hashing/include
 )
 
+
 target_include_directories(retro_poker PRIVATE include)
 
 
@@ -54,5 +56,7 @@ target_link_libraries(retro_poker PRIVATE
     SFML::Window
     SFML::System
     SFML::Audio
+    argon2
+    SQLite3::SQLite3
 )
 
