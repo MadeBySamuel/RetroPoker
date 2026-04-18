@@ -1,13 +1,16 @@
-
 #include "gui_login.cpp"
 #include "gui_main_menu.cpp"
+
+#include "auth.hpp"
+#include <sqlite3.h>
+#include <iostream>
+
 
 
 enum class ScreenState{
     Login,
     MainMenu
 };  
-
 
 
 std::string getCurrentTimeString() {
@@ -23,9 +26,6 @@ std::string getCurrentTimeString() {
 
 
 int main(){
-
-
-
 
     using namespace std::chrono_literals;
 
@@ -70,6 +70,8 @@ int main(){
         mainmenu.showMainMenu();
     },music);
 
+
+    
     if (screen == ScreenState::Login){
         login.login_screen();
     }

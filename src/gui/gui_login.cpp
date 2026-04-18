@@ -7,17 +7,38 @@
 #include <functional>
 #include <vector>
 
+#include "auth.hpp"
+#include <argon2.h>
+#include <sqlite3.h>
+#include "auth.hpp"
+
+
+
+
 class Login {
 
     private:
         tgui::Gui& gui;
         std::function<void()> onLogin;
         sf::Music& music;
+        sqlite3* db = nullptr;
 
     public:
         Login(tgui::Gui& gui, std::function<void()> onLogin, sf::Music& music) : gui(gui), onLogin(onLogin), music(music) {} 
 
+
     void login_screen(){
+
+       
+
+        if (sqlite3_open("users.db", &db) == SQLITE_OK){
+                bool created = auth::createUsersTable(db);
+                if (created == 1) std::cout << "Table created " << std::endl;
+                if (created == 0) std::cout << "Table is not created " << std::endl;
+        }
+
+
+
         gui.removeAllWidgets();
 
         tgui::Color bg(28, 24, 20);        
@@ -111,7 +132,41 @@ class Login {
             sign_up_pass[i]->getRenderer()->setBorderColorHover(down);
         }
 
-        sign_up->onClick([centerPanel, root, panel, text, bg,down]{
+
+        forgot_password->onClick([this, root, panel, text, centerPanel]{
+            centerPanel->setVisible(false);
+
+            auto centerPanel = tgui::Panel::create({"30%", "40%"});
+            centerPanel->setPosition({"25%" , "30%"});
+            centerPanel->getRenderer()->setBackgroundColor(panel);
+            centerPanel->getRenderer()->setRoundedBorderRadius(20.0);
+            root->add(centerPanel);
+
+            auto forgot_password_label = tgui::Label::create("Write email of your account");
+            forgot_password_label->setPosition({"20%", "20%"});
+            forgot_password_label->setTextSize(30);   
+            forgot_password_label->getRenderer()->setTextColor(text);
+            centerPanel->add(forgot_password_label);
+
+
+            auto forgot_password_box = tgui::EditBox::create();
+            forgot_password_box->setDefaultText("email");
+            forgot_password_box->setSize("80%", "8%");
+            forgot_password_box->setPosition({"10%", "40%"});
+
+            forgot_password_box->setTextSize(20);
+            forgot_password_box->getRenderer()->setBackgroundColor(panel);
+            forgot_password_box->getRenderer()->setBorders(0);
+            forgot_password_box->getRenderer()->setBackgroundColorHover(panel);
+            forgot_password_box->getRenderer()->setTextColor(text);
+            forgot_password_box->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 2});
+            forgot_password_box->getRenderer()->setBorderColor(text);
+
+            centerPanel->add(forgot_password_box);
+
+            });
+
+        sign_up->onClick([this, centerPanel, root, panel, text, bg,down]{
             centerPanel->setVisible(false);
             
             auto centerPanel = tgui::Panel::create({"30%", "40%"});
@@ -175,7 +230,61 @@ class Login {
             sign_up_button->getRenderer()->setBackgroundColorHover(bg);
             centerPanel->add(sign_up_button);
 
+
+
+            auto wrongLabel = tgui::Label::create("");
+            wrongLabel->setTextSize(17);
+            wrongLabel->setPosition("10%", "63%");
+            wrongLabel->getRenderer()->setTextColor(sf::Color(160, 42, 16));
+            centerPanel->add(wrongLabel);
+
+
+            sign_up_button->onClick([this, username_box, email_box, password_box, wrongLabel]{
+            if (username_box->getText().length() == 0 && password_box->getText().length() == 0 && username_box->getText().length() == 0){
+                email_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
+                password_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
+                username_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
+            }
+            else if(username_box->getText().length() == 0){
+                username_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
+            }
+            else if (password_box->getText().length() == 0){
+                password_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
+            }
+            else if (email_box->getText().length() == 0){
+                email_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
+            }
+
+            else{
+
+                std::string  email = email_box->getText().toStdString();
+                std::string  password = password_box->getText().toStdString();
+                std::string  username = username_box->getText().toStdString();
+
+                auth::LoginResult register_user = auth::registerUser(db, email, username, password);
+
+                if(register_user == auth::LoginResult::DatabaseError){
+                    std::cout << "Database problem "<< std::endl;
+                }
+                else if (register_user == auth::LoginResult::Empty){
+                    std::cout << "Empty" << std::endl;
+                }
+                else if (register_user == auth::LoginResult::UserAlreadyExist){
+                    wrongLabel->setText("User already exists");
+                }
+                else if (register_user == auth::LoginResult::Pass){
+                    onLogin();
+                }
+                else {
+                    std::cout << "wtf" << std::endl;
+                }
+            }
+
+            });
         });
+
+
+
 
 
 
@@ -209,11 +318,7 @@ class Login {
         login_button->getRenderer()->setBackgroundColorDown(bg);
         login_button->getRenderer()->setBackgroundColorHover(bg);
         centerPanel->add(login_button);
-
-
-        
-        std::string username = username_box->getText().toStdString();
-        std::string password = password_box->getText().toStdString();
+     
 
 
 
@@ -225,7 +330,7 @@ class Login {
 
 
         auto volume_panel = tgui::Panel::create({"20%", "10%"});
-        volume_panel->setPosition({"80%" , "10%"});
+        volume_panel->setPosition({"80%" , "8%"});
         volume_panel->getRenderer()->setBackgroundColor(panel);
         volume_panel->getRenderer()->setRoundedBorderRadius(20.0);
         root->add(volume_panel);
@@ -244,6 +349,7 @@ class Login {
         volume_slider->setMinimum(0);
         volume_slider->setMaximum(100);
         volume_slider->setValue(100);
+        volume_slider->setSize("80%", "10%");
 
         volume_slider->getRenderer()->setThumbColor(text);
         volume_slider->getRenderer()->setTrackColor(text);
@@ -273,8 +379,9 @@ class Login {
 
 
 
-        login_button->onClick([this, username_box, password_box]
+        login_button->onClick([this, username_box, password_box, text, centerPanel]
         {
+ 
             if (username_box->getText().length() == 0 && password_box->getText().length() == 0){
                 password_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
                 username_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
@@ -286,7 +393,31 @@ class Login {
                 password_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
             }
             else {
-                onLogin();
+                std::string username = username_box->getText().toStdString();
+                std::string password = password_box->getText().toStdString();
+
+                auth::LoginResult loginresult = auth::loginUser(db, username, password);
+
+
+                auto wrongLabel = tgui::Label::create("");
+                wrongLabel->setTextSize(17);
+                wrongLabel->setPosition("10%", "63%");
+                wrongLabel->getRenderer()->setTextColor(sf::Color(160, 42, 16));
+                centerPanel->add(wrongLabel);
+
+                if (loginresult == auth::LoginResult::DatabaseError){
+                    std::cout << "Database error "; // toto by sa nemalo stať 
+                }
+                else if(loginresult == auth::LoginResult::NotFound){
+                    wrongLabel->setText("User was not found, please sign up");
+                }
+
+                else if (loginresult == auth::LoginResult::WrongPassword){
+                    wrongLabel->setText("Wrong password");
+                }
+                else {
+                    onLogin();
+                }
             }
         });
 

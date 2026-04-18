@@ -24,8 +24,7 @@ bool generateSalt(std::array<std::uint8_t, kSaltLen>& salt) {
         return false;
     }
 
-    urandom.read(reinterpret_cast<char*>(salt.data()),
-                 static_cast<std::streamsize>(salt.size()));
+    urandom.read(reinterpret_cast<char*>(salt.data()), static_cast<std::streamsize>(salt.size()));
 
     return urandom.gcount() == static_cast<std::streamsize>(salt.size());
 }
@@ -36,9 +35,7 @@ bool hashPassword(const std::string& plainPassword, std::string& outHash) {
         return false;
     }
 
-    const std::size_t encodedLen =
-        argon2_encodedlen(kTimeCost, kMemoryCostKiB, kParallelism,
-                          kSaltLen, kHashLen, Argon2_id);
+    const std::size_t encodedLen =argon2_encodedlen(kTimeCost, kMemoryCostKiB, kParallelism, kSaltLen, kHashLen, Argon2_id);
 
     std::vector<char> encoded(encodedLen);
 
@@ -63,16 +60,20 @@ bool hashPassword(const std::string& plainPassword, std::string& outHash) {
     return true;
 }
 
-bool verifyPassword(const std::string& plainPassword,
-                    const std::string& storedHash) {
-    return argon2id_verify(
-        storedHash.c_str(),
-        plainPassword.data(),
-        plainPassword.size()
-    ) == ARGON2_OK;
+bool verifyPassword(const std::string& plainPassword,const std::string& storedHash) {
+    if (argon2id_verify(storedHash.c_str(), plainPassword.data(),plainPassword.size()) == ARGON2_OK){
+        return 1;
+    }
+    else {
+        return 0;
+    }
 }
 
 } // namespace
+
+
+
+
 
 bool createUsersTable(sqlite3* db) {
     const char* sql =
@@ -89,15 +90,13 @@ bool createUsersTable(sqlite3* db) {
     return sqlite3_exec(db, sql, nullptr, nullptr, nullptr) == SQLITE_OK;
 }
 
-bool userExists(sqlite3* db,
-                const std::string& username,
-                const std::string& email) {
-    const char* sql =
-        "SELECT 1 FROM users WHERE username = ?1 OR email = ?2 LIMIT 1;";
+LoginResult userExists(sqlite3* db,const std::string& username, const std::string& email) {
+    const char* sql = "SELECT 1 FROM users WHERE username = ?1 OR email = ?2 LIMIT 1;";
 
     sqlite3_stmt* stmt = nullptr;
+
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
-        return false;
+        return LoginResult::UserAlreadyExist;
     }
 
     sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_TRANSIENT);
@@ -106,25 +105,26 @@ bool userExists(sqlite3* db,
     const int rc = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
-    return rc == SQLITE_ROW;
+    return LoginResult::Pass;
+
 }
 
-bool registerUser(sqlite3* db,
-                  const std::string& username,
-                  const std::string& email,
-                  const std::string& plainPassword) {
+LoginResult registerUser(sqlite3* db, const std::string& username, const std::string& email, const std::string& plainPassword) {
+    
     if (username.empty() || email.empty() || plainPassword.empty()) {
-        return false;
+        return LoginResult::Empty;
     }
 
-    if (userExists(db, username, email)) {
-        return false;
+
+    if (userExists(db, username, email) == LoginResult::UserAlreadyExist) {
+        return LoginResult::UserAlreadyExist;
     }
 
     std::string passwordHash;
     if (!hashPassword(plainPassword, passwordHash)) {
-        return false;
+        return LoginResult::DatabaseError;
     }
+
 
     const char* sql =
         "INSERT INTO users (username, email, password_hash) "
@@ -132,7 +132,7 @@ bool registerUser(sqlite3* db,
 
     sqlite3_stmt* stmt = nullptr;
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
-        return false;
+        return LoginResult::DatabaseError;
     }
 
     sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_TRANSIENT);
@@ -142,12 +142,11 @@ bool registerUser(sqlite3* db,
     const int rc = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
-    return rc == SQLITE_DONE;
+    return LoginResult::Pass;
 }
 
-bool loginUser(sqlite3* db,
-               const std::string& usernameOrEmail,
-               const std::string& plainPassword) {
+LoginResult loginUser(sqlite3* db, const std::string& usernameOrEmail, const std::string& plainPassword) {
+    
     const char* sql =
         "SELECT password_hash "
         "FROM users "
@@ -155,25 +154,36 @@ bool loginUser(sqlite3* db,
         "LIMIT 1;";
 
     sqlite3_stmt* stmt = nullptr;
+
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
-        return false;
+        return LoginResult::DatabaseError;
     }
 
     sqlite3_bind_text(stmt, 1, usernameOrEmail.c_str(), -1, SQLITE_TRANSIENT);
 
     const int rc = sqlite3_step(stmt);
+
     if (rc != SQLITE_ROW) {
         sqlite3_finalize(stmt);
-        return false;
+        return LoginResult::NotFound;
     }
 
     const unsigned char* rawHash = sqlite3_column_text(stmt, 0);
-    const std::string storedHash =
-        rawHash ? reinterpret_cast<const char*>(rawHash) : "";
+    const std::string storedHash = rawHash ? reinterpret_cast<const char*>(rawHash) : "";
 
     sqlite3_finalize(stmt);
 
-    return !storedHash.empty() && verifyPassword(plainPassword, storedHash);
+    if (storedHash.empty()){
+    return LoginResult::DatabaseError;
+    }
+    
+    if (!verifyPassword(plainPassword, storedHash)){
+        return LoginResult::WrongPassword;
+    }
+
+    
+    return LoginResult::Pass;
+}
 }
 
-} // namespace auth
+
