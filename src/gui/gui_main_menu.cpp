@@ -8,11 +8,16 @@
 
 #include "game.hpp"
 
+#include "gui_utils.hpp"
+
 class MainMenu{
 
     private:
         tgui::Gui& gui;
         sf::RenderWindow& window;
+
+        tgui::Panel::Ptr topBar;
+        tgui::Color text;        
         tgui::Label::Ptr time_label;
         std::string last_time_text;
 
@@ -26,7 +31,7 @@ class MainMenu{
 
     tgui::Font::setGlobalFont("assets/fonts/Shelten.ttf");
 
-    // auto color_picker =rgb(160, 42, 16));
+    // auto color_picker =rgb(125, 125, 125));
 
 
     
@@ -41,37 +46,47 @@ class MainMenu{
     tgui::Color down(160, 110, 25);    
     tgui::Color disabled(80, 70, 60);  
     tgui::Color yes_quit(133, 22, 22);
+    this->text = text;
 
+    const auto windowSize = gui.getWindow()->getSize();
+    const float guiWidth = static_cast<float>(windowSize.x);
+    const float guiHeight = static_cast<float>(windowSize.y);
 
+    constexpr float topBarHeight = 56.f;
+    constexpr float sideBarWidth = 280.f;
+    constexpr float sideBarHeight = 360.f;
+    constexpr float centerPanelWidth = 900.f;
+    constexpr float centerPanelHeight = 760.f;
+    constexpr float rightPanelWidth = 420.f;
+    constexpr float rightPanelHeight = 760.f;
 
-    auto root = tgui::Panel::create({"100%", "100%"});
+    auto root = tgui::Panel::create({guiWidth, guiHeight});
     root->getRenderer()->setBackgroundColor(panel);
     root->getRenderer()->setTextureBackground("assets/images/main_menu4.jpg");
     gui.add(root);
 
-    auto topBar = tgui::Panel::create({"100%", "5%"});
-    topBar->setPosition({"0%", "0%"});
+    topBar = tgui::Panel::create({guiWidth, topBarHeight});
+    topBar->setPosition({0, 0});
     topBar->getRenderer()-> setBackgroundColor(tgui::Color(0, 0, 0, 140));
-    topBar->getRenderer()->setRoundedBorderRadius(20.0);
     root->add(topBar);
 
-    auto sideBar = tgui::Panel::create({"15%", "40%"});
-    sideBar->setPosition({"0%", "60%" });
+    auto sideBar = tgui::Panel::create({sideBarWidth, sideBarHeight});
+    sideBar->setPosition({30, guiHeight - sideBarHeight - 40});
     sideBar->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
     sideBar->getRenderer()->setRoundedBorderRadius(20.0);
     sideBar->setVisible(true);
     root->add(sideBar);
 
 
-    auto centerPanel = tgui::Panel::create({"52%", "75%"});
-    centerPanel->setPosition({"20%", "15%"});
+    auto centerPanel = tgui::Panel::create({centerPanelWidth, centerPanelHeight});
+    centerPanel->setPosition({320, 110});
     centerPanel->getRenderer()->setBackgroundColor(bg);
     centerPanel->getRenderer()->setRoundedBorderRadius(20.0);
     centerPanel->setVisible(false);
     root->add(centerPanel);
 
-    auto rightPanel = tgui::Panel::create({"24%", "75%"});
-    rightPanel->setPosition({"74%", "15%"});
+    auto rightPanel = tgui::Panel::create({rightPanelWidth, rightPanelHeight});
+    rightPanel->setPosition({1245, 110});
     rightPanel->getRenderer()->setBackgroundColor(bg);
     rightPanel->getRenderer()->setRoundedBorderRadius(20.0);
     rightPanel->setVisible(false);
@@ -83,38 +98,27 @@ class MainMenu{
     title->getRenderer()->setFont("assets/fonts/AncientMedium.ttf");
 
     title->getRenderer()->setTextColor(bg);
-    title->setPosition({"28%","30%"});
+    title->setPosition({540, 220});
     title->getRenderer()->setTextOutlineColor(tgui::Color(42, 26, 18));
     title->getRenderer()->setTextOutlineThickness(2.f);                
     title->setTextSize(200);
     root->add(title);
 
-    auto money_lay = tgui::Panel::create({"10%","100%"});
-    money_lay->setPosition({"0%", "0%"});
+    auto money_lay = tgui::Panel::create({220, topBarHeight});
+    money_lay->setPosition({0, 0});
     money_lay->getRenderer()->setBackgroundColor(border);
     money_lay->getRenderer()->setRoundedBorderRadius(10);
     topBar->add(money_lay);
 
 
-    std::unique_ptr<Game> game = std::make_unique<Game>();
-    game->game();
-    game->getPlayers();
-
-    auto& players = game->getPlayers();
-    int money = 0;
-
-    for(size_t i = 0; i < players.size();i++){
-        if(players[i]->getName() == "Player"){
-            money = players[i]->getMoney();
-        } 
-    }
+    const int money = Constants::START_PLAYER_MONEY;
 
 
 
     auto money_show = tgui::Label::create("Balance: " + std::to_string(money) + "$" );
     money_show->getRenderer()->setTextColor(text);
     money_show->getRenderer()->setFont("assets/fonts/Shelten.ttf");
-    money_show->setPosition({"40","40%"});
+    money_show->setPosition({24, 16});
     money_show->setTextSize(20);
     money_lay->add(money_show);
 
@@ -136,18 +140,18 @@ class MainMenu{
 
     // button 
     auto buttonPlay = tgui::Button::create("Play");
-    buttonPlay->setPosition({"10%","50%"});
+    buttonPlay->setPosition({25, 120});
     buttonPlay->setTextSize(33);
 
     sideBar->add(buttonPlay);
 
     auto buttonSettings = tgui::Button::create("Settings");
-    buttonSettings->setPosition({"10%","60%"});
+    buttonSettings->setPosition({25, 195});
     buttonSettings->setTextSize(30);
     sideBar->add(buttonSettings);
 
     auto quitButton = tgui::Button::create("Quit");
-    quitButton->setPosition({"10%","70%"});
+    quitButton->setPosition({25, 270});
     quitButton->setTextSize(30);
     sideBar->add(quitButton);
 
@@ -178,27 +182,28 @@ class MainMenu{
         buttons[i]->getRenderer()->setBorders(0);
 
         if(buttons[i] != buttonPlay ){
-            buttons[i]->setSize({"92%","4%"});
+            buttons[i]->setSize({240, 48});
         }
         else{
-           buttons[i]->setSize({"92%","6%"}); 
+           buttons[i]->setSize({240, 62}); 
         }
         buttons[i]->getRenderer()->setRoundedBorderRadius(0);
 
     }
 
 
-        quitButton->onClick([this, quitButton, buttonSettings, buttonPlay, panel, down, disabled, text, bg, yes_quit] {
-            auto overlay = tgui::Panel::create({"100%", "100%"});
+        quitButton->onClick([this, quitButton, buttonSettings, buttonPlay, panel, down, disabled, text, bg, yes_quit, guiWidth, guiHeight] {
+            auto overlay = tgui::Panel::create({guiWidth, guiHeight});
+            overlay->setPosition({0, 0});
             overlay->getRenderer()->setBackgroundColor(tgui::Color(0, 0, 0, 220));
             gui.add(overlay);
 
 
             auto quit_label = tgui::ChildWindow::create("Do you really want to quit ?", tgui::ChildWindow::TitleButton::None);
-            quit_label->setPosition({"41%","40%"});
+            quit_label->setPosition({(guiWidth - 420.f) / 2.f, (guiHeight - 190.f) / 2.f});
             quit_label->setTextSize(20);
             quit_label->setTitleTextSize(17);
-            quit_label->setSize({"19%","11%"});
+            quit_label->setSize({420, 190});
             quit_label->setPositionLocked(true);
             quit_label->getRenderer()->setBackgroundColor(bg);
 
@@ -222,7 +227,7 @@ class MainMenu{
 
 
             for (size_t i = 0; i < yes_no_buttons.size(); i++){
-                yes_no_buttons[i]->setSize({"35%","50%"});
+                yes_no_buttons[i]->setSize({130, 58});
                 yes_no_buttons[i]->getRenderer()->setBackgroundColor(panel);
                 yes_no_buttons[i]->getRenderer()->setBackgroundColorHover(panel);
 
@@ -247,8 +252,8 @@ class MainMenu{
 
             
 
-            no_button->setPosition({"30","20%"});
-            yes_button->setPosition({"55%","20%"});
+            no_button->setPosition({45, 60});
+            yes_button->setPosition({235, 60});
 
 
             yes_button->onClick([this]
@@ -272,31 +277,11 @@ class MainMenu{
 
 
         });
-
-
-        time_label = tgui::Label::create("");
-        time_label->setTextSize(30);
-        time_label->setPosition({"90%","50%"});
-        time_label->getRenderer()->setTextColor(text);
-        
-        topBar->add(time_label);
-
 }
 
-  void time(){
-    auto now = std::chrono::system_clock::now();
-    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-    std::tm* local_time = std::localtime(&now_c);
-
-    std::ostringstream oss;
-    oss << std::put_time(local_time, "%H:%M:%S");
-
-    std::string currentTimeText = oss.str();
-
-    if (currentTimeText != last_time_text && time_label) {
-        time_label->setText(currentTimeText);
-        last_time_text = currentTimeText;
+    void time(){
+        update_time(time_label, last_time_text, text, topBar);
     }
-    }
+
+
 };
-

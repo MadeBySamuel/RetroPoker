@@ -2,7 +2,7 @@
 
  
 Player::Player(){
-    money = (rand() % 11 + 1) * 10; 
+    money = Constants::START_PLAYER_MONEY;
 }
 
 std::string Player::getName(){
@@ -57,5 +57,4 @@ Player::~Player(){
 
 
     
-
 

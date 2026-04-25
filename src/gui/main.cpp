@@ -1,6 +1,7 @@
 #include "gui_login.cpp"
 #include "gui_main_menu.cpp"
 
+
 #include "auth.hpp"
 #include <sqlite3.h>
 #include <iostream>
@@ -11,17 +12,6 @@ enum class ScreenState{
     Login,
     MainMenu
 };  
-
-
-std::string getCurrentTimeString() {
-    auto now = std::chrono::system_clock::now();
-    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-    std::tm* local_time = std::localtime(&now_c);
-
-    std::ostringstream oss;
-    oss << std::put_time(local_time, "%H:%M:%S");
-    return oss.str();
-}
 
 
 
@@ -56,11 +46,15 @@ int main(){
     sf::Music music("assets/sound/western_music.ogg");
     
     music.play();
+    music.setLooping(true);
+
+
+    music.setVolume(0);
 
 
     auto time_label = tgui::Label::create("");
     time_label->getRenderer()->setTextColor(down);
-    time_label->setPosition("90%", "4%");
+    time_label->setPosition("85%", "10%");
     time_label->setTextSize(20);
 
     MainMenu mainmenu(gui, window);
@@ -89,12 +83,18 @@ int main(){
             }
         }
 
-    if(screen == ScreenState::MainMenu) {
-        mainmenu.time();
-    }
+        if (screen == ScreenState::Login){
+            login.time();
+        }
+        else {
+            mainmenu.time();
+        }
         gui.draw();
         window.display();
     }
+
+
+    
   
 
     return 0;
