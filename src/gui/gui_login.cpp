@@ -27,13 +27,15 @@ class Login {
         tgui::Panel::Ptr topBar;
         tgui::Label::Ptr time_label;
         std::string last_time_text;
-        tgui::Color text;   
+        tgui::Color text;
+           
 
 
         sqlite3* db = nullptr;
 
     public:
         Login(tgui::Gui& gui, std::function<void()> onLogin, sf::Music& music) : gui(gui), onLogin(onLogin), music(music) {} 
+
 
 
     void login_screen(){
@@ -46,10 +48,6 @@ class Login {
                 if (created == 0) std::cout << "Table is not created " << std::endl;
         }
 
-
-
-        gui.removeAllWidgets();
-
         tgui::Color bg(28, 24, 20);        
         tgui::Color panel(58, 46, 38, 230);    
         tgui::Color panel2(72, 58, 48);    
@@ -60,6 +58,11 @@ class Login {
         tgui::Color down(160, 110, 25);    
         tgui::Color disabled(80, 70, 60);  
         tgui::Color yes_quit(133, 22, 22);
+
+
+
+        gui.removeAllWidgets();
+
         this->text = text;
 
         tgui::Font::setGlobalFont("assets/fonts/Shelten.ttf");
@@ -283,7 +286,7 @@ class Login {
         }
 
 
-        auto login_button = tgui::Button::create("Login");
+        auto login_button = tgui::Button::create("LOGIN");
         login_button->setPosition({70, 300});
         login_button->setTextSize(28);
         login_button->setSize({500, 60});
@@ -692,6 +695,7 @@ class Login {
 
         
     }
+
 
     void time(){
         update_time(time_label, last_time_text, text, topBar);

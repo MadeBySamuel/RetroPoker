@@ -35,7 +35,7 @@ bool hashPassword(const std::string& plainPassword, std::string& outHash) {
         return false;
     }
 
-    const std::size_t encodedLen =argon2_encodedlen(kTimeCost, kMemoryCostKiB, kParallelism, kSaltLen, kHashLen, Argon2_id);
+    const std::size_t encodedLen = argon2_encodedlen(kTimeCost, kMemoryCostKiB, kParallelism, kSaltLen, kHashLen, Argon2_id);
 
     std::vector<char> encoded(encodedLen);
 
@@ -121,6 +121,7 @@ LoginResult registerUser(sqlite3* db, const std::string& username, const std::st
     }
 
     std::string passwordHash;
+
     if (!hashPassword(plainPassword, passwordHash)) {
         return LoginResult::DatabaseError;
     }
@@ -153,8 +154,10 @@ LoginResult loginUser(sqlite3* db, const std::string& usernameOrEmail, const std
         "WHERE username = ?1 OR email = ?1 "
         "LIMIT 1;";
 
-    sqlite3_stmt* stmt = nullptr;
+    sqlite3_stmt* stmt;
 
+
+    // služi na skompilovanie sql 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
         return LoginResult::DatabaseError;
     }

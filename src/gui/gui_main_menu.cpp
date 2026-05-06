@@ -15,38 +15,86 @@ class MainMenu{
     private:
         tgui::Gui& gui;
         sf::RenderWindow& window;
+        tgui::Panel::Ptr root;
+        tgui::Panel::Ptr modalOverlay;
 
         tgui::Panel::Ptr topBar;
-        tgui::Color text;        
+                
         tgui::Label::Ptr time_label;
         std::string last_time_text;
+        tgui::Color bg{28, 24, 20};        
+        tgui::Color panel{8, 46, 38};    
+        tgui::Color panel2{72, 58, 48};    
+        tgui::Color accent{212, 160, 23};  
+        tgui::Color text{244, 230, 200};   
+        tgui::Color hover{201, 106, 43};   
+        tgui::Color border{120, 92, 60};   
+        tgui::Color down{160, 110, 25};    
+        tgui::Color disabled{80, 70, 60};  
+        tgui::Color yes_quit{133, 22, 22};
+
+
+
+        float getGuiWidth() const{
+            return static_cast<float>(gui.getWindow()->getSize().x);
+        }
+
+        const float getGuiWidth(){
+            return static_cast<float>(gui.getWindow()->getSize().x);
+        }
+
+
+        float getGuiHeight() co
+
+        float get
+
+        float 
+        const sf::Vector2u windowSize{gui.getWindow()->getSize()};
+
+        const float guiWidth{static_cast<float>(windowSize.x)};
+        const float guiHeight{static_cast<float>(windowSize.y)};
+
 
 
 
     public:
         MainMenu(tgui::Gui& gui, sf::RenderWindow& window) : gui(gui), window(window) {} 
 
+
+    
+        
+    tgui::Panel::Ptr overlay() {
+        auto overlay = tgui::Panel::create({guiWidth, guiHeight});
+        overlay->setPosition({0, 0});
+        overlay->getRenderer()->setBackgroundColor(tgui::Color(0, 0, 0, 220));
+        return overlay;
+    }
+
+    void showOverlay(const float guiWidth, const float guiHeight) {
+        if (!root) {
+            return;
+        }
+
+        hideOverlay();
+        modalOverlay = overlay(guiWidth, guiHeight);
+        root->add(modalOverlay);
+    }
+
+    void hideOverlay() {
+        if (!root || !modalOverlay) {
+            return;
+        }
+
+        root->remove(modalOverlay);
+        modalOverlay = nullptr;
+    }
+
     void showMainMenu(){
     gui.removeAllWidgets();
 
     tgui::Font::setGlobalFont("assets/fonts/Shelten.ttf");
 
-    // auto color_picker =rgb(125, 125, 125));
-
-
-    
-
-    tgui::Color bg(28, 24, 20);        
-    tgui::Color panel(58, 46, 38);    
-    tgui::Color panel2(72, 58, 48);    
-    tgui::Color accent(212, 160, 23);  
-    tgui::Color text(244, 230, 200);   
-    tgui::Color hover(201, 106, 43);   
-    tgui::Color border(120, 92, 60);   
-    tgui::Color down(160, 110, 25);    
-    tgui::Color disabled(80, 70, 60);  
-    tgui::Color yes_quit(133, 22, 22);
-    this->text = text;
+    // auto color_picker =rgb(72, 58, 48));
 
     const auto windowSize = gui.getWindow()->getSize();
     const float guiWidth = static_cast<float>(windowSize.x);
@@ -60,7 +108,7 @@ class MainMenu{
     constexpr float rightPanelWidth = 420.f;
     constexpr float rightPanelHeight = 760.f;
 
-    auto root = tgui::Panel::create({guiWidth, guiHeight});
+    root = tgui::Panel::create({guiWidth, guiHeight});
     root->getRenderer()->setBackgroundColor(panel);
     root->getRenderer()->setTextureBackground("assets/images/main_menu4.jpg");
     gui.add(root);
@@ -96,7 +144,6 @@ class MainMenu{
     // titles
     auto title = tgui::Label::create("RetroPoker");
     title->getRenderer()->setFont("assets/fonts/AncientMedium.ttf");
-
     title->getRenderer()->setTextColor(bg);
     title->setPosition({540, 220});
     title->getRenderer()->setTextOutlineColor(tgui::Color(42, 26, 18));
@@ -142,7 +189,6 @@ class MainMenu{
     auto buttonPlay = tgui::Button::create("Play");
     buttonPlay->setPosition({25, 120});
     buttonPlay->setTextSize(33);
-
     sideBar->add(buttonPlay);
 
     auto buttonSettings = tgui::Button::create("Settings");
@@ -191,12 +237,15 @@ class MainMenu{
 
     }
 
+        buttonPlay->onClick([this, guiWidth, guiHeight]{
+            showOverlay(guiWidth, guiHeight);
+            game_menu();
+        });
 
-        quitButton->onClick([this, quitButton, buttonSettings, buttonPlay, panel, down, disabled, text, bg, yes_quit, guiWidth, guiHeight] {
-            auto overlay = tgui::Panel::create({guiWidth, guiHeight});
-            overlay->setPosition({0, 0});
-            overlay->getRenderer()->setBackgroundColor(tgui::Color(0, 0, 0, 220));
-            gui.add(overlay);
+
+        quitButton->onClick([this, quitButton, buttonSettings, buttonPlay, guiWidth, guiHeight] {
+    
+            showOverlay(guiWidth, guiHeight);
 
 
             auto quit_label = tgui::ChildWindow::create("Do you really want to quit ?", tgui::ChildWindow::TitleButton::None);
@@ -266,9 +315,9 @@ class MainMenu{
             quit_label->add(no_button);
 
 
-            no_button->onClick([this, overlay, quit_label, quitButton, buttonSettings, buttonPlay]
+            no_button->onClick([this, quit_label,guiWidth, guiHeight, quitButton, buttonSettings, buttonPlay]
             {
-                gui.remove(overlay);
+                hideOverlay();
                 gui.remove(quit_label);
                 quitButton->setVisible(true);
                 buttonSettings->setVisible(true);
@@ -281,6 +330,146 @@ class MainMenu{
 
     void time(){
         update_time(time_label, last_time_text, text, topBar);
+    }
+
+    void game_menu(){
+
+        if (!root) {
+            return;
+        }
+
+        const auto windowSize = gui.getWindow()->getSize();
+        const float guiWidth = static_cast<float>(windowSize.x);
+        const float guiHeight = static_cast<float>(windowSize.y);
+
+        constexpr float topBarHeight = 56.f;
+        constexpr float loginPanelWidth = 620.f*1.5;
+        constexpr float loginPanelHeight = 440.f*1.5;
+        constexpr float forgotPanelWidth = 620.f;
+        constexpr float forgotPanelHeight = 350.f;
+        constexpr float signUpPanelWidth = 620.f;
+        constexpr float signUpPanelHeight = 550.f;
+
+        constexpr float sideBarWidth = 280.f;
+        constexpr float sideBarHeight = 360.f;
+        constexpr float centerPanelWidth = 900.f;
+        constexpr float centerPanelHeight = 760.f;
+        constexpr float rightPanelWidth = 420.f;
+        constexpr float rightPanelHeight = 760.f;
+        
+
+        constexpr float buttonWidth = 400.f;
+        constexpr float buttonHeight = 200.f;
+
+
+
+        auto game_menu = tgui::Panel::create({loginPanelWidth, loginPanelHeight});
+        game_menu->setPosition({(guiWidth - loginPanelWidth) / 2.f, (guiHeight - loginPanelHeight) / 2.f});
+        game_menu->getRenderer()->setBackgroundColor(tgui::Color(0, 0, 0, 200));
+        game_menu->getRenderer()->setRoundedBorderRadius(20.0);
+        
+        root->add(game_menu);
+
+
+        const float gap = 40.f;
+        const float totalWidth = buttonWidth + gap + buttonWidth;
+        const float startX = (loginPanelWidth - totalWidth) / 2.f;
+
+
+        auto game_menu_title = tgui::Label::create("Game Modes");
+        game_menu_title->setTextSize(45);
+        game_menu_title->getRenderer()->setTextColor(text);
+        game_menu_title->setPosition({(loginPanelWidth - game_menu_title->getSize().x) / 2.f, 20.f});
+        game_menu->add(game_menu_title);
+
+
+
+        auto back_menu_button = tgui::Button::create("Back to Main Menu");
+        back_menu_button->setTextSize(45);
+        back_menu_button->getRenderer()->setTextColor(text);
+        back_menu_button->setPosition({startX, 500.f});
+        game_menu->add(back_menu_button);
+
+        back_menu_button->onClick([game_menu, this]{
+            root->remove(game_menu);
+            hideOverlay();
+        });
+
+
+        auto texasHoldem = tgui::Button::create("Texas Hold'em");
+        texasHoldem->getRenderer()->setTextColor(text);
+        game_menu->add(texasHoldem);
+
+        auto five_card_draw = tgui::Button::create("5-Card draw");
+        five_card_draw->getRenderer()->setTextColor(text);
+        game_menu->add(five_card_draw);
+
+        texasHoldem->setPosition({startX,100.f});
+        five_card_draw->setPosition({startX + buttonWidth + gap, 100.f});
+
+
+        // auto arrow_back = tgui::Picture::create("assets/images/arrow_left.png");
+        // five_card_draw->setSize({100,100});
+
+        // game_menu->add(arrow_back);
+
+
+
+        std::vector<tgui::Button::Ptr> buttons;
+
+        buttons.emplace_back(texasHoldem);
+        buttons.emplace_back(five_card_draw);
+        buttons.emplace_back(back_menu_button);
+
+
+
+
+        for(size_t i = 0; i < buttons.size(); i++){
+            buttons[i]->setTextSize(33);
+            if(buttons[i] == back_menu_button){
+                buttons[i]->setSize({loginPanelWidth - startX * 2, buttonHeight/2});
+            }
+            else {
+                buttons[i]->setSize({buttonWidth,buttonHeight});
+            }
+
+            buttons[i]->getRenderer()->setBackgroundColor(bg);
+            buttons[i]->getRenderer()->setBackgroundColorDownHover(border);
+            buttons[i]->getRenderer()->setBackgroundColorDown(border);
+            buttons[i]->getRenderer()->setBackgroundColorHover(border);
+
+            buttons[i]->getRenderer()->setTextColor(text);
+            buttons[i]->getRenderer()->setTextColorDisabled(tgui::Color(160, 150, 130));
+            buttons[i]->getRenderer()->setTextColorHover(sf::Color(0,0,0));
+            buttons[i]->getRenderer()->setTextColorDown(sf::Color(0,0,0));
+            buttons[i]->getRenderer()->setBorders(0);
+
+        }
+
+
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+
+
+
     }
 
 

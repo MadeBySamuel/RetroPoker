@@ -58,7 +58,8 @@ int main(){
     time_label->setTextSize(20);
 
     MainMenu mainmenu(gui, window);
-    ScreenState screen = ScreenState::Login;
+    ScreenState screen = ScreenState::MainMenu;
+
     Login login(gui,[&]{
         screen = ScreenState::MainMenu;
         mainmenu.showMainMenu();
@@ -66,8 +67,8 @@ int main(){
 
 
     
-    if (screen == ScreenState::Login){
-        login.login_screen();
+    if (screen == ScreenState::MainMenu){
+        mainmenu.showMainMenu();
     }
     
 
