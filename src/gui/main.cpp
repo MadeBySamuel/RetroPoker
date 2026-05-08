@@ -3,6 +3,7 @@
 
 
 #include "auth.hpp"
+#include "gui_utils.hpp"
 #include <sqlite3.h>
 #include <iostream>
 
@@ -10,28 +11,30 @@
 
 enum class ScreenState{
     Login,
-    MainMenu
+    MainMenu,
+    Game
 };  
+
+
+
+void sound(){
+    GuiTheme color;
+    auto time_label = tgui::Label::create("");
+    time_label->getRenderer()->setTextColor(color.down);
+    time_label->setPosition("85%", "10%");
+    time_label->setTextSize(20);
+
+}
+
+
+
 
 
 
 int main(){
 
     using namespace std::chrono_literals;
-
-
-
-    tgui::Color bg(28, 24, 20);        
-    tgui::Color panel(58, 46, 38);    
-    tgui::Color panel2(72, 58, 48);    
-    tgui::Color accent(212, 160, 23);  
-    tgui::Color text(244, 230, 200);   
-    tgui::Color hover(201, 106, 43);   
-    tgui::Color border(120, 92, 60);   
-    tgui::Color down(160, 110, 25);    
-    tgui::Color disabled(80, 70, 60);  
-    tgui::Color yes_quit(133, 22, 22);
-
+    GuiTheme color;
 
     sf::ContextSettings settings;
     settings.antiAliasingLevel = 8;
@@ -50,30 +53,13 @@ int main(){
 
 
     music.setVolume(0);
-
-
-    auto time_label = tgui::Label::create("");
-    time_label->getRenderer()->setTextColor(down);
-    time_label->setPosition("85%", "10%");
-    time_label->setTextSize(20);
-
-    MainMenu mainmenu(gui, window);
-    ScreenState screen = ScreenState::MainMenu;
-
-    Login login(gui,[&]{
-        screen = ScreenState::MainMenu;
-        mainmenu.showMainMenu();
-    },music);
-
-
     
-    if (screen == ScreenState::MainMenu){
-        mainmenu.showMainMenu();
-    }
+
     
 
 
     std::string last_time_text;
+
 
 
     while(window.isOpen()){
@@ -87,8 +73,8 @@ int main(){
         if (screen == ScreenState::Login){
             login.time();
         }
-        else {
-            mainmenu.time();
+        else if (screen == ScreenState::MainMenu){
+            mainmenu.time(color);
         }
         gui.draw();
         window.display();

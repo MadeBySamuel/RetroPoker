@@ -3,10 +3,12 @@
 
 #include "game.hpp"
 #include "utils.hpp"
+#include "gui_utils.hpp"
 #include "handevoluator.hpp"
 #include "constants.hpp"
 #include "logger.hpp"
 #include "player.hpp"
+
 
 int& Game::getPot(){
     return pot;
@@ -93,37 +95,18 @@ void Game::setup_once_per_game(std::vector<std::unique_ptr<Player>>& players, st
 }
 
 
-/*
-void Game::show_game(std::vector<Player> players, std::vector<Card>& community_cards){
-    for(int i = 0; i < players.size(); i ++){
-        std::cout << players[i].getName() << std::endl;
-
-    }
-}
-*/
-
-
-
 
 void Game::game(){
+
+    std::vector<Card> game_cards = gui_utils::game_cards();
+
     HandEvoluator handevoluator;
     Logger logger;
 
 
-
-
-
-    std::vector<std::string> suits = {"♥️", "♦️", "♣️", "♠️"};
-    std::vector<Card> game_cards;
-
     setSmallBlind(1);
     setBigBlind(2);
     
-    for (auto s : suits) {
-        for (int r = 2; r <= 14; r++) {
-            game_cards.push_back({r, s});
-        }
-    }
 
 
     std::vector<std::string> game_names = Constants::NAMES;

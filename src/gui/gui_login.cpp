@@ -301,75 +301,10 @@ class Login {
 
 
 
-        auto volume_icon = tgui::Picture::create(tgui::Texture("assets/images/volume/volume_muted.png", {}, {}, true));
-        volume_icon->setPosition({guiWidth - 200.f, 12});
-        volume_icon->setSize({40, 31});
-        topBar->add(volume_icon);
         
 
 
-        auto volume_panel = tgui::Panel::create({300, 90});
-        volume_panel->setPosition({guiWidth - 330.f, topBarHeight + 10.f});
-        volume_panel->getRenderer()->setBackgroundColor(panel);
-        volume_panel->getRenderer()->setRoundedBorderRadius(20.0);
-        root->add(volume_panel);
-        volume_panel->setVisible(false);
-
-
-        auto volume_label = tgui::Label::create("Sound");
-        volume_label->setPosition({18, 12});
-        volume_label->getRenderer()->setTextColor(text);
-        volume_label->setTextSize(20);
-        volume_panel->add(volume_label);
-
-
-        auto volume_slider = tgui::Slider::create();
-        volume_slider->setPosition({18, 52});
-        volume_slider->setMinimum(0);
-        volume_slider->setMaximum(100);
-        volume_slider->setValue(0);
-        volume_slider->setSize({264, 12});
-
-        volume_slider->getRenderer()->setThumbColor(text);
-        volume_slider->getRenderer()->setTrackColor(text);
-
-        volume_slider->getRenderer()->setThumbColorHover(down);
-        volume_slider->getRenderer()->setTrackColorHover(text);
-
-        volume_panel->add(volume_slider);
-
-
-        volume_slider->onValueChange([this, volume_icon](float value){
-            if (value == 0) volume_icon->getRenderer()->setTexture("assets/images/volume/volume_muted_click.png");
-            else if (value > 0 && value < 30) volume_icon->getRenderer()->setTexture("assets/images/volume/volume_first_click.png");
-            else if (value >= 30 && value < 60) volume_icon->getRenderer()->setTexture("assets/images/volume/volume_second_click.png");
-            else volume_icon->getRenderer()->setTexture("assets/images/volume/volume_full_click.png");
-            music.setVolume(value);
-        });
-    
-
-
-        volume_icon->onClick([this,volume_panel,volume_icon, volume_slider]{
-        volume_panel->setVisible(!volume_panel->isVisible());
-
-        if (volume_panel->isVisible()){
-            if(volume_slider->getValue() == 0) volume_icon->getRenderer()->setTexture("assets/images/volume/volume_muted_click.png");
-            else if (volume_slider->getValue() > 0 && volume_slider->getValue() < 30) volume_icon->getRenderer()->setTexture("assets/images/volume/volume_first_click.png");
-            else if (volume_slider->getValue() >= 30 && volume_slider->getValue() < 60) volume_icon->getRenderer()->setTexture("assets/images/volume/volume_second_click.png");
-            else volume_icon->getRenderer()->setTexture("assets/images/volume/volume_full_click.png");
-        }
-        else {
-            if(volume_slider->getValue() == 0) volume_icon->getRenderer()->setTexture("assets/images/volume/volume_muted.png");
-            else if (volume_slider->getValue() > 0 && volume_slider->getValue() < 30) volume_icon->getRenderer()->setTexture("assets/images/volume/volume_first.png");
-            else if (volume_slider->getValue() >= 30 && volume_slider->getValue() < 60) volume_icon->getRenderer()->setTexture("assets/images/volume/volume_second.png");
-            else volume_icon->getRenderer()->setTexture("assets/images/volume/volume_full.png");
-        }
-        });
-
-
-
-        login_button->onClick([this, username_box, password_box, text, centerPanel]
-        {
+        login_button->onClick([this, username_box, password_box, text, centerPanel]{
  
             if (username_box->getText().length() == 0 && password_box->getText().length() == 0){
                 password_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
@@ -444,7 +379,7 @@ class Login {
 
             forgot_password_panel->add(forgot_password_box);
 
-
+            
 
             auto email_icon = tgui::Picture::create("assets/images/email_icon.png");
             email_icon->setPosition({40, 150});
@@ -641,7 +576,7 @@ class Login {
             signUpPanel->add(wrongLabel);
 
 
-            sign_up_button->onClick([this, username_box, email_box, password_box, wrongLabel]{
+        sign_up_button->onClick([this, username_box, email_box, password_box, wrongLabel]{
             if (username_box->getText().length() == 0 && password_box->getText().length() == 0 && username_box->getText().length() == 0){
                 email_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
                 password_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
@@ -698,7 +633,7 @@ class Login {
 
 
     void time(){
-        update_time(time_label, last_time_text, text, topBar);
+        gui_utils::update_time(time_label, last_time_text, text, topBar);
     }
 
 

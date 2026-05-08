@@ -13,6 +13,8 @@
 
 #include "constants.hpp"
 
+#include "gui_utils.hpp"
+
 
 class Player{
     private:

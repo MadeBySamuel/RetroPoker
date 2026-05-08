@@ -2,7 +2,7 @@
 
 #include "player.hpp"
 #include "constants.hpp"
-
+#include "gui_utils.hpp"
 
 
 struct HandScore {
@@ -10,6 +10,9 @@ struct HandScore {
     int sum_for_tie;
     std::string name;
 };
+
+
+
 
 
 namespace utils{

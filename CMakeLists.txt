@@ -23,6 +23,8 @@ add_executable(retro_poker
     src/gui/gui_main_menu.cpp
     src/gui/main.cpp
     src/auth.cpp
+    src/gui/gui_utils.cpp
+    src/gui/gui_game.cpp
 )
 
 
