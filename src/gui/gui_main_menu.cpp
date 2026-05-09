@@ -10,36 +10,27 @@
 
 #include "gui_utils.hpp"
 
-class MainMenu{
+class MainMenu : public Gui_base{
 
     private:
-        tgui::Gui& gui;
         sf::RenderWindow& window;
+        tgui::Panel::Ptr topBar;
         sf::Music& music;
 
         tgui::Panel::Ptr root;
         tgui::Panel::Ptr modalOverlay;
 
-        tgui::Panel::Ptr topBar;
                 
         tgui::Label::Ptr time_label;
         std::string last_time_text;
-        std::function<void()> onGame;
-
-        
-        float getGuiWidth() const{
-            return static_cast<float>(gui.getWindow()->getSize().x);
-        }
-
-        float getGuiHeight() const{
-            return static_cast<float>(gui.getWindow()->getSize().y);
-        }
 
 
     public:
-        MainMenu(tgui::Gui& gui, std::function<void()> onGame, sf::RenderWindow& window, sf::Music& music) : gui(gui), onGame(onGame),window(window), music(music) {} 
+        MainMenu(tgui::Gui& gui, sf::RenderWindow& window, sf::Music& music) : Gui_base(gui),window(window), music(music) {} 
+        std::function<void()> onGame;
+        std::string logged_username;
 
-    
+
         
     tgui::Panel::Ptr overlay() {
         auto overlay = tgui::Panel::create({getGuiWidth(), getGuiHeight()});
@@ -94,13 +85,13 @@ class MainMenu{
 
     root = tgui::Panel::create({guiWidth, guiHeight});
     root->getRenderer()->setBackgroundColor(color.panel);
-    root->getRenderer()->setTextureBackground("assets/images/main_menu4.jpg");
+    root->getRenderer()->setTextureBackground("assets/images/backgrounds/main_menu.jpg");
     gui.add(root);
 
-    topBar = tgui::Panel::create({guiWidth, topBarHeight});
-    topBar->setPosition({0, 0});
-    topBar->getRenderer()-> setBackgroundColor(tgui::Color(0, 0, 0, 140));
-    root->add(topBar);
+   
+    auto topBar = bar(root);
+
+
 
     auto sideBar = tgui::Panel::create({sideBarWidth, sideBarHeight});
     sideBar->setPosition({30, guiHeight - sideBarHeight - 40});
@@ -125,7 +116,7 @@ class MainMenu{
     root->add(rightPanel);
 
 
-    gui_utils::volume(guiWidth, topBarHeight, topBar, root, color, music);
+    volume(topBar, root, color, music);
 
     // titles
     auto title = tgui::Label::create("RetroPoker");
@@ -137,45 +128,45 @@ class MainMenu{
     title->setTextSize(200);
     root->add(title);
 
-    auto money_lay = tgui::Panel::create({220, topBarHeight});
-    money_lay->setPosition({0, 0});
-    money_lay->getRenderer()->setBackgroundColor(color.border);
-    money_lay->getRenderer()->setRoundedBorderRadius(10);
-    topBar->add(money_lay);
 
+    std::cout << "logged_username: '" << logged_username << "'\n";
+    
+    float username_panel_lenght = 0;
+    if (logged_username.length() < 6){
+        username_panel_lenght = 150;
+    }
+    else if(logged_username.length() > 6 && logged_username.length() < 14 ){
+        username_panel_lenght = 180;
+    }
+
+    auto username_lay = tgui::Panel::create({username_panel_lenght, topBarHeight});
+    username_lay->setPosition({0, 0});
+    username_lay->getRenderer()->setBackgroundColor(color.border);
+    username_lay->getRenderer()->setRoundedBorderRadius(10);
+    topBar->add(username_lay);
+
+
+    auto username_show = tgui::Label::create(logged_username);
+    username_show->setPosition({10,10});
+    username_show->setTextSize(30);
+    username_show->getRenderer()->setTextColor(color.text);
+    
+    username_lay->add(username_show);
 
     const int money = Constants::START_PLAYER_MONEY;
-
-
 
     auto money_show = tgui::Label::create("Balance: " + std::to_string(money) + "$" );
     money_show->getRenderer()->setTextColor(color.text);
     money_show->getRenderer()->setFont("assets/fonts/Shelten.ttf");
-    money_show->setPosition({24, 16});
+    money_show->setPosition({220, 16});
     money_show->setTextSize(20);
-    money_lay->add(money_show);
+    topBar->add(money_show);
 
-
-
-
-
-
-
-
-    // pictures
-    
-/*
-    auto table_icon = tgui::Picture::create("assets/images/retro_icon.png");
-    table_icon->setPosition({"-50%","70%"});
-    table_icon->setSize({700,300});
-    sideBar->add(table_icon);
-    */
-
-    // button 
     auto buttonCampaign = tgui::Button::create("Campaign");
     buttonCampaign->setPosition({25, 45});
     buttonCampaign->setTextSize(33);
     sideBar->add(buttonCampaign);
+
 
 
 
@@ -230,8 +221,12 @@ class MainMenu{
 
     }
 
-        buttonGameModes->onClick([this, color, buttons]{
+        buttonCampaign->onClick([this]{
+            play_button();
+        });
 
+        buttonGameModes->onClick([this, color, buttons]{
+            play_button();
             for (size_t i = 0; i < buttons.size(); i++){
                 buttons[i]->setVisible(!(buttons[i]->isVisible()));
             }
@@ -241,9 +236,13 @@ class MainMenu{
         });
 
 
-        quitButton->onClick([this, buttons, color] {
-    
+        buttonSettings->onClick([this]{
+            play_button();
+        });
 
+
+        quitButton->onClick([this, buttons, color] {
+            play_button();
             for (auto x : buttons){
                 x->setVisible( !(x->isVisible()));
             }
@@ -274,6 +273,8 @@ class MainMenu{
 
             yes_no_buttons.emplace_back(yes_button);
             yes_no_buttons.emplace_back(no_button);
+
+
 
 
             for (size_t i = 0; i < yes_no_buttons.size(); i++){
@@ -307,6 +308,7 @@ class MainMenu{
 
             yes_button->onClick([this]
             {
+                play_button();
                 window.close();
             });
 
@@ -317,6 +319,7 @@ class MainMenu{
 
             no_button->onClick([this, quit_label, buttons]
             {
+                play_button();
                 hideOverlay();
                 gui.remove(quit_label);
                 for(auto x : buttons){
@@ -335,9 +338,7 @@ class MainMenu{
 
 }
 
-    void time(GuiTheme color){
-        gui_utils::update_time(time_label, last_time_text, color.text, topBar);
-    }
+   
 
     void game_menu(GuiTheme color, std::vector<tgui::Button::Ptr> buttons){
 
@@ -397,7 +398,16 @@ class MainMenu{
         back_menu_button->setPosition({startX, 500.f});
         game_menu->add(back_menu_button);
 
+
+        auto back_icon = tgui::Picture::create("assets/images/arrow_left.png");
+        back_icon->setSize({60,60});
+        back_icon->setPosition({startX + 20,503.f});
+        game_menu->add(back_icon);
+
+
         back_menu_button->onClick([game_menu, this, buttons]{
+            play_button();
+
             for(auto x : buttons){
                 x->setVisible(true);
             }
@@ -417,6 +427,9 @@ class MainMenu{
         texasHoldem->setPosition({startX,100.f});
         five_card_draw->setPosition({startX + buttonWidth + gap, 100.f});
 
+
+
+        
 
         // auto arrow_back = tgui::Picture::create("assets/images/arrow_left.png");
         // five_card_draw->setSize({100,100});
@@ -454,6 +467,16 @@ class MainMenu{
             game_mode_buttons[i]->getRenderer()->setTextColorDown(sf::Color(0,0,0));
             game_mode_buttons[i]->getRenderer()->setBorders(0);
         }
+
+
+        texasHoldem->onClick([this]{
+            if(onGame) onGame();
+        });
+
+        five_card_draw->onClick([this]{
+            if(onGame) onGame();
+        });
+        
 
     }
 

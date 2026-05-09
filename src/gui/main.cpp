@@ -1,5 +1,6 @@
 #include "gui_login.cpp"
 #include "gui_main_menu.cpp"
+#include "gui_game.cpp"
 
 
 #include "auth.hpp"
@@ -12,7 +13,7 @@
 enum class ScreenState{
     Login,
     MainMenu,
-    Game
+    Game_GUI
 };  
 
 
@@ -25,10 +26,6 @@ void sound(){
     time_label->setTextSize(20);
 
 }
-
-
-
-
 
 
 int main(){
@@ -44,10 +41,18 @@ int main(){
     sf::RenderWindow window(desktop, "Retro Poker", sf::Style::Default, sf::State::Fullscreen, settings);
     window.setFramerateLimit(60);
 
+
+
+
     tgui::Gui gui{window};
 
-    sf::Music music("assets/sound/western_music.ogg");
-    
+    const auto windowSize = gui.getWindow()->getSize();
+    const float guiWidth = static_cast<float>(windowSize.x);
+    const float guiHeight = static_cast<float>(windowSize.y);
+
+
+    sf::Music music("assets/sound/song2.ogg");
+
     music.play();
     music.setLooping(true);
 
@@ -55,30 +60,51 @@ int main(){
     music.setVolume(0);
     
 
+    ScreenState screen = ScreenState::Login;
     
+    
+    Login login(gui, music);
+    MainMenu mainmenu(gui, window, music);
+    Game_GUI game(gui, window, music);
 
+
+    login.login_screen();
+
+    Gui_base* currentPointer = &login;
+
+    std::string logged_username = "";
+
+    login.onLogin = [&](std::string username){
+        std::cout << username;
+        logged_username = username;
+        currentPointer = &mainmenu;
+        screen = ScreenState::MainMenu;
+        mainmenu.logged_username = username;
+        mainmenu.showMainMenu(); 
+    };
+
+
+    mainmenu.onGame = [&]{
+        currentPointer = &game;
+        screen = ScreenState::Game_GUI;
+        game.game();
+    };
 
     std::string last_time_text;
 
 
-
-    while(window.isOpen()){
-        while(const auto event = window.pollEvent()){
-            gui.handleEvent(*event);
-            if(event->is<sf::Event::Closed>()){
-                window.close();
+        while(window.isOpen()){
+            while(const auto event = window.pollEvent()){
+                gui.handleEvent(*event);
+                if(event->is<sf::Event::Closed>()){
+                    window.close();
+                }
             }
-        }
+            currentPointer->update_time();
 
-        if (screen == ScreenState::Login){
-            login.time();
+            gui.draw();
+            window.display();
         }
-        else if (screen == ScreenState::MainMenu){
-            mainmenu.time(color);
-        }
-        gui.draw();
-        window.display();
-    }
 
 
     

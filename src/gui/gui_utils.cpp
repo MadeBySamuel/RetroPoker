@@ -6,16 +6,53 @@
 #include "gui_utils.hpp"
 
 
+tgui::Panel::Ptr Gui_base::bar(tgui::Panel::Ptr root){
+    GuiTheme color;
 
-void gui_utils::volume(float guiWidth, float topBarHeight, tgui::Panel::Ptr topBar, tgui::Panel::Ptr root, GuiTheme color, sf::Music &music){
+    auto topBar = tgui::Panel::create({getGuiWidth(), Constants::topBarHeight});
+    topBar->setPosition({0, 0});
+    topBar->getRenderer()-> setBackgroundColor(color.bar_color);
+    root->add(topBar);
 
+    time_label = tgui::Label::create(""); 
+    time_label->setPosition({"94%", "17%"});
+    time_label->setTextSize(30);
+    time_label->getRenderer()->setTextColor(color.text);
+    topBar->add(time_label);
+
+    return topBar;
+}
+
+
+std::string Gui_base::getCurrentTimeString() {
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+    std::tm* local_time = std::localtime(&now_c);
+
+    std::ostringstream oss;
+    oss << std::put_time(local_time, "%H:%M:%S");
+    return oss.str();
+}
+
+
+void Gui_base::update_time(){
+
+        std::string currentTimeText = getCurrentTimeString();
+
+        if (currentTimeText != last_time_text && time_label) {
+            time_label->setText(currentTimeText);
+            last_time_text = currentTimeText;
+        }
+}
+
+void Gui_base::volume(tgui::Panel::Ptr topBar, tgui::Panel::Ptr root, GuiTheme color, sf::Music &music){
     auto volume_icon = tgui::Picture::create(tgui::Texture("assets/images/volume/volume_muted.png", {}, {}, true));
-        volume_icon->setPosition({guiWidth - 200.f, 12});
+        volume_icon->setPosition({getGuiWidth() - 200.f, 12});
         volume_icon->setSize({40, 31});
         topBar->add(volume_icon);
         
         auto volume_panel = tgui::Panel::create({300, 90});
-        volume_panel->setPosition({guiWidth - 330.f, topBarHeight + 10.f});
+        volume_panel->setPosition({getGuiWidth() - 330.f, Constants::topBarHeight + 10.f});
         volume_panel->getRenderer()->setBackgroundColor(color.down);
         volume_panel->getRenderer()->setRoundedBorderRadius(20.0);
         root->add(volume_panel);

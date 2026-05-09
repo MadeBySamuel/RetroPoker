@@ -8,6 +8,8 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <iostream>
+
 
 namespace auth {
 namespace {
@@ -72,9 +74,6 @@ bool verifyPassword(const std::string& plainPassword,const std::string& storedHa
 } // namespace
 
 
-
-
-
 bool createUsersTable(sqlite3* db) {
     const char* sql =
         "CREATE TABLE IF NOT EXISTS users ("
@@ -96,7 +95,7 @@ LoginResult userExists(sqlite3* db,const std::string& username, const std::strin
     sqlite3_stmt* stmt = nullptr;
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
-        return LoginResult::UserAlreadyExist;
+        return {LoginResult::Status::DatabaseError};
     }
 
     sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_TRANSIENT);
@@ -105,25 +104,27 @@ LoginResult userExists(sqlite3* db,const std::string& username, const std::strin
     const int rc = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
-    return LoginResult::Pass;
+    return {LoginResult::Status::Pass};
 
 }
 
 LoginResult registerUser(sqlite3* db, const std::string& username, const std::string& email, const std::string& plainPassword) {
     
     if (username.empty() || email.empty() || plainPassword.empty()) {
-        return LoginResult::Empty;
+        return {LoginResult::Status::Empty};
     }
 
 
-    if (userExists(db, username, email) == LoginResult::UserAlreadyExist) {
-        return LoginResult::UserAlreadyExist;
+    auto user = userExists(db, username, email);
+
+    if (user.status == LoginResult::Status::UserAlreadyExist) {
+        return {LoginResult::Status::UserAlreadyExist};
     }
 
     std::string passwordHash;
 
     if (!hashPassword(plainPassword, passwordHash)) {
-        return LoginResult::DatabaseError;
+        return {LoginResult::Status::DatabaseError};
     }
 
 
@@ -133,7 +134,7 @@ LoginResult registerUser(sqlite3* db, const std::string& username, const std::st
 
     sqlite3_stmt* stmt = nullptr;
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
-        return LoginResult::DatabaseError;
+        return {LoginResult::Status::DatabaseError};
     }
 
     sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_TRANSIENT);
@@ -143,50 +144,62 @@ LoginResult registerUser(sqlite3* db, const std::string& username, const std::st
     const int rc = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
-    return LoginResult::Pass;
+    return {LoginResult::Status::Pass};
 }
 
 LoginResult loginUser(sqlite3* db, const std::string& usernameOrEmail, const std::string& plainPassword) {
     
     const char* sql =
-        "SELECT password_hash "
+        "SELECT username, password_hash "
         "FROM users "
-        "WHERE username = ?1 OR email = ?1 "
+        "WHERE username = ?1 "
         "LIMIT 1;";
 
     sqlite3_stmt* stmt;
 
 
     // služi na skompilovanie sql 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
-        return LoginResult::DatabaseError;
-    }
+    sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
 
     sqlite3_bind_text(stmt, 1, usernameOrEmail.c_str(), -1, SQLITE_TRANSIENT);
 
+
+    std::cout << "hladam: " << usernameOrEmail << "\n";
+
+
     const int rc = sqlite3_step(stmt);
+
+    std::cout << "rc: " << rc << "\n"; // 100 = SQLITE_ROW, 101 = SQLITE_DONE
+
 
     if (rc != SQLITE_ROW) {
         sqlite3_finalize(stmt);
-        return LoginResult::NotFound;
+        return {LoginResult::Status::NotFound};
     }
 
-    const unsigned char* rawHash = sqlite3_column_text(stmt, 0);
+    const unsigned char* rawName = sqlite3_column_text(stmt, 0);
+    const unsigned char* rawHash = sqlite3_column_text(stmt, 1);
+
+    const std::string username = rawName ? reinterpret_cast<const char*>(rawName) : "";
     const std::string storedHash = rawHash ? reinterpret_cast<const char*>(rawHash) : "";
 
+    
     sqlite3_finalize(stmt);
 
     if (storedHash.empty()){
-    return LoginResult::DatabaseError;
+    return {LoginResult::Status::DatabaseError};
     }
     
     if (!verifyPassword(plainPassword, storedHash)){
-        return LoginResult::WrongPassword;
+        return {LoginResult::Status::WrongPassword};
     }
 
     
-    return LoginResult::Pass;
+    return {LoginResult::Status::Pass,username};
 }
+
+
+
 }
 
 

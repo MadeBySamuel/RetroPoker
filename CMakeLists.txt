@@ -45,11 +45,11 @@ target_include_directories(argon2 PUBLIC
 
 target_include_directories(retro_poker PRIVATE
     include
+    include/gui
     external/argon2-hashing/include
+    src/gui
+    src
 )
-
-
-target_include_directories(retro_poker PRIVATE include)
 
 
 target_link_libraries(retro_poker PRIVATE

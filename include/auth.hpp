@@ -6,14 +6,20 @@
 namespace auth {
 
 
-enum class LoginResult{
-    Pass, 
-    NotFound, 
-    WrongPassword,
-    DatabaseError,
-    UserAlreadyExist,
-    Wrong,
-    Empty
+
+
+struct LoginResult {
+    enum class Status{
+        Pass, 
+        NotFound, 
+        WrongPassword,
+        DatabaseError,
+        UserAlreadyExist,
+        Wrong,
+        Empty
+    };
+    Status status;
+    std::string username;
 };
 
 bool createUsersTable(sqlite3* db);

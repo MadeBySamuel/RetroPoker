@@ -14,26 +14,26 @@
 
 
 #include "gui_utils.hpp"
+#include "constants.hpp"
 
 
-
-
-
-class Game {
+class Game_GUI : public Gui_base{
     
     private:
-        tgui::Gui& gui;
         sf::Music& music;
         sf::RenderWindow& window;
-        std::function<void()> onLogin;
 
     public:
-        Game(tgui::Gui& gui,std::function<void()> onLogin, sf::RenderWindow& window, sf::Music& music) : gui(gui), onLogin(onLogin), window(window), music(music) {}
+        Game_GUI(tgui::Gui& gui, sf::RenderWindow& window, sf::Music& music) : Gui_base(gui), window(window), music(music) {}
+        std::function<void()> onExit;
+
 
     void game(){
+        GuiTheme color;
         auto root = tgui::Panel::create();
         root->getRenderer()->setTextureBackground("assets/images/backgrounds/game_background.jpeg");
         gui.add(root);
 
+        bar(root);
     }
 };

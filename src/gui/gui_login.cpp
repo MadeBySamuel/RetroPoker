@@ -14,17 +14,15 @@
 
 
 #include "gui_utils.hpp"
+#include "constants.hpp"
+#include "constants.hpp"
 
 
-
-class Login {
+class Login : public Gui_base {
 
     private:
-        tgui::Gui& gui;
-        std::function<void()> onLogin;
         sf::Music& music;
 
-        tgui::Panel::Ptr topBar;
         tgui::Label::Ptr time_label;
         std::string last_time_text;
         tgui::Color text;
@@ -34,71 +32,49 @@ class Login {
         sqlite3* db = nullptr;
 
     public:
-        Login(tgui::Gui& gui, std::function<void()> onLogin, sf::Music& music) : gui(gui), onLogin(onLogin), music(music) {} 
+        Login(tgui::Gui& gui, sf::Music& music) : Gui_base(gui), music(music) {} 
+        std::function<void(std::string)> onLogin;
+        std::string logged_username;
+
+
 
 
 
     void login_screen(){
 
-       
+        GuiTheme color;
 
+    
         if (sqlite3_open("users.db", &db) == SQLITE_OK){
                 bool created = auth::createUsersTable(db);
                 if (created == 1) std::cout << "Table created " << std::endl;
                 if (created == 0) std::cout << "Table is not created " << std::endl;
         }
 
-        tgui::Color bg(28, 24, 20);        
-        tgui::Color panel(58, 46, 38, 230);    
-        tgui::Color panel2(72, 58, 48);    
-        tgui::Color accent(212, 160, 23);  
-        tgui::Color text(244, 230, 200);
-        tgui::Color hover(201, 106, 43);   
-        tgui::Color border(120, 92, 60);   
-        tgui::Color down(160, 110, 25);    
-        tgui::Color disabled(80, 70, 60);  
-        tgui::Color yes_quit(133, 22, 22);
-
-
 
         gui.removeAllWidgets();
 
-        this->text = text;
-
         tgui::Font::setGlobalFont("assets/fonts/Shelten.ttf");
 
-        const auto windowSize = gui.getWindow()->getSize();
-        const float guiWidth = static_cast<float>(windowSize.x);
-        const float guiHeight = static_cast<float>(windowSize.y);
 
-        constexpr float topBarHeight = 56.f;
-        constexpr float loginPanelWidth = 620.f;
-        constexpr float loginPanelHeight = 440.f;
-        constexpr float forgotPanelWidth = 620.f;
-        constexpr float forgotPanelHeight = 350.f;
-        constexpr float signUpPanelWidth = 620.f;
-        constexpr float signUpPanelHeight = 550.f;
 
-        auto root = tgui::Panel::create({guiWidth, guiHeight});
-        root->getRenderer()->setTextureBackground("assets/images/login_background.jpeg");
+        auto root = tgui::Panel::create({getGuiWidth(), getGuiWidth()});
+        root->getRenderer()->setTextureBackground("assets/images/backgrounds/login_background.jpeg");
         gui.add(root);
 
-        auto centerPanel = tgui::Panel::create({loginPanelWidth, loginPanelHeight});
-        centerPanel->setPosition({(guiWidth - loginPanelWidth) / 2.f, (guiHeight - loginPanelHeight) / 2.f});
-        centerPanel->getRenderer()->setBackgroundColor(panel);
+        auto centerPanel = tgui::Panel::create({Constants::loginPanelWidth, Constants::loginPanelHeight});
+        centerPanel->setPosition({(getGuiWidth() - Constants::loginPanelWidth) / 2.f, (getGuiHeight() - Constants::loginPanelHeight) / 2.f});
+        centerPanel->getRenderer()->setBackgroundColor(sf::Color(45, 35, 28, 230));
         centerPanel->getRenderer()->setRoundedBorderRadius(20.0);
         root->add(centerPanel);
 
-        topBar = tgui::Panel::create({guiWidth, topBarHeight});
-        topBar->setPosition({0, 0});
-        topBar->getRenderer()-> setBackgroundColor(panel);
-        root->add(topBar);
+        auto topBar = bar(root);
 
 
         auto login_title = tgui::Label::create("Welcome!");
         login_title->setPosition({55, 35});
         login_title->setTextSize(45);   
-        login_title->getRenderer()->setTextColor(text);
+        login_title->getRenderer()->setTextColor(color.text);
 
         centerPanel->add(login_title);
 
@@ -148,6 +124,7 @@ class Login {
         centerPanel->add(lock_icon);
 
 
+
         std::vector<tgui::Button::Ptr> sign_up_pass;
 
 
@@ -156,11 +133,11 @@ class Login {
         auto sign_up = tgui::Button::create("Sign up");
         sign_up->setPosition({450, 30});
         sign_up->setSize({120, 28});
-        
         centerPanel->add(sign_up);
 
 
-        
+
+
 
         auto forgot_password = tgui::Button::create("Forgot password");
         forgot_password->setPosition({400, 390});
@@ -179,11 +156,11 @@ class Login {
             else
                 sign_up_pass[i]->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 0});
 
-            sign_up_pass[i]->getRenderer()->setTextColor(text);
-            sign_up_pass[i]->getRenderer()->setTextColorHover(down);
-            sign_up_pass[i]->getRenderer()->setTextColorDown(down);
-            sign_up_pass[i]->getRenderer()->setTextColorFocused(text);
-            sign_up_pass[i]->getRenderer()->setTextColorDownFocused(down);
+            sign_up_pass[i]->getRenderer()->setTextColor(color.text);
+            sign_up_pass[i]->getRenderer()->setTextColorHover(color.down);
+            sign_up_pass[i]->getRenderer()->setTextColorDown(color.down);
+            sign_up_pass[i]->getRenderer()->setTextColorFocused(color.text);
+            sign_up_pass[i]->getRenderer()->setTextColorDownFocused(color.down);
 
             sign_up_pass[i]->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
             sign_up_pass[i]->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
@@ -192,14 +169,12 @@ class Login {
             sign_up_pass[i]->getRenderer()->setBackgroundColorDownFocused(tgui::Color::Transparent);
             sign_up_pass[i]->getRenderer()->setBackgroundColorDisabled(tgui::Color::Transparent);
 
-            sign_up_pass[i]->getRenderer()->setBorderColor(text);
-            sign_up_pass[i]->getRenderer()->setBorderColorHover(down);
-            sign_up_pass[i]->getRenderer()->setBorderColorDown(down);
-            sign_up_pass[i]->getRenderer()->setBorderColorDownHover(down);
-            sign_up_pass[i]->getRenderer()->setBorderColorFocused(text);
-            sign_up_pass[i]->getRenderer()->setBorderColorDownFocused(down);
-
-        
+            sign_up_pass[i]->getRenderer()->setBorderColor(color.text);
+            sign_up_pass[i]->getRenderer()->setBorderColorHover(color.down);
+            sign_up_pass[i]->getRenderer()->setBorderColorDown(color.down);
+            sign_up_pass[i]->getRenderer()->setBorderColorDownHover(color.down);
+            sign_up_pass[i]->getRenderer()->setBorderColorFocused(color.text);
+            sign_up_pass[i]->getRenderer()->setBorderColorDownFocused(color.down);
 
         }
 
@@ -213,19 +188,19 @@ class Login {
         centerPanel->add(rememberBox);
 
 
-        rememberBox->getRenderer()->setTextColor(text);
-        rememberBox->getRenderer()->setTextColorHover(down);
+        rememberBox->getRenderer()->setTextColor(color.text);
+        rememberBox->getRenderer()->setTextColorHover(color.down);
 
         rememberBox->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
         rememberBox->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
         rememberBox->getRenderer()->setBackgroundColorDisabled(tgui::Color::Transparent);
 
-        rememberBox->getRenderer()->setBorderColor(text);
-        rememberBox->getRenderer()->setBorderColorHover(down);
-        rememberBox->getRenderer()->setBorderColorFocused(text);
+        rememberBox->getRenderer()->setBorderColor(color.text);
+        rememberBox->getRenderer()->setBorderColorHover(color.down);
+        rememberBox->getRenderer()->setBorderColorFocused(color.text);
 
-        rememberBox->getRenderer()->setCheckColor(text);
-        rememberBox->getRenderer()->setCheckColorHover(down);
+        rememberBox->getRenderer()->setCheckColor(color.text);
+        rememberBox->getRenderer()->setCheckColorHover(color.down);
 
 
 
@@ -233,32 +208,32 @@ class Login {
         auto rememberLabel = tgui::Label::create("Remember me");
         rememberLabel->setPosition({80, 390});
         rememberLabel->setTextSize(18);
-        rememberLabel->getRenderer()->setTextColor(down);
+        rememberLabel->getRenderer()->setTextColor(color.down);
         centerPanel->add(rememberLabel);
-        rememberLabel->getRenderer()->setTextColor(text);
-        rememberLabel->getRenderer()->setBorderColor(text);
+        rememberLabel->getRenderer()->setTextColor(color.text);
+        rememberLabel->getRenderer()->setBorderColor(color.text);
 
 
         rememberLabel->onClick([rememberBox]{
             rememberBox->setChecked(!rememberBox->isChecked());
         });
 
-        rememberLabel->onMouseEnter([down, rememberLabel, rememberBox]{
-            rememberLabel->getRenderer()->setTextColor(down);
-            rememberBox->getRenderer()->setTextColorHover(down);
-            rememberBox->getRenderer()->setBorderColorHover(down);
-            rememberBox->getRenderer()->setCheckColorHover(down);
+        rememberLabel->onMouseEnter([color, rememberLabel, rememberBox]{
+            rememberLabel->getRenderer()->setTextColor(color.down);
+            rememberBox->getRenderer()->setTextColorHover(color.down);
+            rememberBox->getRenderer()->setBorderColorHover(color.down);
+            rememberBox->getRenderer()->setCheckColorHover(color.down);
         });
 
-        rememberLabel->onMouseLeave([text, rememberLabel]{
-            rememberLabel->getRenderer()->setTextColor(text);
+        rememberLabel->onMouseLeave([color, rememberLabel]{
+            rememberLabel->getRenderer()->setTextColor(color.text);
         });
 
-        rememberLabel->onMousePress([down, rememberLabel,rememberBox]{
-            rememberLabel->getRenderer()->setTextColor(down);
-            rememberBox->getRenderer()->setTextColorHover(down);
-            rememberBox->getRenderer()->setBorderColorHover(down);
-            rememberBox->getRenderer()->setCheckColorHover(down);
+        rememberLabel->onMousePress([color, rememberLabel,rememberBox]{
+            rememberLabel->getRenderer()->setTextColor(color.down);
+            rememberBox->getRenderer()->setTextColorHover(color.down);
+            rememberBox->getRenderer()->setBorderColorHover(color.down);
+            rememberBox->getRenderer()->setCheckColorHover(color.down);
         });
 
         
@@ -279,7 +254,7 @@ class Login {
             login_boxes[i]->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
             login_boxes[i]->getRenderer()->setBorders(0);
             login_boxes[i]->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
-            login_boxes[i]->getRenderer()->setTextColor(text);
+            login_boxes[i]->getRenderer()->setTextColor(color.text);
             login_boxes[i]->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 2});
             login_boxes[i]->getRenderer()->setBorderColor(sf::Color(0,0,0));
             login_boxes[i]->getRenderer()->setDefaultTextColor(sf::Color(125, 125, 125));
@@ -291,21 +266,17 @@ class Login {
         login_button->setTextSize(28);
         login_button->setSize({500, 60});
         login_button->getRenderer()->setBackgroundColor(sf::Color(0,0,0,100));
-        login_button->getRenderer()->setTextColor(text);
-        login_button->getRenderer()->setTextColorHover(down);
-        login_button->getRenderer()->setBackgroundColorDownHover(bg);
-        login_button->getRenderer()->setBackgroundColorDown(bg);
-        login_button->getRenderer()->setBackgroundColorHover(bg);
+        login_button->getRenderer()->setTextColor(color.text);
+        login_button->getRenderer()->setTextColorHover(color.accent);
+        login_button->getRenderer()->setBackgroundColorDownHover(color.bg);
+        login_button->getRenderer()->setBackgroundColorDown(color.bg);
+        login_button->getRenderer()->setBackgroundColorHover(color.bg);
         centerPanel->add(login_button);
-     
 
 
-
-        
-
-
-        login_button->onClick([this, username_box, password_box, text, centerPanel]{
- 
+        login_button->onClick([this, username_box, password_box, color, centerPanel]{
+            play_button();
+            
             if (username_box->getText().length() == 0 && password_box->getText().length() == 0){
                 password_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
                 username_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
@@ -320,7 +291,12 @@ class Login {
                 std::string username = username_box->getText().toStdString();
                 std::string password = password_box->getText().toStdString();
 
-                auth::LoginResult loginresult = auth::loginUser(db, username, password);
+                auto loginresult = auth::loginUser(db, username, password);
+
+
+                std::cout << "status: " << (int)loginresult.status << "\n";
+                std::cout << "username vstup: " << username << "\n";
+                std::cout << "username vystup: " << loginresult.username << "\n";
 
 
                 auto wrongLabel = tgui::Label::create("");
@@ -329,31 +305,33 @@ class Login {
                 wrongLabel->getRenderer()->setTextColor(sf::Color(160, 42, 16));
                 centerPanel->add(wrongLabel);
 
-                if (loginresult == auth::LoginResult::DatabaseError){
+
+                if (loginresult.status == auth::LoginResult::Status::DatabaseError){
                     std::cout << "Database error "; // toto by sa nemalo stať 
                 }
-                else if(loginresult == auth::LoginResult::NotFound){
+                else if(loginresult.status == auth::LoginResult::Status::NotFound){
                     wrongLabel->setText("User was not found, please sign up");
                 }
 
-                else if (loginresult == auth::LoginResult::WrongPassword){
+                else if (loginresult.status == auth::LoginResult::Status::WrongPassword){
                     wrongLabel->setText("Wrong password");
                 }
                 else {
-                    onLogin();
+                    if (onLogin) onLogin(loginresult.username);
                 }
             }
         });
 
 
 
-        forgot_password->onClick([this, root, panel, text, centerPanel, guiWidth, guiHeight, forgotPanelWidth, forgotPanelHeight, down]{
+        forgot_password->onClick([this, root, color, centerPanel]{
+            play_button();
             centerPanel->setVisible(false);
             
 
-            auto forgot_password_panel = tgui::Panel::create({forgotPanelWidth, forgotPanelHeight});
-            forgot_password_panel->setPosition({(guiWidth - forgotPanelWidth) / 2.f, (guiHeight - forgotPanelHeight) / 2.f});
-            forgot_password_panel->getRenderer()->setBackgroundColor(panel);
+            auto forgot_password_panel = tgui::Panel::create({Constants::forgotPanelWidth, Constants::forgotPanelHeight});
+            forgot_password_panel->setPosition({(getGuiWidth() - Constants::forgotPanelWidth) / 2.f, (getGuiHeight() - Constants::forgotPanelHeight) / 2.f});
+            forgot_password_panel->getRenderer()->setBackgroundColor(color.panel2);
             forgot_password_panel->getRenderer()->setRoundedBorderRadius(20.0);
             root->add(forgot_password_panel);
 
@@ -379,7 +357,7 @@ class Login {
 
             forgot_password_panel->add(forgot_password_box);
 
-            
+
 
             auto email_icon = tgui::Picture::create("assets/images/email_icon.png");
             email_icon->setPosition({40, 150});
@@ -398,8 +376,8 @@ class Login {
             back_to_login->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
             back_to_login->getRenderer()->setBackgroundColorDown(tgui::Color::Transparent);
             back_to_login->getRenderer()->setBackgroundColorDisabled(tgui::Color::Transparent);
-            back_to_login->getRenderer()->setTextColorHover(down);
-            back_to_login->getRenderer()->setBorderColorHover(down);
+            back_to_login->getRenderer()->setTextColorHover(color.down);
+            back_to_login->getRenderer()->setBorderColorHover(color.down);
 
             forgot_password_panel->add(back_to_login);
 
@@ -420,12 +398,12 @@ class Login {
             next_button->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
             next_button->getRenderer()->setBackgroundColorDown(tgui::Color::Transparent);
             next_button->getRenderer()->setBackgroundColorDisabled(tgui::Color::Transparent);
-            next_button->getRenderer()->setTextColorHover(down);
-            next_button->getRenderer()->setBorderColorHover(down);
+            next_button->getRenderer()->setTextColorHover(color.down);
+            next_button->getRenderer()->setBorderColorHover(color.down);
 
             forgot_password_panel->add(next_button);
 
-            next_button->onClick([root, forgot_password_panel, centerPanel, forgot_password_box,guiWidth,guiHeight, panel]{
+            next_button->onClick([root, forgot_password_panel, centerPanel, forgot_password_box, color, this]{
                 if(forgot_password_box->getText().length() == 0){
                     forgot_password_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
                 }                
@@ -433,9 +411,9 @@ class Login {
 
                 root->remove(forgot_password_panel);
 
-                auto code_email_panel = tgui::Panel::create({forgotPanelWidth, forgotPanelHeight});
-                code_email_panel->setPosition({(guiWidth - forgotPanelWidth) / 2.f, (guiHeight - forgotPanelHeight) / 2.f});
-                code_email_panel->getRenderer()->setBackgroundColor(panel);
+                auto code_email_panel = tgui::Panel::create({Constants::forgotPanelWidth, Constants::forgotPanelHeight});
+                code_email_panel->setPosition({(getGuiWidth() - Constants::forgotPanelWidth) / 2.f, (getGuiHeight() - Constants::forgotPanelHeight) / 2.f});
+                code_email_panel->getRenderer()->setBackgroundColor(color.panel2);
                 code_email_panel->getRenderer()->setRoundedBorderRadius(20.0);
                 
                 root->add(code_email_panel);
@@ -445,19 +423,19 @@ class Login {
 
             });
 
-        sign_up->onClick([this, centerPanel, root, panel, text, bg,down, guiWidth, guiHeight, signUpPanelWidth, signUpPanelHeight]{
+        sign_up->onClick([this, centerPanel, root, color]{
             centerPanel->setVisible(false);
             
-            auto signUpPanel = tgui::Panel::create({signUpPanelWidth, signUpPanelHeight});
-            signUpPanel->setPosition({(guiWidth - signUpPanelWidth) / 2.f , (guiHeight - signUpPanelHeight) / 2.f});
-            signUpPanel->getRenderer()->setBackgroundColor(panel);
+            auto signUpPanel = tgui::Panel::create({Constants::signUpPanelWidth, Constants::signUpPanelHeight});
+            signUpPanel->setPosition({(getGuiWidth() - Constants::signUpPanelWidth) / 2.f , (getGuiHeight() - Constants::signUpPanelHeight) / 2.f});
+            signUpPanel->getRenderer()->setBackgroundColor(color.panel2);
             signUpPanel->getRenderer()->setRoundedBorderRadius(20.0);
             root->add(signUpPanel);
 
             auto login_title = tgui::Label::create("Sign up");
             login_title->setPosition({40, 30});
             login_title->setTextSize(45);   
-            login_title->getRenderer()->setTextColor(text);
+            login_title->getRenderer()->setTextColor(color.text);
             signUpPanel->add(login_title);
 
 
@@ -503,13 +481,13 @@ class Login {
             back_to_login->setSize({160, 30}); 
             back_to_login->setTextSize(18);
             back_to_login->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 2});
-            back_to_login->getRenderer()->setTextColor(text);
+            back_to_login->getRenderer()->setTextColor(color.text);
             back_to_login->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
             back_to_login->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
             back_to_login->getRenderer()->setBackgroundColorDown(tgui::Color::Transparent);
             back_to_login->getRenderer()->setBackgroundColorDisabled(tgui::Color::Transparent);
-            back_to_login->getRenderer()->setTextColorHover(down);
-            back_to_login->getRenderer()->setBorderColorHover(down);
+            back_to_login->getRenderer()->setTextColorHover(color.down);
+            back_to_login->getRenderer()->setBorderColorHover(color.down);
 
             signUpPanel->add(back_to_login);
 
@@ -548,7 +526,7 @@ class Login {
             login_boxes[i]->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
             login_boxes[i]->getRenderer()->setBorders(0);
             login_boxes[i]->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
-            login_boxes[i]->getRenderer()->setTextColor(text);
+            login_boxes[i]->getRenderer()->setTextColor(color.text);
             login_boxes[i]->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 2});
             login_boxes[i]->getRenderer()->setBorderColor(sf::Color(0,0,0));
         }
@@ -560,11 +538,11 @@ class Login {
             sign_up_button->setTextSize(28);
             sign_up_button->setSize({500, 60});
             sign_up_button->getRenderer()->setBackgroundColor(sf::Color(0,0,0,100));
-            sign_up_button->getRenderer()->setTextColor(text);
-            sign_up_button->getRenderer()->setTextColorHover(down);
-            sign_up_button->getRenderer()->setBackgroundColorDownHover(bg);
-            sign_up_button->getRenderer()->setBackgroundColorDown(bg);
-            sign_up_button->getRenderer()->setBackgroundColorHover(bg);
+            sign_up_button->getRenderer()->setTextColor(color.text);
+            sign_up_button->getRenderer()->setTextColorHover(color.down);
+            sign_up_button->getRenderer()->setBackgroundColorDownHover(color.bg);
+            sign_up_button->getRenderer()->setBackgroundColorDown(color.bg);
+            sign_up_button->getRenderer()->setBackgroundColorHover(color.bg);
             signUpPanel->add(sign_up_button);
 
 
@@ -577,6 +555,8 @@ class Login {
 
 
         sign_up_button->onClick([this, username_box, email_box, password_box, wrongLabel]{
+            play_button();
+
             if (username_box->getText().length() == 0 && password_box->getText().length() == 0 && username_box->getText().length() == 0){
                 email_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
                 password_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
@@ -598,19 +578,20 @@ class Login {
                 std::string  password = password_box->getText().toStdString();
                 std::string  username = username_box->getText().toStdString();
 
-                auth::LoginResult register_user = auth::registerUser(db, email, username, password);
+                auth::LoginResult register_user = auth::registerUser(db, username, email, password);
 
-                if(register_user == auth::LoginResult::DatabaseError){
+                
+                if(register_user.status == auth::LoginResult::Status::DatabaseError){
                     std::cout << "Database problem "<< std::endl;
                 }
-                else if (register_user == auth::LoginResult::Empty){
+                else if (register_user.status == auth::LoginResult::Status::Empty){
                     std::cout << "Empty" << std::endl;
                 }
-                else if (register_user == auth::LoginResult::UserAlreadyExist){
+                else if (register_user.status == auth::LoginResult::Status::UserAlreadyExist){
                     wrongLabel->setText("User already exists");
                 }
-                else if (register_user == auth::LoginResult::Pass){
-                    onLogin();
+                else if (register_user.status == auth::LoginResult::Status::Pass){
+                    onLogin(register_user.username);
                 }
                 else {
                     std::cout << "wtf" << std::endl;
@@ -623,7 +604,7 @@ class Login {
 
         time_label = tgui::Label::create("");
         time_label->setTextSize(30);
-        time_label->setPosition({guiWidth - 125.f, 10});
+        time_label->setPosition({getGuiWidth() - 125.f, 10});
         time_label->getRenderer()->setTextColor(text);
         
         topBar->add(time_label);
@@ -632,9 +613,6 @@ class Login {
     }
 
 
-    void time(){
-        gui_utils::update_time(time_label, last_time_text, text, topBar);
-    }
-
+    
 
 };
