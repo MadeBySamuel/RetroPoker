@@ -4,7 +4,7 @@
 #include "game.hpp"
 #include "utils.hpp"
 #include "gui_utils.hpp"
-#include "handevoluator.hpp"
+#include "hand_evaluator.hpp"
 #include "constants.hpp"
 #include "logger.hpp"
 #include "player.hpp"
@@ -90,17 +90,28 @@ void Game::setup_once_per_game(std::vector<std::unique_ptr<Player>>& players, st
         }
     }
 
-    HandEvoluator handEvo;
     
 }
 
 
 
+const std::vector<Card>& Game::getCommunityCards() const {
+    return communityCards;
+}
+
+const std::string& Game::getWinnerMessage() const {
+    return winnerMessage;
+}
+
 void Game::game(){
+
+    pot = 0;
+    winnerMessage.clear();
+    communityCards.clear();
 
     std::vector<Card> game_cards = gui_utils::game_cards();
 
-    HandEvoluator handevoluator;
+    HandEvaluator handEvaluator;
     Logger logger;
 
 
@@ -111,7 +122,6 @@ void Game::game(){
 
     std::vector<std::string> game_names = Constants::NAMES;
     
-    std::vector<Card> community_cards;
     
     std::vector<int> used_cards_index;
     std::vector<bool> card_evoluator;
@@ -143,11 +153,11 @@ void Game::game(){
 
     std::cout << "$$ PRE-FLOP STAGE $$" << std::endl;
 
-    Game::setup_once_per_game(this->players, game_cards, used_cards_index, community_cards, smallBlindPosition, bigBlindPosition);
+    Game::setup_once_per_game(this->players, game_cards, used_cards_index, communityCards, smallBlindPosition, bigBlindPosition);
     for (size_t i = 0; i < this->players.size(); i++)
     {
-        cards = utils::cards7collection(this->players, i, community_cards);    
-        evoluation_cards.push_back(handevoluator.evoluator(cards, this->players, community_cards, i));
+        cards = utils::cards7collection(this->players, i, communityCards);    
+        evoluation_cards.push_back(handEvaluator.evaluate(cards, this->players, communityCards, i));
     }
     std::cout << "Your cards: " << std::endl;
 
@@ -155,10 +165,10 @@ void Game::game(){
     
     
     for (size_t i = 0; i < 3; i ++){
-        std::cout << community_cards[i].write_name() << std::endl;
+        std::cout << communityCards[i].write_name() << std::endl;
     }
 
-    std::cout << community_cards[3].write_name() << std::endl;
+    std::cout << communityCards[3].write_name() << std::endl;
 
 
     for (size_t i = 0; i < this->players.size(); i ++){
@@ -169,7 +179,7 @@ void Game::game(){
         }
     }
 
-    std::cout << community_cards[4].write_name() << std::endl;
+    std::cout << communityCards[4].write_name() << std::endl;
 
 
 
@@ -191,7 +201,8 @@ void Game::game(){
     HandScore winner = utils::max(evoluation_cards);
 
     if (ties.empty()){
-        std::cout << "Winner of round is " << winner.name;
+        winnerMessage = "Winner: " + winner.name;
+        std::cout << "Winner of round is " << winner.name << std::endl;
         for (size_t i = 0; i < this->players.size(); i++){
             if (winner.name == this->players[i]->getName()){
                 this->players[i]->getMoney() += this->getPot();
@@ -202,16 +213,16 @@ void Game::game(){
         HandScore tieswinner = utils::max(ties);
 
         if (winner.sum_for_tie > tieswinner.sum_for_tie && winner.rank > tieswinner.rank) {
-            std::cout << "Winner of round is " << winner.name;
+            winnerMessage = "Winner: " + winner.name;
+            std::cout << "Winner of round is " << winner.name << std::endl;
             for (size_t i = 0; i < this->players.size(); i++){
                 if (winner.name == this->players[i]->getName()){
                     this->players[i]->getMoney() += this->getPot();
                 }
             }
             blindOffset = (blindOffset + 1) % playerCount;
-            //continue;
         }
-
+        else {
         std::vector<std::string> tied_names;
         for (const auto& tie : ties) {
             if (std::find(tied_names.begin(), tied_names.end(), tie.name) == tied_names.end()) {
@@ -219,10 +230,12 @@ void Game::game(){
             }
         }
 
-        if (tied_names.empty()) {
-            blindOffset = (blindOffset + 1) % playerCount;
-            //continue;
-        }
+        if (!tied_names.empty()) {
+            winnerMessage = "Split pot: ";
+            for (size_t n = 0; n < tied_names.size(); n++) {
+                if (n > 0) winnerMessage += ", ";
+                winnerMessage += tied_names[n];
+            }
 
         int part = this->getPot() / static_cast<int>(tied_names.size());
 
@@ -230,6 +243,8 @@ void Game::game(){
             if (std::find(tied_names.begin(), tied_names.end(), this->players[i]->getName()) != tied_names.end()) {
                 this->players[i]->getMoney() += part;
             }
+        }
+        }
         }
     }
     

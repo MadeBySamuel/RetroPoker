@@ -1,5 +1,6 @@
 #pragma once
 #include "player.hpp"
+#include "utils.hpp"
 
 class Game {
 
@@ -9,6 +10,8 @@ class Game {
         int smallBlind = 0;
         int bigBlind = 0;
         std::vector<std::unique_ptr<Player>> players;
+        std::vector<Card> communityCards;
+        std::string winnerMessage;
  
 
     public:
@@ -37,6 +40,8 @@ class Game {
 
     void game();
 
+    const std::vector<Card>& getCommunityCards() const;
+    const std::string& getWinnerMessage() const;
     
 };
 

@@ -1,16 +1,17 @@
 #include <vector>
 
-#include "handevoluator.hpp"
+#include "hand_evaluator.hpp"
 #include "player.hpp"
 #include "utils.hpp"
 
 
 
-    int HandEvoluator::RoyalFlush(std::vector<Card>& cards, int& sum){
+    int HandEvaluator::RoyalFlush(std::vector<Card>& cards, int& sum){
         utils::sort_function(cards);
         
-        for (int i = 0; i < cards.size() - 4; i++){
-            if (cards[i].rank == 10 && cards[i+1].rank == 11 && cards[i+2].rank == 12 && cards[i+3].rank == 13 && cards[i+3].rank == 14){
+        for (int i = 0; i < static_cast<int>(cards.size()) - 4; i++){
+            if (cards[i].rank == 10 && cards[i+1].rank == 11 && cards[i+2].rank == 12 && cards[i+3].rank == 13 && cards[i+4].rank == 14 &&
+                cards[i].name == cards[i+1].name && cards[i+1].name == cards[i+2].name && cards[i+2].name == cards[i+3].name && cards[i+3].name == cards[i+4].name){
             
             sum = 0;    
             return 9;
@@ -20,10 +21,10 @@
     }
 
         
-    int HandEvoluator::StraightFlush(std::vector<Card>& cards, int& sum){
+    int HandEvaluator::StraightFlush(std::vector<Card>& cards, int& sum){
         utils::sort_function(cards);
         
-        for (int i = 0; i < cards.size() - 4; i++){
+        for (int i = 0; i < static_cast<int>(cards.size()) - 4; i++){
             if (cards[i].rank == (cards[i+1].rank - 1)  && cards[i+1].rank == (cards[i+2].rank - 2) && cards[i+2].rank == (cards[i+3].rank -3) && cards[i+3].rank == (cards[i+4].rank - 4)){
                 if (cards[i].name == cards[i+1].name && cards[i+1].name == cards[i+2].name && cards[i+2].name == cards[i+3].name && cards[i+3].name == cards[i+4].name){
                     sum = cards[i+4].rank;
@@ -34,10 +35,10 @@
         return 0;
     }
 
-    int HandEvoluator::FourOfKind(std::vector<Card>& cards, int& sum){
+    int HandEvaluator::FourOfKind(std::vector<Card>& cards, int& sum){
         utils::sort_function(cards);        
         
-        for (int i = 0; i < cards.size() - 3; i++){
+        for (int i = 0; i < static_cast<int>(cards.size()) - 3; i++){
             if (cards[i].rank == cards[i+1].rank && cards[i+1].rank == cards[i+2].rank && cards[i+2].rank == cards[i+3].rank ){
                 sum = cards[i].rank;
                 return 7;
@@ -46,13 +47,13 @@
         return 0;
     }
         
-    int HandEvoluator::FullHouse(std::vector<Card>& cards, int& sum){
+    int HandEvaluator::FullHouse(std::vector<Card>& cards, int& sum){
         sum = 0; 
 
 
         utils::sort_function(cards);
 
-        for (int i = 0; i < cards.size() - 4; i++){
+        for (int i = 0; i < static_cast<int>(cards.size()) - 4; i++){
             if (cards[i].rank == cards[i+1].rank && cards[i+1].rank == cards[i+2].rank){
                 sum = cards[i].rank;
                 if(cards[i+3].rank == cards[i+4].rank){
@@ -68,10 +69,10 @@
         return 0;
     }
 
-    int HandEvoluator::Flush(std::vector<Card>& cards, int& sum){
+    int HandEvaluator::Flush(std::vector<Card>& cards, int& sum){
         sum = 0;
         utils::sort_name(cards);
-        for (int i = 0; i < cards.size() - 4; i++){
+        for (int i = 0; i < static_cast<int>(cards.size()) - 4; i++){
             if (cards[i].name == cards[i+1].name && cards[i+1].name == cards[i+2].name && cards[i+2].name == cards[i+3].name && cards[i+3].name == cards[i+4].name){
                 sum = cards[i+4].rank;
                 return 5;
@@ -79,12 +80,12 @@
         }
         return 0;
     }
-    int HandEvoluator::Straight(std::vector<Card>& cards, int& sum){
+    int HandEvaluator::Straight(std::vector<Card>& cards, int& sum){
         sum = 0;
 
         utils::sort_function(cards);
         
-        for (int i = 0; i < cards.size() - 4; i++){
+        for (int i = 0; i < static_cast<int>(cards.size()) - 4; i++){
             if (cards[i].rank + 1 == cards[i+1].rank && cards[i+1].rank + 1 == cards[i+2].rank && cards[i+2].rank + 1 == cards[i+3].rank &&cards[i+3].rank + 1 == cards[i+4].rank)
             {
                 sum = (cards[i+4].rank + 4); 
@@ -94,12 +95,12 @@
         return 0;
 }
 
-    int HandEvoluator::ThreeOfKind(std::vector<Card>& cards, int& sum){
+    int HandEvaluator::ThreeOfKind(std::vector<Card>& cards, int& sum){
 
         sum = 0;
         utils::sort_function(cards);        
         
-        for (int i = 0; i < cards.size() - 2; i++){
+        for (int i = 0; i < static_cast<int>(cards.size()) - 2; i++){
             if (cards[i].rank == cards[i+1].rank && cards[i+1].rank == cards[i+2].rank){
                 sum = cards[i].rank + cards[i+1].rank + cards[i+2].rank;
                 return 3;
@@ -107,7 +108,7 @@
         }
         return 0;
     }
-    int HandEvoluator::TwoPairs(std::vector<Card>& cards, int& sum){
+    int HandEvaluator::TwoPairs(std::vector<Card>& cards, int& sum){
         
         sum = 0;
         utils::sort_function(cards);
@@ -115,7 +116,7 @@
 
         std::vector<Card> highpaircomp;
 
-        for(int i =0; i <cards.size() - 1; i ++){
+        for(int i =0; i < static_cast<int>(cards.size()) - 1; i ++){
             if(cards[i].rank == cards[i+1].rank)
             
             highpaircomp.push_back(cards[i]);
@@ -123,8 +124,8 @@
             counter++;
         }
         if (counter == 2) {
-            for(int i = 0; i < highpaircomp.size(); i++){
-                if(i == highpaircomp.size() - 1){
+            for(int i = 0; i < static_cast<int>(highpaircomp.size()); i++){
+                if(i == static_cast<int>(highpaircomp.size()) - 1){
                     sum = highpaircomp[i].rank;
                 }
             }
@@ -132,12 +133,12 @@
         }
         return 0;
     }
-    int HandEvoluator::OnePair(std::vector<Card>& cards, int& sum){
+    int HandEvaluator::OnePair(std::vector<Card>& cards, int& sum){
         sum = 0;
 
        utils::sort_function(cards);
 
-        for (int i = 0; i < cards.size() - 1; i++){
+        for (int i = 0; i < static_cast<int>(cards.size()) - 1; i++){
             if(cards[i].rank == cards[i+1].rank){
                 sum = cards[i].rank;
                 return 1;
@@ -148,30 +149,24 @@
     }
 
 
-    HandScore HandEvoluator::evoluator(std::vector<Card> &cards, std::vector<std::unique_ptr<Player>>& players, std::vector<Card> community_cards, int i){
+    HandScore HandEvaluator::evaluate(std::vector<Card> &cards, std::vector<std::unique_ptr<Player>>& players, std::vector<Card> community_cards, int i){
     
-    std::vector<HandScore> game_evoluation;
     int sum = 0;
 
-
-    std::vector<std::vector<Card>> all_cards;
     std::vector<HandScore> list;
 
     if(players[i]->getInGame()){
  
 
-    list.emplace_back(HandScore{HandEvoluator::OnePair(cards, sum), sum, players[i]->getName()});
-    list.emplace_back(HandScore{HandEvoluator::TwoPairs(cards, sum), sum,  players[i]->getName()});
-    list.emplace_back(HandScore{HandEvoluator::ThreeOfKind(cards, sum), sum,  players[i]->getName()});
-    list.emplace_back(HandScore{HandEvoluator::Straight(cards, sum), sum,  players[i]->getName()});
-    list.emplace_back(HandScore{HandEvoluator::Flush(cards,sum ), sum,  players[i]->getName()});
-    list.emplace_back(HandScore{HandEvoluator::FullHouse(cards,sum), sum,  players[i]->getName()});
-    list.emplace_back(HandScore{HandEvoluator::FourOfKind(cards, sum),sum,  players[i]->getName()});
-    list.emplace_back(HandScore{HandEvoluator::StraightFlush(cards,sum),sum,  players[i]->getName()});
-    list.emplace_back(HandScore{HandEvoluator::RoyalFlush(cards,sum),sum,  players[i]->getName()});
-
-    int max_element = 0;
-    int max_element_of_person = 0;
+    list.emplace_back(HandScore{HandEvaluator::OnePair(cards, sum), sum, players[i]->getName()});
+    list.emplace_back(HandScore{HandEvaluator::TwoPairs(cards, sum), sum,  players[i]->getName()});
+    list.emplace_back(HandScore{HandEvaluator::ThreeOfKind(cards, sum), sum,  players[i]->getName()});
+    list.emplace_back(HandScore{HandEvaluator::Straight(cards, sum), sum,  players[i]->getName()});
+    list.emplace_back(HandScore{HandEvaluator::Flush(cards,sum ), sum,  players[i]->getName()});
+    list.emplace_back(HandScore{HandEvaluator::FullHouse(cards,sum), sum,  players[i]->getName()});
+    list.emplace_back(HandScore{HandEvaluator::FourOfKind(cards, sum),sum,  players[i]->getName()});
+    list.emplace_back(HandScore{HandEvaluator::StraightFlush(cards,sum),sum,  players[i]->getName()});
+    list.emplace_back(HandScore{HandEvaluator::RoyalFlush(cards,sum),sum,  players[i]->getName()});
 
     
     }
@@ -179,6 +174,5 @@
     return best_hand;
     
 }
-
 
 

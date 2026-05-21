@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <utility>
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
@@ -52,6 +53,14 @@ class Gui_base{
 
     void play_button(){
         clickSound.play();
+    }
+
+    template<typename WidgetPtr, typename Callback>
+    void bindSoundOnClick(const WidgetPtr& widget, Callback&& callback) {
+        widget->onClick([this, cb = std::forward<Callback>(callback)]() mutable {
+            play_button();
+            cb();
+        });
     }
 
     float getGuiWidth() const{

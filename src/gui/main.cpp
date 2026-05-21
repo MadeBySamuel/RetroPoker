@@ -1,7 +1,6 @@
-#include "gui_login.cpp"
-#include "gui_main_menu.cpp"
-#include "gui_game.cpp"
-
+#include "gui_login.hpp"
+#include "gui_main_menu.hpp"
+#include "gui_game.hpp"
 
 #include "auth.hpp"
 #include "gui_utils.hpp"
@@ -40,8 +39,6 @@ int main(){
 
     sf::RenderWindow window(desktop, "Retro Poker", sf::Style::Default, sf::State::Fullscreen, settings);
     window.setFramerateLimit(60);
-
-
 
 
     tgui::Gui gui{window};
@@ -89,6 +86,21 @@ int main(){
         screen = ScreenState::Game_GUI;
         game.game();
     };
+
+    mainmenu.onLogout = [&]{
+        logged_username.clear();
+        mainmenu.logged_username.clear();
+        currentPointer = &login;
+        screen = ScreenState::Login;
+        login.login_screen();
+    };
+
+    game.onExit = [&]{
+        currentPointer = &mainmenu;
+        screen = ScreenState::MainMenu;
+        mainmenu.showMainMenu();
+    };
+
 
     std::string last_time_text;
 

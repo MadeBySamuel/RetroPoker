@@ -1,0 +1,35 @@
+#pragma once
+
+#include <functional>
+#include <string>
+#include <vector>
+
+#include <SFML/Audio.hpp>
+#include <SFML/Graphics.hpp>
+#include <TGUI/TGUI.hpp>
+
+#include "gui_utils.hpp"
+
+class MainMenu : public Gui_base {
+
+    private:
+        sf::RenderWindow& window;
+        tgui::Panel::Ptr topBar;
+        sf::Music& music;
+        tgui::Panel::Ptr root;
+        tgui::Panel::Ptr modalOverlay;
+        tgui::Label::Ptr time_label;
+        std::string last_time_text;
+
+    public:
+        MainMenu(tgui::Gui& gui, sf::RenderWindow& window, sf::Music& music);
+        std::function<void()> onGame;
+        std::function<void()> onLogout;
+        std::string logged_username;
+
+        tgui::Panel::Ptr overlay();
+        void showOverlay();
+        void hideOverlay();
+        void showMainMenu();
+        void game_menu(GuiTheme color, std::vector<tgui::Button::Ptr> buttons);
+};

@@ -14,17 +14,26 @@ add_executable(retro_poker
     src/aiplayer.cpp
     src/constants.cpp
     src/game.cpp
-    src/handevoluator.cpp
+    src/hand_evaluator.cpp
     src/logger.cpp
     src/player.cpp
     src/plays.cpp
     src/utils.cpp
     src/gui/gui_login.cpp
     src/gui/gui_main_menu.cpp
+    src/gui/gui_game.cpp
     src/gui/main.cpp
     src/auth.cpp
     src/gui/gui_utils.cpp
-    src/gui/gui_game.cpp
+)
+
+add_custom_target(run
+    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target retro_poker
+    COMMAND ${CMAKE_BINARY_DIR}/retro_poker
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    DEPENDS retro_poker
+    USES_TERMINAL
+    COMMENT "Build and run RetroPoker"
 )
 
 

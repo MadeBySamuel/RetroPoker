@@ -1,13 +1,9 @@
 #pragma once
 
-
-#include "handevoluator.hpp"
-#include "constants.hpp"
 #include "player.hpp"
 #include "utils.hpp"
 
-
-class HandEvoluator : public Player{
+class HandEvaluator : public Player {
 
     public:
     int RoyalFlush(std::vector<Card>& cards, int& sum);
@@ -19,6 +15,6 @@ class HandEvoluator : public Player{
     int ThreeOfKind(std::vector<Card>& cards, int& sum);
     int TwoPairs(std::vector<Card>& cards, int& sum);
     int OnePair(std::vector<Card>& cards, int& sum);
-    HandScore evoluator(std::vector<Card> &cards, std::vector<std::unique_ptr<Player>>& players, std::vector<Card> community_cards, int i);
+    HandScore evaluate(std::vector<Card> &cards, std::vector<std::unique_ptr<Player>>& players, std::vector<Card> community_cards, int i);
 
 };

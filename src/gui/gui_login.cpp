@@ -13,34 +13,14 @@
 #include "auth.hpp"
 
 
+#include "gui_login.hpp"
 #include "gui_utils.hpp"
 #include "constants.hpp"
-#include "constants.hpp"
 
 
-class Login : public Gui_base {
+Login::Login(tgui::Gui& gui, sf::Music& music) : Gui_base(gui), music(music) {}
 
-    private:
-        sf::Music& music;
-
-        tgui::Label::Ptr time_label;
-        std::string last_time_text;
-        tgui::Color text;
-           
-
-
-        sqlite3* db = nullptr;
-
-    public:
-        Login(tgui::Gui& gui, sf::Music& music) : Gui_base(gui), music(music) {} 
-        std::function<void(std::string)> onLogin;
-        std::string logged_username;
-
-
-
-
-
-    void login_screen(){
+void Login::login_screen(){
 
         GuiTheme color;
 
@@ -100,7 +80,7 @@ class Login : public Gui_base {
         centerPanel->add(eye);
 
 
-        eye->onClick([eye, password_box]{
+        bindSoundOnClick(eye, [eye, password_box]{
             if (password_box->getPasswordCharacter() == '*'){
                 eye->getRenderer()->setTexture("assets/images/eye_on.png");
                 password_box->setPasswordCharacter(false);
@@ -214,9 +194,11 @@ class Login : public Gui_base {
         rememberLabel->getRenderer()->setBorderColor(color.text);
 
 
-        rememberLabel->onClick([rememberBox]{
+        bindSoundOnClick(rememberLabel, [rememberBox]{
             rememberBox->setChecked(!rememberBox->isChecked());
         });
+
+        bindSoundOnClick(rememberBox, []{});
 
         rememberLabel->onMouseEnter([color, rememberLabel, rememberBox]{
             rememberLabel->getRenderer()->setTextColor(color.down);
@@ -274,9 +256,7 @@ class Login : public Gui_base {
         centerPanel->add(login_button);
 
 
-        login_button->onClick([this, username_box, password_box, color, centerPanel]{
-            play_button();
-            
+        bindSoundOnClick(login_button, [this, username_box, password_box, color, centerPanel]{
             if (username_box->getText().length() == 0 && password_box->getText().length() == 0){
                 password_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
                 username_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
@@ -324,8 +304,7 @@ class Login : public Gui_base {
 
 
 
-        forgot_password->onClick([this, root, color, centerPanel]{
-            play_button();
+        bindSoundOnClick(forgot_password, [this, root, color, centerPanel]{
             centerPanel->setVisible(false);
             
 
@@ -381,7 +360,7 @@ class Login : public Gui_base {
 
             forgot_password_panel->add(back_to_login);
 
-            back_to_login->onClick([root, forgot_password_panel, centerPanel]{
+            bindSoundOnClick(back_to_login, [root, forgot_password_panel, centerPanel]{
                 root->remove(forgot_password_panel);
                 centerPanel->setVisible(true);
             });
@@ -403,7 +382,7 @@ class Login : public Gui_base {
 
             forgot_password_panel->add(next_button);
 
-            next_button->onClick([root, forgot_password_panel, centerPanel, forgot_password_box, color, this]{
+            bindSoundOnClick(next_button, [root, forgot_password_panel, centerPanel, forgot_password_box, color, this]{
                 if(forgot_password_box->getText().length() == 0){
                     forgot_password_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
                 }                
@@ -423,7 +402,7 @@ class Login : public Gui_base {
 
             });
 
-        sign_up->onClick([this, centerPanel, root, color]{
+        bindSoundOnClick(sign_up, [this, centerPanel, root, color]{
             centerPanel->setVisible(false);
             
             auto signUpPanel = tgui::Panel::create({Constants::signUpPanelWidth, Constants::signUpPanelHeight});
@@ -498,7 +477,7 @@ class Login : public Gui_base {
             signUpPanel->add(eye);
 
 
-            eye->onClick([eye, password_box]{
+            bindSoundOnClick(eye, [eye, password_box]{
                 if (password_box->getPasswordCharacter() == '*'){
                     eye->getRenderer()->setTexture("assets/images/eye_on.png");
                     password_box->setPasswordCharacter(false);
@@ -509,7 +488,7 @@ class Login : public Gui_base {
                 }
             });
 
-            back_to_login->onClick([root, signUpPanel, centerPanel]{
+            bindSoundOnClick(back_to_login, [root, signUpPanel, centerPanel]{
                 root->remove(signUpPanel);
                 centerPanel->setVisible(true);
             });
@@ -554,9 +533,7 @@ class Login : public Gui_base {
             signUpPanel->add(wrongLabel);
 
 
-        sign_up_button->onClick([this, username_box, email_box, password_box, wrongLabel]{
-            play_button();
-
+        bindSoundOnClick(sign_up_button, [this, username_box, email_box, password_box, wrongLabel]{
             if (username_box->getText().length() == 0 && password_box->getText().length() == 0 && username_box->getText().length() == 0){
                 email_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
                 password_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
@@ -611,8 +588,3 @@ class Login : public Gui_base {
 
         
     }
-
-
-    
-
-};

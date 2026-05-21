@@ -6,40 +6,21 @@
 #include <TGUI/Backend/SFML-Graphics.hpp>
 #include <vector>
 
-#include "game.hpp"
-
+#include "gui_main_menu.hpp"
 #include "gui_utils.hpp"
+#include "constants.hpp"
 
-class MainMenu : public Gui_base{
+MainMenu::MainMenu(tgui::Gui& gui, sf::RenderWindow& window, sf::Music& music)
+    : Gui_base(gui), window(window), music(music) {}
 
-    private:
-        sf::RenderWindow& window;
-        tgui::Panel::Ptr topBar;
-        sf::Music& music;
-
-        tgui::Panel::Ptr root;
-        tgui::Panel::Ptr modalOverlay;
-
-                
-        tgui::Label::Ptr time_label;
-        std::string last_time_text;
-
-
-    public:
-        MainMenu(tgui::Gui& gui, sf::RenderWindow& window, sf::Music& music) : Gui_base(gui),window(window), music(music) {} 
-        std::function<void()> onGame;
-        std::string logged_username;
-
-
-        
-    tgui::Panel::Ptr overlay() {
+tgui::Panel::Ptr MainMenu::overlay() {
         auto overlay = tgui::Panel::create({getGuiWidth(), getGuiHeight()});
         overlay->setPosition({0, 0});
         overlay->getRenderer()->setBackgroundColor(tgui::Color(0, 0, 0, 220));
         return overlay;
     }
 
-    void showOverlay() {
+void MainMenu::showOverlay() {
         if (!root) {
             return;
         }
@@ -49,7 +30,7 @@ class MainMenu : public Gui_base{
 
     }
 
-    void hideOverlay() {
+void MainMenu::hideOverlay() {
         if (!root || !modalOverlay) {
             return;
         }
@@ -59,7 +40,7 @@ class MainMenu : public Gui_base{
 
 
 
-    void showMainMenu(){
+void MainMenu::showMainMenu(){
 
     GuiTheme color;
 
@@ -150,10 +131,37 @@ class MainMenu : public Gui_base{
     username_show->setPosition({10,10});
     username_show->setTextSize(30);
     username_show->getRenderer()->setTextColor(color.text);
-    
     username_lay->add(username_show);
 
     const int money = Constants::START_PLAYER_MONEY;
+
+    auto logout_panel = tgui::Panel::create({300, 90});
+    logout_panel->setPosition({0, Constants::topBarHeight + 10.f});
+    logout_panel->getRenderer()->setBackgroundColor(color.down);
+    logout_panel->getRenderer()->setRoundedBorderRadius(20.0);
+    root->add(logout_panel);
+    logout_panel->setVisible(false);
+
+    auto logout_button = tgui::Button::create("Logout");
+    logout_button->setPosition({18, 42});
+    logout_button->setSize({264, 36});
+    logout_button->setTextSize(20);
+    logout_button->getRenderer()->setTextColor(color.text);
+    logout_button->getRenderer()->setBackgroundColor(color.panel2);
+    logout_button->getRenderer()->setBackgroundColorHover(color.border);
+    logout_panel->add(logout_button);
+
+    bindSoundOnClick(username_lay, [logout_panel]{
+        logout_panel->setVisible(!logout_panel->isVisible());
+    });
+
+    bindSoundOnClick(logout_button, [this, logout_panel]{
+        logout_panel->setVisible(false);
+        logged_username.clear();
+        if (onLogout) {
+            onLogout();
+        }
+    });
 
     auto money_show = tgui::Label::create("Balance: " + std::to_string(money) + "$" );
     money_show->getRenderer()->setTextColor(color.text);
@@ -221,12 +229,10 @@ class MainMenu : public Gui_base{
 
     }
 
-        buttonCampaign->onClick([this]{
-            play_button();
+        bindSoundOnClick(buttonCampaign, [this]{
         });
 
-        buttonGameModes->onClick([this, color, buttons]{
-            play_button();
+        bindSoundOnClick(buttonGameModes, [this, color, buttons]{
             for (size_t i = 0; i < buttons.size(); i++){
                 buttons[i]->setVisible(!(buttons[i]->isVisible()));
             }
@@ -236,13 +242,11 @@ class MainMenu : public Gui_base{
         });
 
 
-        buttonSettings->onClick([this]{
-            play_button();
+        bindSoundOnClick(buttonSettings, [this]{
         });
 
 
-        quitButton->onClick([this, buttons, color] {
-            play_button();
+        bindSoundOnClick(quitButton, [this, buttons, color] {
             for (auto x : buttons){
                 x->setVisible( !(x->isVisible()));
             }
@@ -306,9 +310,8 @@ class MainMenu : public Gui_base{
             no_button->setPosition({235, 60});
 
 
-            yes_button->onClick([this]
+            bindSoundOnClick(yes_button, [this]
             {
-                play_button();
                 window.close();
             });
 
@@ -317,9 +320,8 @@ class MainMenu : public Gui_base{
             quit_label->add(no_button);
 
 
-            no_button->onClick([this, quit_label, buttons]
+            bindSoundOnClick(no_button, [this, quit_label, buttons]
             {
-                play_button();
                 hideOverlay();
                 gui.remove(quit_label);
                 for(auto x : buttons){
@@ -340,7 +342,7 @@ class MainMenu : public Gui_base{
 
    
 
-    void game_menu(GuiTheme color, std::vector<tgui::Button::Ptr> buttons){
+void MainMenu::game_menu(GuiTheme color, std::vector<tgui::Button::Ptr> buttons){
 
         if (!root) {
             return;
@@ -373,7 +375,7 @@ class MainMenu : public Gui_base{
 
         auto game_menu = tgui::Panel::create({loginPanelWidth, loginPanelHeight});
         game_menu->setPosition({(guiWidth - loginPanelWidth) / 2.f, (guiHeight - loginPanelHeight) / 2.f});
-        game_menu->getRenderer()->setBackgroundColor(tgui::Color(0, 0, 0, 200));
+        game_menu->getRenderer()->setBackgroundColor(color.bg);
         game_menu->getRenderer()->setRoundedBorderRadius(20.0);
         
         root->add(game_menu);
@@ -395,7 +397,7 @@ class MainMenu : public Gui_base{
         auto back_menu_button = tgui::Button::create("Back to Main Menu");
         back_menu_button->setTextSize(25);
         back_menu_button->getRenderer()->setTextColor(color.text);
-        back_menu_button->setPosition({startX, 500.f});
+        back_menu_button->setPosition({startX, 550.f});
         game_menu->add(back_menu_button);
 
 
@@ -405,9 +407,7 @@ class MainMenu : public Gui_base{
         game_menu->add(back_icon);
 
 
-        back_menu_button->onClick([game_menu, this, buttons]{
-            play_button();
-
+        bindSoundOnClick(back_menu_button, [game_menu, this, buttons]{
             for(auto x : buttons){
                 x->setVisible(true);
             }
@@ -456,7 +456,7 @@ class MainMenu : public Gui_base{
                 game_mode_buttons[i]->setSize({buttonWidth,buttonHeight});
             }
 
-            game_mode_buttons[i]->getRenderer()->setBackgroundColor(color.bg);
+            game_mode_buttons[i]->getRenderer()->setBackgroundColor(color.panel2);
             game_mode_buttons[i]->getRenderer()->setBackgroundColorDownHover(color.border);
             game_mode_buttons[i]->getRenderer()->setBackgroundColorDown(color.border);
             game_mode_buttons[i]->getRenderer()->setBackgroundColorHover(color.border);
@@ -469,17 +469,21 @@ class MainMenu : public Gui_base{
         }
 
 
-        texasHoldem->onClick([this]{
+        bindSoundOnClick(texasHoldem, [this]{
             if(onGame) onGame();
         });
 
-        five_card_draw->onClick([this]{
+        bindSoundOnClick(five_card_draw, [this]{
             if(onGame) onGame();
+        });
+
+        bindSoundOnClick(back_icon, [game_menu, this, buttons]{
+            for(auto x : buttons){
+                x->setVisible(true);
+            }
+            root->remove(game_menu);
+            hideOverlay();
         });
         
 
     }
-
-
-
-};

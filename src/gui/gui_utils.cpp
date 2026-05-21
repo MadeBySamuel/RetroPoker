@@ -92,7 +92,8 @@ void Gui_base::volume(tgui::Panel::Ptr topBar, tgui::Panel::Ptr root, GuiTheme c
     
 
 
-        volume_icon->onClick([volume_panel,volume_icon, volume_slider]{
+        volume_icon->onClick([this, volume_panel,volume_icon, volume_slider]{
+        play_button();
         volume_panel->setVisible(!volume_panel->isVisible());
 
         if (volume_panel->isVisible()){
