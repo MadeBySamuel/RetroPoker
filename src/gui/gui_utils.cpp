@@ -178,16 +178,16 @@ std::vector<Card> gui_utils::game_cards (){
     cards_images.emplace_back(tgui::Picture::create("assets/cards/spade/spades_K.png")); 
     cards_images.emplace_back(tgui::Picture::create("assets/cards/spade/spades_Q.png")); 
 
-
     size_t image_iterator = 0;
 
+    
     for (auto s : suits) {
         for (int r = 2; r <= 14; r++) {
             cards.push_back({r, s, cards_images.at(image_iterator)});
+            ++image_iterator;
         }
     }
     return cards;
 
 }
-
 

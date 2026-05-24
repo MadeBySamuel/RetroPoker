@@ -2,6 +2,10 @@
 #include "player.hpp"
 #include "utils.hpp"
 
+
+enum class GamePhase { PRE_FLOP, FLOP, TURN, RIVER, SHOWDOWN };
+enum class ActionType { FOLD, CHECK, CALL, RAISE, ALLIN };
+
 class Game {
 
     private:
@@ -12,9 +16,15 @@ class Game {
         std::vector<std::unique_ptr<Player>> players;
         std::vector<Card> communityCards;
         std::string winnerMessage;
+        GamePhase currentPhase = GamePhase::PRE_FLOP;
+
+        void resolveShowdown();
+
  
 
     public:
+
+        GamePhase getPhase() const;
         int& getPot();
         void setPot(int pot);
 
@@ -39,8 +49,10 @@ class Game {
     // void show_game(std::vector<Player> players, std::vector<Card>& community_cards);
 
     void game();
+    void playerAction(ActionType action, int raiseAmount = 0);
 
     const std::vector<Card>& getCommunityCards() const;
+    std::vector<Card> getVisibleCommunityCards() const;
     const std::string& getWinnerMessage() const;
     
 };

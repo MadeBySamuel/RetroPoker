@@ -3,6 +3,11 @@ project(retro_poker)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug)
+endif()
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(external/SFML)
@@ -62,12 +67,17 @@ target_include_directories(retro_poker PRIVATE
 
 
 target_link_libraries(retro_poker PRIVATE
-    TGUI::TGUI      
+    TGUI::TGUI
     SFML::Graphics
     SFML::Window
     SFML::System
     SFML::Audio
     argon2
     SQLite3::SQLite3
+)
+
+target_compile_options(retro_poker PRIVATE
+    $<$<CONFIG:Debug>:-g -O0>
+    $<$<CONFIG:Release>:-O2>
 )
 
