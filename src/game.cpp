@@ -120,8 +120,8 @@ void Game::game() {
     Game::setup_once(this->players, game_names);
 
     const int playerCount = static_cast<int>(players.size());
-    int smallBlindPosition = (playerCount - 1 + playerCount) % playerCount;
-    int bigBlindPosition   = (playerCount - 2 + playerCount) % playerCount;
+    int smallBlindPosition = playerCount - 1;
+    int bigBlindPosition = playerCount - 2;
 
     Game::setup_once_per_game(this->players, game_cards, used_cards_index, communityCards,
                                smallBlindPosition, bigBlindPosition);
@@ -164,25 +164,41 @@ void Game::playerAction(ActionType action, int raiseAmount) {
 
     static std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<int> dist(0, 4);
+
     for (size_t i = 0; i < players.size(); i++) {
-        if (players[i]->getName() == "Player" || !players[i]->getInGame()) continue;
+        if (players[i]->getName() == "Player" || !players[i]->getInGame()){
+            continue;
+        }
+
         int r = dist(rng);
+        
         if (r == 0) {
             players[i]->setInGame(false);
-        } else if (r <= 2) {
+        } 
+        else if (r <= 2) {
             // check
-        } else {
+        } 
+        else {
             int callAmt = std::min(std::max(currentBet, bigBlind), players[i]->getMoney());
             players[i]->getMoney() -= callAmt;
             pot += callAmt;
         }
+
     }
 
     switch (currentPhase) {
-        case GamePhase::PRE_FLOP: currentPhase = GamePhase::FLOP;     break;
-        case GamePhase::FLOP:     currentPhase = GamePhase::TURN;     break;
-        case GamePhase::TURN:     currentPhase = GamePhase::RIVER;    break;
-        case GamePhase::RIVER:    currentPhase = GamePhase::SHOWDOWN; break;
+        case GamePhase::PRE_FLOP: 
+            currentPhase = GamePhase::FLOP;     
+            break;
+        case GamePhase::FLOP:     
+            currentPhase = GamePhase::TURN;     
+            break;
+        case GamePhase::TURN:     
+            currentPhase = GamePhase::RIVER;    
+            break;
+        case GamePhase::RIVER:    
+            currentPhase = GamePhase::SHOWDOWN; 
+            break;
         default: break;
     }
 

@@ -32,11 +32,14 @@ struct GuiTheme {
 class Gui_base{
     protected:
         tgui::Gui& gui;
+        tgui::Panel::Ptr root;
         std::vector<tgui::Button::Ptr> buttons_sound;
         sf::SoundBuffer clickBuffer;  
         sf::Sound clickSound;         
         tgui::Label::Ptr time_label;
         std::string last_time_text;
+        tgui::Panel::Ptr modalOverlay;
+
         
 
 
@@ -55,6 +58,12 @@ class Gui_base{
         clickSound.play();
     }
 
+    tgui::Panel::Ptr overlay();
+
+    void showOverlay();
+    void hideOverlay();
+
+
     template<typename WidgetPtr, typename Callback>
     void bindSoundOnClick(const WidgetPtr& widget, Callback&& callback) {
         widget->onClick([this, cb = std::forward<Callback>(callback)]() mutable {
@@ -63,20 +72,19 @@ class Gui_base{
         });
     }
 
-    float getGuiWidth() const{
+    float getGuiWidth() const {
             return static_cast<float>(gui.getWindow()->getSize().x);
     }
 
-    float getGuiHeight() const{
+    float getGuiHeight() const {
             return static_cast<float>(gui.getWindow()->getSize().y);
     }
-
-
 
     void volume(tgui::Panel::Ptr topBar, tgui::Panel::Ptr root, GuiTheme color, sf::Music &music);
 
     tgui::Panel::Ptr bar(tgui::Panel::Ptr root);  
 
+    void showEscapeMenu();
 
     std::string getCurrentTimeString();
     void update_time();
@@ -107,13 +115,6 @@ struct Card{
 
 
 namespace gui_utils {
-
-
-
-
-
-
-
 
 
 

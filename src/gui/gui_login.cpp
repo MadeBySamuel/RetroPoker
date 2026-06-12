@@ -38,7 +38,7 @@ void Login::login_screen(){
 
 
 
-        auto root = tgui::Panel::create({getGuiWidth(), getGuiWidth()});
+        root = tgui::Panel::create({getGuiWidth(), getGuiWidth()});
         root->getRenderer()->setTextureBackground("assets/images/backgrounds/login_background.jpeg");
         gui.add(root);
 
@@ -55,9 +55,7 @@ void Login::login_screen(){
         login_title->setPosition({55, 35});
         login_title->setTextSize(45);   
         login_title->getRenderer()->setTextColor(color.text);
-
         centerPanel->add(login_title);
-
 
 
         auto username_box = tgui::EditBox::create();
@@ -304,7 +302,7 @@ void Login::login_screen(){
 
 
 
-        bindSoundOnClick(forgot_password, [this, root, color, centerPanel]{
+        bindSoundOnClick(forgot_password, [this, color, centerPanel]{
             centerPanel->setVisible(false);
             
 
@@ -317,7 +315,7 @@ void Login::login_screen(){
             auto forgot_password_label = tgui::Label::create("Write email of your account");
             forgot_password_label->setPosition({40, 55});
             forgot_password_label->setTextSize(30);   
-            forgot_password_label->getRenderer()->setTextColor(text);
+            forgot_password_label->getRenderer()->setTextColor(color.text);
             forgot_password_panel->add(forgot_password_label);
 
 
@@ -329,7 +327,7 @@ void Login::login_screen(){
             forgot_password_box->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
             forgot_password_box->getRenderer()->setBorders(0);
             forgot_password_box->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
-            forgot_password_box->getRenderer()->setTextColor(text);
+            forgot_password_box->getRenderer()->setTextColor(color.text);
             forgot_password_box->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 2});
             forgot_password_box->getRenderer()->setBorderColor(sf::Color(0,0,0));
             forgot_password_box->getRenderer()->setDefaultTextColor(sf::Color(125, 125, 125));
@@ -350,7 +348,7 @@ void Login::login_screen(){
 
             back_to_login->setTextSize(18);
             back_to_login->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 2});
-            back_to_login->getRenderer()->setTextColor(text);
+            back_to_login->getRenderer()->setTextColor(color.text);
             back_to_login->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
             back_to_login->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
             back_to_login->getRenderer()->setBackgroundColorDown(tgui::Color::Transparent);
@@ -360,7 +358,7 @@ void Login::login_screen(){
 
             forgot_password_panel->add(back_to_login);
 
-            bindSoundOnClick(back_to_login, [root, forgot_password_panel, centerPanel]{
+            bindSoundOnClick(back_to_login, [this,forgot_password_panel, centerPanel]{
                 root->remove(forgot_password_panel);
                 centerPanel->setVisible(true);
             });
@@ -372,7 +370,7 @@ void Login::login_screen(){
             next_button->setSize({160, 30}); 
             next_button->setTextSize(18);
             next_button->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 2});
-            next_button->getRenderer()->setTextColor(text);
+            next_button->getRenderer()->setTextColor(color.text);
             next_button->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
             next_button->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
             next_button->getRenderer()->setBackgroundColorDown(tgui::Color::Transparent);
@@ -382,7 +380,7 @@ void Login::login_screen(){
 
             forgot_password_panel->add(next_button);
 
-            bindSoundOnClick(next_button, [root, forgot_password_panel, centerPanel, forgot_password_box, color, this]{
+            bindSoundOnClick(next_button, [this, forgot_password_panel, centerPanel, forgot_password_box, color]{
                 if(forgot_password_box->getText().length() == 0){
                     forgot_password_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
                 }                
@@ -402,7 +400,7 @@ void Login::login_screen(){
 
             });
 
-        bindSoundOnClick(sign_up, [this, centerPanel, root, color]{
+        bindSoundOnClick(sign_up, [this, centerPanel, color]{
             centerPanel->setVisible(false);
             
             auto signUpPanel = tgui::Panel::create({Constants::signUpPanelWidth, Constants::signUpPanelHeight});
@@ -488,7 +486,7 @@ void Login::login_screen(){
                 }
             });
 
-            bindSoundOnClick(back_to_login, [root, signUpPanel, centerPanel]{
+            bindSoundOnClick(back_to_login, [this, signUpPanel, centerPanel]{
                 root->remove(signUpPanel);
                 centerPanel->setVisible(true);
             });
@@ -582,7 +580,7 @@ void Login::login_screen(){
         time_label = tgui::Label::create("");
         time_label->setTextSize(30);
         time_label->setPosition({getGuiWidth() - 125.f, 10});
-        time_label->getRenderer()->setTextColor(text);
+        time_label->getRenderer()->setTextColor(color.text);
         
         topBar->add(time_label);
 

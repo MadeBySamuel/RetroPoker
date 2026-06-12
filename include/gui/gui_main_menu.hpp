@@ -16,8 +16,6 @@ class MainMenu : public Gui_base {
         sf::RenderWindow& window;
         tgui::Panel::Ptr topBar;
         sf::Music& music;
-        tgui::Panel::Ptr root;
-        tgui::Panel::Ptr modalOverlay;
         tgui::Label::Ptr time_label;
         std::string last_time_text;
 
@@ -27,9 +25,6 @@ class MainMenu : public Gui_base {
         std::function<void()> onLogout;
         std::string logged_username;
 
-        tgui::Panel::Ptr overlay();
-        void showOverlay();
-        void hideOverlay();
         void showMainMenu();
         void game_menu(GuiTheme color, std::vector<tgui::Button::Ptr> buttons);
 };

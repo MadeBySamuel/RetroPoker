@@ -63,8 +63,7 @@ int main(){
     Login login(gui, music);
     MainMenu mainmenu(gui, window, music);
     Game_GUI game(gui, window, music);
-
-
+    
     login.login_screen();
 
     Gui_base* currentPointer = &login;
@@ -79,6 +78,10 @@ int main(){
         mainmenu.logged_username = username;
         mainmenu.showMainMenu(); 
     };
+
+
+
+
 
 
     mainmenu.onGame = [&]{
@@ -101,6 +104,8 @@ int main(){
         mainmenu.showMainMenu();
     };
 
+    
+
 
     std::string last_time_text;
 
@@ -110,6 +115,13 @@ int main(){
                 gui.handleEvent(*event);
                 if(event->is<sf::Event::Closed>()){
                     window.close();
+                }
+                if (const auto* key = event->getIf<sf::Event::KeyPressed>()){
+                    if (key->code == sf::Keyboard::Key::Escape){
+                        if(currentPointer == &game){
+                            currentPointer->showEscapeMenu();
+                        }
+                }
                 }
             }
             currentPointer->update_time();

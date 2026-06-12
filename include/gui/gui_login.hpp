@@ -15,7 +15,6 @@ class Login : public Gui_base {
         sf::Music& music;
         tgui::Label::Ptr time_label;
         std::string last_time_text;
-        tgui::Color text;
         sqlite3* db = nullptr;
 
     public:

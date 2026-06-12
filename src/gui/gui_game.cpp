@@ -116,7 +116,7 @@ void Game_GUI::game() {
     engine = std::make_unique<Game>();
     engine->game();
 
-    auto root = tgui::Panel::create({getGuiWidth(), getGuiHeight()});
+    root = tgui::Panel::create({getGuiWidth(), getGuiHeight()});
     root->getRenderer()->setTextureBackground("assets/images/backgrounds/game_background.png");
     gui.add(root);
 
@@ -191,34 +191,24 @@ void Game_GUI::game() {
     winnerLabel->setTextSize(scaledTextSize(guiH, 0.022f, 22, 34));
     winnerLabel->getRenderer()->setTextColor(color.text);
     placeCenteredLabel(root, winnerLabel, guiW / 2.f, communityY + communityCardH + 22.f, 20.f, guiW - 20.f);
-
-    auto backButton = tgui::Button::create("Back to Menu");
-    backButton->setPosition({30.f, getGuiHeight() - 70.f});
-    backButton->setSize({220.f, 48.f});
-    backButton->setTextSize(22);
-    backButton->getRenderer()->setTextColor(color.text);
-    backButton->getRenderer()->setBackgroundColor(color.panel2);
-    backButton->getRenderer()->setBackgroundColorHover(color.border);
-    root->add(backButton);
-
-    bindSoundOnClick(backButton, [this] {
-        if (onExit) onExit();
-    });
+    
 
     if (humanPlayerIndex < players.size()) {
-        const float controlsY    = getGuiHeight() - 70.f;
-        constexpr float btnW     = 124.f;
-        constexpr float btnH     = 48.f;
-        constexpr float btnGap   = 12.f;
-        const float startX       = 270.f;
+        const float controlsY = getGuiHeight() - 70.f; 
+        constexpr float btnW = 124.f;
+        constexpr float btnH = 48.f;
+        constexpr float btnGap = 12.f;
+        constexpr float startX = 270.f;
 
         actionStatus = tgui::Label::create("Choose action");
+        
         actionStatus->setTextSize(20);
         actionStatus->getRenderer()->setTextColor(color.text);
         actionStatus->setPosition({startX, controlsY - 34.f});
         root->add(actionStatus);
 
         auto placeActionButton = [&](const std::string& text, float x, ActionType action, std::string statusMsg, int raiseAmount = 0) {
+            
             auto button = tgui::Button::create(text);
             button->setPosition({x, controlsY});
             button->setSize({btnW, btnH});
@@ -231,6 +221,7 @@ void Game_GUI::game() {
             button->getRenderer()->setBackgroundColorDisabled(tgui::Color(74, 66, 58, 230));
             root->add(button);
             actionButtons.push_back(button);
+            
             bindSoundOnClick(button, [this, action, msg = std::move(statusMsg), raiseAmount] {
                 engine->playerAction(action, raiseAmount);
                 actionStatus->setText(msg);

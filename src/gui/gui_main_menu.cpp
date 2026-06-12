@@ -13,31 +13,6 @@
 MainMenu::MainMenu(tgui::Gui& gui, sf::RenderWindow& window, sf::Music& music)
     : Gui_base(gui), window(window), music(music) {}
 
-tgui::Panel::Ptr MainMenu::overlay() {
-        auto overlay = tgui::Panel::create({getGuiWidth(), getGuiHeight()});
-        overlay->setPosition({0, 0});
-        overlay->getRenderer()->setBackgroundColor(tgui::Color(0, 0, 0, 220));
-        return overlay;
-    }
-
-void MainMenu::showOverlay() {
-        if (!root) {
-            return;
-        }
-        hideOverlay();
-        modalOverlay = overlay();
-        root->add(modalOverlay);
-
-    }
-
-void MainMenu::hideOverlay() {
-        if (!root || !modalOverlay) {
-            return;
-        }
-        root->remove(modalOverlay);
-        modalOverlay = nullptr;
-    }
-
 
 
 void MainMenu::showMainMenu(){
@@ -230,6 +205,7 @@ void MainMenu::showMainMenu(){
     }
 
         bindSoundOnClick(buttonCampaign, [this]{
+            //
         });
 
         bindSoundOnClick(buttonGameModes, [this, color, buttons]{
@@ -243,6 +219,7 @@ void MainMenu::showMainMenu(){
 
 
         bindSoundOnClick(buttonSettings, [this]{
+            //
         });
 
 

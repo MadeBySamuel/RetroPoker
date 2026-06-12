@@ -1,9 +1,7 @@
 #include <iostream> 
-
-
 #include "game.hpp"
-
 #include "gui_utils.hpp"
+
 
 
 tgui::Panel::Ptr Gui_base::bar(tgui::Panel::Ptr root){
@@ -23,6 +21,83 @@ tgui::Panel::Ptr Gui_base::bar(tgui::Panel::Ptr root){
     return topBar;
 }
 
+tgui::Panel::Ptr Gui_base::overlay() {
+        auto overlay = tgui::Panel::create({getGuiWidth(), getGuiHeight()});
+        overlay->setPosition({0, 0});
+        overlay->getRenderer()->setBackgroundColor(tgui::Color(0, 0, 0, 220));
+        return overlay;
+}
+
+void Gui_base::hideOverlay() {
+        if (!root || !modalOverlay) {
+            return;
+        }
+        root->remove(modalOverlay);
+        modalOverlay = nullptr;
+}
+
+void Gui_base::showOverlay() {
+        if (!root) {
+            return;
+        }
+        hideOverlay();
+        modalOverlay = overlay();
+        root->add(modalOverlay);
+
+}
+
+
+void Gui_base::showEscapeMenu(){
+
+    showOverlay();
+
+    auto escapeMenu = tgui::Panel::create({Constants::signUpPanelWidth, Constants::signUpPanelHeight});
+    escapeMenu->setPosition({(getGuiWidth() - Constants::signUpPanelHeight) / 2.f, (getGuiHeight() - Constants::signUpPanelHeight) / 2.f});
+    escapeMenu->getRenderer()->setBackgroundColor(sf::Color(45, 35, 28, 230));
+    escapeMenu->getRenderer()->setRoundedBorderRadius(20.0);
+
+    gui.add(escapeMenu);
+
+    GuiTheme color;
+
+    std::vector<tgui::Button::Ptr> escapeButtons;
+
+    auto backToGameButton = tgui::Button::create("Back to Game");
+    backToGameButton->setPosition({70, 100});
+
+
+    auto restartGameButton = tgui::Button::create("Restart game");
+    restartGameButton->setPosition({70, 200});
+
+
+    auto backToMenuButton = tgui::Button::create({"Back to Menu"});
+    backToMenuButton->setPosition({70, 300});
+
+
+    auto quitGameButton = tgui::Button::create({"Exit Game"});
+    quitGameButton->setPosition({70, 400});
+
+    escapeButtons.push_back(backToGameButton);
+    escapeButtons.push_back(restartGameButton);
+    escapeButtons.push_back(backToMenuButton);
+    escapeButtons.push_back(quitGameButton);
+
+    
+    for (size_t i = 0; i < escapeButtons.size(); i++){
+        
+        escapeButtons[i]->setTextSize(28);
+        escapeButtons[i]->setSize({500, 60});
+        escapeButtons[i]->getRenderer()->setBackgroundColor(sf::Color(0,0,0,100));
+        escapeButtons[i]->getRenderer()->setTextColor(color.text);
+        escapeButtons[i]->getRenderer()->setTextColorHover(color.accent);
+        escapeButtons[i]->getRenderer()->setBackgroundColorDownHover(color.bg);
+        escapeButtons[i]->getRenderer()->setBackgroundColorDown(color.bg);
+        escapeButtons[i]->getRenderer()->setBackgroundColorHover(color.bg);
+
+        escapeMenu->add(escapeButtons[i]);
+    }
+
+}
 
 std::string Gui_base::getCurrentTimeString() {
     auto now = std::chrono::system_clock::now();
@@ -44,6 +119,7 @@ void Gui_base::update_time(){
             last_time_text = currentTimeText;
         }
 }
+
 
 void Gui_base::volume(tgui::Panel::Ptr topBar, tgui::Panel::Ptr root, GuiTheme color, sf::Music &music){
     auto volume_icon = tgui::Picture::create(tgui::Texture("assets/images/volume/volume_muted.png", {}, {}, true));
@@ -111,9 +187,6 @@ void Gui_base::volume(tgui::Panel::Ptr topBar, tgui::Panel::Ptr root, GuiTheme c
         });
 
 }
-
-
-
 
 
 std::vector<Card> gui_utils::game_cards (){
