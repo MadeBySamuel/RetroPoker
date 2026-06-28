@@ -26,6 +26,7 @@ struct GuiTheme {
     tgui::Color disabled{80, 70, 60};  
     tgui::Color yes_quit{133, 22, 22};
     tgui::Color bar_color{28, 22, 18, 200};
+    tgui::Color centerpanel{45, 35, 28, 230};
 };
 
 
@@ -39,6 +40,8 @@ class Gui_base{
         tgui::Label::Ptr time_label;
         std::string last_time_text;
         tgui::Panel::Ptr modalOverlay;
+        tgui::CheckBox::Ptr checkBox;
+
 
         
 
@@ -47,16 +50,22 @@ class Gui_base{
 
     public: 
     Gui_base(tgui::Gui& gui) : gui(gui), clickSound(clickBuffer) {
+
         if (!clickBuffer.loadFromFile("assets/sound/button_press.ogg")) {
             std::cerr << "Failed to load click sound\n";
         }
         clickSound.setBuffer(clickBuffer);
+
         }
         
 
     void play_button(){
         clickSound.play();
     }
+
+    tgui::CheckBox::Ptr makeCheckBox(tgui::Panel::Ptr centerPanel, float x, float y);
+
+
 
     tgui::Panel::Ptr overlay();
 
@@ -65,13 +74,20 @@ class Gui_base{
 
 
     template<typename WidgetPtr, typename Callback>
-    void bindSoundOnClick(const WidgetPtr& widget, Callback&& callback) {
-        widget->onClick([this, cb = std::forward<Callback>(callback)]() mutable {
-            play_button();
+    void bindSoundOnClick(const WidgetPtr& widget, Callback&& callback, bool soundOn = true) {
+        widget->onClick([this, cb = std::forward<Callback>(callback), soundOn]() mutable {
+            if(soundOn) {
+                play_button();
+            }
             cb();
         });
     }
 
+
+    const sf::Vector2u getWindowSize() const{
+        return gui.getWindow()->getSize();
+    }
+    
     float getGuiWidth() const {
             return static_cast<float>(gui.getWindow()->getSize().x);
     }
@@ -82,9 +98,8 @@ class Gui_base{
 
     void volume(tgui::Panel::Ptr topBar, tgui::Panel::Ptr root, GuiTheme color, sf::Music &music);
 
-    tgui::Panel::Ptr bar(tgui::Panel::Ptr root);  
+    tgui::Panel::Ptr bar();  
 
-    void showEscapeMenu();
 
     std::string getCurrentTimeString();
     void update_time();

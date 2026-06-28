@@ -19,20 +19,24 @@ class Game_GUI : public Gui_base {
         sf::RenderWindow& window;
         std::unique_ptr<Game> engine;
 
-        // Persistent GUI state — prežijú návrat game()
-        tgui::Panel::Ptr   communityPanel;
-        tgui::Label::Ptr   potLabel;
-        tgui::Label::Ptr   winnerLabel;
-        tgui::Label::Ptr   balanceLabel;
-        tgui::Label::Ptr   actionStatus;
+        tgui::Panel::Ptr communityPanel;
+        tgui::Label::Ptr potLabel;
+        tgui::Label::Ptr winnerLabel;
+        tgui::Label::Ptr balanceLabel;
+        tgui::Label::Ptr actionStatus;
         std::vector<tgui::Button::Ptr> actionButtons;
+        tgui::Panel::Ptr escapeMenu;
 
-        float balanceCenterX  = 0.f;
-        float balanceY        = 0.f;
-        float communityY      = 0.f;
-        float communityCardW  = 0.f;
-        float communityCardH  = 0.f;
-        float communityGap    = 0.f;
+
+
+        bool opened = false;
+
+        float balanceCenterX = 0.f;
+        float balanceY = 0.f;
+        float communityY = 0.f;
+        float communityCardW = 0.f;
+        float communityCardH = 0.f;
+        float communityGap = 0.f;
         std::size_t humanPlayerIndex = 0;
 
         void placeCard(tgui::Panel::Ptr parent, const Card& card, float x, float y, float w, float h);
@@ -47,5 +51,6 @@ class Game_GUI : public Gui_base {
     public:
         Game_GUI(tgui::Gui& gui, sf::RenderWindow& window, sf::Music& music);
         std::function<void()> onExit;
+        void showEscapeMenu();
         void game();
 };

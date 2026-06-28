@@ -15,59 +15,76 @@ MainMenu::MainMenu(tgui::Gui& gui, sf::RenderWindow& window, sf::Music& music)
 
 
 
+
+void MainMenu::game_settings(){
+
+    showOverlay();
+    GuiTheme color;
+    
+    auto gameSettingsPanel = tgui::Panel::create({Constants::totalWidth, Constants::loginPanelHeight});
+    gameSettingsPanel->setPosition((getGuiWidth() - Constants::totalWidth) / 2.f, (getGuiHeight() - Constants::loginPanelHeight) / 2.f);
+    gameSettingsPanel->getRenderer()->setBackgroundColor(color.centerpanel);
+    gameSettingsPanel->getRenderer()->setRoundedBorderRadius(10.f);
+
+    root->add(gameSettingsPanel);
+
+
+    auto settingsTitle = tgui::Label::create("Settings");
+    settingsTitle->setTextSize(45);
+    settingsTitle->setPosition((Constants::totalWidth - settingsTitle->getSize().x) / 2.f, 20.f);
+    settingsTitle->getRenderer()->setTextColor(color.text);
+    gameSettingsPanel->add(settingsTitle);
+
+
+
+    auto soundEffectCheckBox = tgui::CheckBox::create();
+
+
+
+
+}
+
 void MainMenu::showMainMenu(){
 
     GuiTheme color;
 
-
     gui.removeAllWidgets();
+
 
     tgui::Font::setGlobalFont("assets/fonts/Shelten.ttf");
 
-    // auto color_picker =rgb(72, 58, 48));
+    // auto color_picker =rgb(160, 110, 25));
 
-    const auto windowSize = gui.getWindow()->getSize();
 
-    const float guiWidth = static_cast<float>(windowSize.x);
-    const float guiHeight = static_cast<float>(windowSize.y);
-
-    constexpr float topBarHeight = 56.f;
-    constexpr float sideBarWidth = 280.f;
-    constexpr float sideBarHeight = 360.f;
-    constexpr float centerPanelWidth = 900.f;
-    constexpr float centerPanelHeight = 760.f;
-    constexpr float rightPanelWidth = 420.f;
-    constexpr float rightPanelHeight = 760.f;
-
-    root = tgui::Panel::create({guiWidth, guiHeight});
+    root = tgui::Panel::create({getGuiWidth(), getGuiHeight()});
     root->getRenderer()->setBackgroundColor(color.panel);
     root->getRenderer()->setTextureBackground("assets/images/backgrounds/main_menu.jpg");
     gui.add(root);
 
    
-    auto topBar = bar(root);
+
+    auto topBar = bar();
 
 
-
-    auto sideBar = tgui::Panel::create({sideBarWidth, sideBarHeight});
-    sideBar->setPosition({30, guiHeight - sideBarHeight - 40});
+    auto sideBar = tgui::Panel::create({Constants::sideBarWidth, Constants::sideBarHeight});
+    sideBar->setPosition({30, getGuiHeight() - Constants::sideBarHeight - 40});
     sideBar->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
-    sideBar->getRenderer()->setRoundedBorderRadius(20.0);
+    sideBar->getRenderer()->setRoundedBorderRadius(10.f);
     sideBar->setVisible(true);
     root->add(sideBar);
 
 
-    auto centerPanel = tgui::Panel::create({centerPanelWidth, centerPanelHeight});
+    auto centerPanel = tgui::Panel::create({Constants::centerPanelWidth, Constants::centerPanelHeight});
     centerPanel->setPosition({320, 110});
     centerPanel->getRenderer()->setBackgroundColor(color.bg);
-    centerPanel->getRenderer()->setRoundedBorderRadius(20.0);
+    centerPanel->getRenderer()->setRoundedBorderRadius(10.f);
     centerPanel->setVisible(false);
     root->add(centerPanel);
 
-    auto rightPanel = tgui::Panel::create({rightPanelWidth, rightPanelHeight});
+    auto rightPanel = tgui::Panel::create({Constants::rightPanelWidth, Constants::rightPanelHeight});
     rightPanel->setPosition({1245, 110});
     rightPanel->getRenderer()->setBackgroundColor(color.bg);
-    rightPanel->getRenderer()->setRoundedBorderRadius(20.0);
+    rightPanel->getRenderer()->setRoundedBorderRadius(10.f);
     rightPanel->setVisible(false);
     root->add(rightPanel);
 
@@ -84,8 +101,6 @@ void MainMenu::showMainMenu(){
     title->setTextSize(200);
     root->add(title);
 
-
-    std::cout << "logged_username: '" << logged_username << "'\n";
     
     float username_panel_lenght = 0;
     if (logged_username.length() < 6){
@@ -95,55 +110,69 @@ void MainMenu::showMainMenu(){
         username_panel_lenght = 180;
     }
 
-    auto username_lay = tgui::Panel::create({username_panel_lenght, topBarHeight});
-    username_lay->setPosition({0, 0});
-    username_lay->getRenderer()->setBackgroundColor(color.border);
-    username_lay->getRenderer()->setRoundedBorderRadius(10);
-    topBar->add(username_lay);
+    auto usernameLayer = tgui::Panel::create({username_panel_lenght, Constants::topBarHeight});
+    usernameLayer->setPosition({0, 0});
+    usernameLayer->getRenderer()->setBackgroundColor(color.border);
+    usernameLayer->getRenderer()->setRoundedBorderRadius(10.f);
+    topBar->add(usernameLayer);
 
 
-    auto username_show = tgui::Label::create(logged_username);
-    username_show->setPosition({10,10});
-    username_show->setTextSize(30);
-    username_show->getRenderer()->setTextColor(color.text);
-    username_lay->add(username_show);
+    auto usernameShow = tgui::Label::create(logged_username);
+    usernameShow->setPosition({60,10});
+    usernameShow->setTextSize(30);
+    usernameShow->getRenderer()->setTextColor(color.text);
+    usernameLayer->add(usernameShow);
+
+    auto usernameIcon = tgui::Picture::create("assets/images/login_icon.png");
+    usernameIcon->setPosition({12,14});
+    usernameIcon->setSize({30,30});
+    usernameLayer->add(usernameIcon);
+
+
 
     const int money = Constants::START_PLAYER_MONEY;
 
-    auto logout_panel = tgui::Panel::create({300, 90});
-    logout_panel->setPosition({0, Constants::topBarHeight + 10.f});
-    logout_panel->getRenderer()->setBackgroundColor(color.down);
-    logout_panel->getRenderer()->setRoundedBorderRadius(20.0);
-    root->add(logout_panel);
-    logout_panel->setVisible(false);
+    auto logoutButton = tgui::Button::create("Logout");
+    logoutButton->setPosition({5, Constants::topBarHeight + 10});
+    logoutButton->setSize({264, 36});
+    logoutButton->setTextSize(20);
 
-    auto logout_button = tgui::Button::create("Logout");
-    logout_button->setPosition({18, 42});
-    logout_button->setSize({264, 36});
-    logout_button->setTextSize(20);
-    logout_button->getRenderer()->setTextColor(color.text);
-    logout_button->getRenderer()->setBackgroundColor(color.panel2);
-    logout_button->getRenderer()->setBackgroundColorHover(color.border);
-    logout_panel->add(logout_button);
+    logoutButton->getRenderer()->setTextColor(color.panel2);
+    logoutButton->getRenderer()->setTextColorHover(color.text);
+    logoutButton->getRenderer()->setTextColorDown(color.text);
 
-    bindSoundOnClick(username_lay, [logout_panel]{
-        logout_panel->setVisible(!logout_panel->isVisible());
+    logoutButton->getRenderer()->setBackgroundColor(color.text);
+    logoutButton->getRenderer()->setBackgroundColorHover(color.down);
+    logoutButton->getRenderer()->setBackgroundColorDown(color.down);
+    logoutButton->getRenderer()->setBorders(0);
+    logoutButton->getRenderer()->setRoundedBorderRadius(10.f);
+    logoutButton->setVisible(false);
+    root->add(logoutButton);
+
+    bindSoundOnClick(usernameLayer, [usernameLayer, color, logoutButton]{
+        if (usernameLayer->getRenderer()->getBackgroundColor() == color.border){
+            usernameLayer->getRenderer()->setBackgroundColor(color.down);
+        }
+        else {
+            usernameLayer->getRenderer()->setBackgroundColor(color.border);
+        }
+        
+        logoutButton->setVisible(!logoutButton->isVisible());
     });
 
-    bindSoundOnClick(logout_button, [this, logout_panel]{
-        logout_panel->setVisible(false);
+    bindSoundOnClick(logoutButton, [this]{
         logged_username.clear();
         if (onLogout) {
             onLogout();
         }
     });
 
-    auto money_show = tgui::Label::create("Balance: " + std::to_string(money) + "$" );
-    money_show->getRenderer()->setTextColor(color.text);
-    money_show->getRenderer()->setFont("assets/fonts/Shelten.ttf");
-    money_show->setPosition({220, 16});
-    money_show->setTextSize(20);
-    topBar->add(money_show);
+    auto moneyShow = tgui::Label::create("Balance: " + std::to_string(money) + "$" );
+    moneyShow->getRenderer()->setTextColor(color.text);
+    moneyShow->getRenderer()->setFont("assets/fonts/Shelten.ttf");
+    moneyShow->setPosition({220, 16});
+    moneyShow->setTextSize(20);
+    topBar->add(moneyShow);
 
     auto buttonCampaign = tgui::Button::create("Campaign");
     buttonCampaign->setPosition({25, 45});
@@ -171,36 +200,35 @@ void MainMenu::showMainMenu(){
 
 
 
-    std::vector<tgui::Button::Ptr> buttons;
-    buttons.emplace_back(buttonCampaign);
-    buttons.emplace_back(buttonGameModes);
-    buttons.emplace_back(buttonSettings);
-    buttons.emplace_back(quitButton);
+    std::vector<tgui::Button::Ptr> buttonsMainMenu;
+    buttonsMainMenu.emplace_back(buttonCampaign);
+    buttonsMainMenu.emplace_back(buttonGameModes);
+    buttonsMainMenu.emplace_back(buttonSettings);
+    buttonsMainMenu.emplace_back(quitButton);
 
 
-    for (size_t i = 0; i < buttons.size(); i++){
-        buttons[i]->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
-        buttons[i]->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
-        buttons[i]->getRenderer()->setBackgroundColorDown(tgui::Color::Transparent);
-        buttons[i]->getRenderer()->setBackgroundColorDisabled(tgui::Color::Transparent);
+    for (auto button : buttonsMainMenu){
+        button->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
+        button->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
+        button->getRenderer()->setBackgroundColorDown(tgui::Color::Transparent);
+        button->getRenderer()->setBackgroundColorDisabled(tgui::Color::Transparent);
 
-        buttons[i]->getRenderer()->setTextStyleHover(tgui::TextStyle::Underlined);
+        button->getRenderer()->setTextStyleHover(tgui::TextStyle::Underlined);
 
-        buttons[i]->getRenderer()->setTextColor(color.text);
-        buttons[i]->getRenderer()->setTextColorHover(color.down);
-        buttons[i]->getRenderer()->setTextColorDown(color.down);
-        buttons[i]->getRenderer()->setTextColorDisabled(tgui::Color(160, 150, 130));
+        button->getRenderer()->setTextColor(color.text);
+        button->getRenderer()->setTextColorHover(color.down);
+        button->getRenderer()->setTextColorDown(color.down);
+        button->getRenderer()->setTextColorDisabled(tgui::Color(160, 150, 130));
 
 
-        buttons[i]->getRenderer()->setBorders(0);
+        button->getRenderer()->setBorders(0);
 
-        if(buttons[i] != buttonCampaign){
-            buttons[i]->setSize({240, 48});
+        if(button != buttonCampaign){
+            button->setSize({240, 48});
         }
         else{
-           buttons[i]->setSize({240, 62}); 
+           button->setSize({240, 62}); 
         }
-        buttons[i]->getRenderer()->setRoundedBorderRadius(0);
 
     }
 
@@ -208,106 +236,100 @@ void MainMenu::showMainMenu(){
             //
         });
 
-        bindSoundOnClick(buttonGameModes, [this, color, buttons]{
-            for (size_t i = 0; i < buttons.size(); i++){
-                buttons[i]->setVisible(!(buttons[i]->isVisible()));
+        bindSoundOnClick(buttonGameModes, [this, color, buttonsMainMenu]{
+            for (auto button : buttonsMainMenu){
+                button->setVisible(!(button->isVisible()));
             }
 
             showOverlay();
-            game_menu(color, buttons);
+            game_menu(buttonsMainMenu);
         });
 
 
         bindSoundOnClick(buttonSettings, [this]{
-            //
+            game_settings();
         });
 
 
-        bindSoundOnClick(quitButton, [this, buttons, color] {
-            for (auto x : buttons){
-                x->setVisible( !(x->isVisible()));
+        bindSoundOnClick(quitButton, [this, buttonsMainMenu, color] {
+            for (auto x : buttonsMainMenu){
+                x->setVisible(!(x->isVisible()));
             }
 
             showOverlay();
 
 
-            auto quit_label = tgui::ChildWindow::create("Do you really want to quit ?", tgui::ChildWindow::TitleButton::None);
+            auto quitLabel = tgui::ChildWindow::create("Do you really want to quit ?", tgui::ChildWindow::TitleButton::None);
 
-            quit_label->setPosition({(getGuiWidth() - 420.f) / 2.f, (getGuiHeight() - 190.f) / 2.f});
-            quit_label->setTextSize(20);
-            quit_label->setTitleTextSize(17);
-            quit_label->setSize({420, 190});
-            quit_label->setPositionLocked(true);
-            quit_label->getRenderer()->setBackgroundColor(color.bg);
+            quitLabel->setPosition({(getGuiWidth() - 420.f) / 2.f, (getGuiHeight() - 190.f) / 2.f});
+            quitLabel->setTextSize(20);
+            quitLabel->setTitleTextSize(17);
+            quitLabel->setSize({420, 190});
+            quitLabel->setPositionLocked(true);
+            quitLabel->getRenderer()->setBackgroundColor(color.bg);
+            quitLabel->getRenderer()->setBorderBelowTitleBar(1.00);
 
+            root->add(quitLabel);
 
-            quit_label->getRenderer()->setBorderBelowTitleBar(1.00);
+            auto yesButton = tgui::Button::create("Yes");
+            yesButton->setPosition({45, 60});
 
+            auto noButton = tgui::Button::create("No");
+            noButton->setPosition({235, 60});
 
-   
-        
-            auto yes_button = tgui::Button::create("Yes");
-            auto no_button = tgui::Button::create("No");
+            std::vector<tgui::Button::Ptr> quitButtons;
 
-
-            std::vector<tgui::Button::Ptr> yes_no_buttons;
-
-            yes_no_buttons.emplace_back(yes_button);
-            yes_no_buttons.emplace_back(no_button);
-
+            quitButtons.push_back(yesButton);
+            quitButtons.push_back(noButton);
 
 
+            for (auto button : quitButtons){
+                button->setSize({130, 58});
+                button->getRenderer()->setBackgroundColor(color.panel2);
 
-            for (size_t i = 0; i < yes_no_buttons.size(); i++){
-                yes_no_buttons[i]->setSize({130, 58});
-                yes_no_buttons[i]->getRenderer()->setBackgroundColor(color.panel2);
-                yes_no_buttons[i]->getRenderer()->setBackgroundColorHover(color.panel2);
-
-                if (yes_no_buttons[i] == no_button){
-                    yes_no_buttons[i]->getRenderer()->setBackgroundColorDown(color.down);
+                if (button == noButton){
+                    button->getRenderer()->setBackgroundColorDown(color.down);
+                    button->getRenderer()->setBackgroundColorHover(color.down);
                 }
                 else {
-                    yes_no_buttons[i]->getRenderer()->setBackgroundColorDown(color.yes_quit);
+                    button->getRenderer()->setBackgroundColorDown(color.yes_quit);
+                    button->getRenderer()->setBackgroundColorHover(color.yes_quit);
                 }
 
-                yes_no_buttons[i]->getRenderer()->setBackgroundColorDisabled(color.disabled);
+                button->getRenderer()->setBackgroundColorDisabled(color.disabled);
 
-                yes_no_buttons[i]->getRenderer()->setTextColor(color.text);
-                yes_no_buttons[i]->getRenderer()->setTextColorHover(color.text);
-                yes_no_buttons[i]->getRenderer()->setTextColorDown(color.bg);
+                button->getRenderer()->setTextColor(color.text);
+                button->getRenderer()->setTextColorHover(color.text);
+                button->getRenderer()->setTextColorDown(color.bg);
 
     
-                yes_no_buttons[i]->getRenderer()->setBorders(0);
-                yes_no_buttons[i]->getRenderer()->setRoundedBorderRadius(10);
+                button->getRenderer()->setBorders(0);
+                button->getRenderer()->setRoundedBorderRadius(10.f);
+
+                quitLabel->add(yesButton);
+                quitLabel->add(noButton);
             }
 
-            
-
-            yes_button->setPosition({45, 60});
-            no_button->setPosition({235, 60});
-
-
-            bindSoundOnClick(yes_button, [this]
+            bindSoundOnClick(yesButton, [this]
             {
                 window.close();
             });
 
-            gui.add(quit_label);
-            quit_label->add(yes_button);
-            quit_label->add(no_button);
 
-
-            bindSoundOnClick(no_button, [this, quit_label, buttons]
+            bindSoundOnClick(noButton, [this, quitLabel, buttonsMainMenu]
             {
                 hideOverlay();
-                gui.remove(quit_label);
-                for(auto x : buttons){
-                    x->setVisible(true);
+                root->remove(quitLabel);
+                for(auto button : buttonsMainMenu){
+                    button->setVisible(true);
                 }
             });
 
 
         });
+
+        //prepiš to 
+        
         time_label = tgui::Label::create("");
         time_label->setTextSize(30);
         time_label->setPosition({getGuiWidth() - 125.f, 10});
@@ -319,148 +341,148 @@ void MainMenu::showMainMenu(){
 
    
 
-void MainMenu::game_menu(GuiTheme color, std::vector<tgui::Button::Ptr> buttons){
+void MainMenu::game_menu(std::vector<tgui::Button::Ptr> buttons){
 
-        if (!root) {
-            return;
-        }
 
-        const auto windowSize = gui.getWindow()->getSize();
-        const float guiWidth = static_cast<float>(windowSize.x);
-        const float guiHeight = static_cast<float>(windowSize.y);
+        GuiTheme color;
 
-        constexpr float topBarHeight = 56.f;
-        constexpr float loginPanelWidth = 620.f*1.5;
-        constexpr float loginPanelHeight = 440.f*1.5;
-        constexpr float forgotPanelWidth = 620.f;
-        constexpr float forgotPanelHeight = 350.f;
-        constexpr float signUpPanelWidth = 620.f;
-        constexpr float signUpPanelHeight = 550.f;
 
-        constexpr float sideBarWidth = 280.f;
-        constexpr float sideBarHeight = 360.f;
-        constexpr float centerPanelWidth = 900.f;
-        constexpr float centerPanelHeight = 760.f;
-        constexpr float rightPanelWidth = 420.f;
-        constexpr float rightPanelHeight = 760.f;
+        float startX = (getGuiWidth() - Constants::totalWidth) / 2.f;
+
+
+
+        float gameMenuHeight = Constants::loginPanelHeight * 1.5f;
+
+
+        auto gameMenu = tgui::Panel::create({Constants::totalWidth, gameMenuHeight});
+        gameMenu->setPosition({startX, (getGuiHeight() - gameMenuHeight) / 2.f});
+        gameMenu->getRenderer()->setBackgroundColor(color.centerpanel);
+        gameMenu->getRenderer()->setRoundedBorderRadius(10.f);
         
-
-        constexpr float buttonWidth = 400.f;
-        constexpr float buttonHeight = 200.f;
+        root->add(gameMenu);
 
 
 
-        auto game_menu = tgui::Panel::create({loginPanelWidth, loginPanelHeight});
-        game_menu->setPosition({(guiWidth - loginPanelWidth) / 2.f, (guiHeight - loginPanelHeight) / 2.f});
-        game_menu->getRenderer()->setBackgroundColor(color.bg);
-        game_menu->getRenderer()->setRoundedBorderRadius(20.0);
-        
-        root->add(game_menu);
+        auto gameMenuTitle = tgui::Label::create("Game Modes");
+        gameMenuTitle->setTextSize(45);
+        gameMenuTitle->getRenderer()->setTextColor(color.text);
+        gameMenuTitle->setPosition({(Constants::totalWidth - gameMenuTitle->getSize().x) / 2.f, 20.f});
+        gameMenu->add(gameMenuTitle);
 
 
-        const float gap = 40.f;
-        const float totalWidth = buttonWidth + gap + buttonWidth;
-        const float startX = (loginPanelWidth - totalWidth) / 2.f;
+        auto backToMenu = tgui::Button::create("Back to Main Menu");
+        backToMenu->setTextSize(25);
+        backToMenu->getRenderer()->setTextColor(color.text);
+        backToMenu->setPosition({Constants::gap, 550.f});
 
 
-        auto game_menu_title = tgui::Label::create("Game Modes");
-        game_menu_title->setTextSize(45);
-        game_menu_title->getRenderer()->setTextColor(color.text);
-        game_menu_title->setPosition({(loginPanelWidth - game_menu_title->getSize().x) / 2.f, 20.f});
-        game_menu->add(game_menu_title);
+        auto backIcon = tgui::Picture::create("assets/images/arrow__left.png");
+        backIcon->setSize({70,55});
+        backIcon->setPosition({Constants::gap, 555.f});
+        gameMenu->add(backIcon);
 
 
-
-        auto back_menu_button = tgui::Button::create("Back to Main Menu");
-        back_menu_button->setTextSize(25);
-        back_menu_button->getRenderer()->setTextColor(color.text);
-        back_menu_button->setPosition({startX, 550.f});
-        game_menu->add(back_menu_button);
-
-
-        auto back_icon = tgui::Picture::create("assets/images/arrow_left.png");
-        back_icon->setSize({60,60});
-        back_icon->setPosition({startX + 20,503.f});
-        game_menu->add(back_icon);
-
-
-        bindSoundOnClick(back_menu_button, [game_menu, this, buttons]{
+        bindSoundOnClick(backToMenu, [gameMenu, this, buttons]{
             for(auto x : buttons){
                 x->setVisible(true);
             }
-            root->remove(game_menu);
+            root->remove(gameMenu);
             hideOverlay();
         });
 
 
-        auto texasHoldem = tgui::Button::create("Texas Hold'em");
-        texasHoldem->getRenderer()->setTextColor(color.text);
-        game_menu->add(texasHoldem);
-
-        auto five_card_draw = tgui::Button::create("5-Card draw");
-        five_card_draw->getRenderer()->setTextColor(color.text);
-        game_menu->add(five_card_draw);
-
-        texasHoldem->setPosition({startX,100.f});
-        five_card_draw->setPosition({startX + buttonWidth + gap, 100.f});
+        auto texasHoldemButton = tgui::Button::create("Texas Hold'em");
+        texasHoldemButton->setPosition({Constants::gap,100.f});
 
 
 
-        
-
-        // auto arrow_back = tgui::Picture::create("assets/images/arrow_left.png");
-        // five_card_draw->setSize({100,100});
-
-        // game_menu->add(arrow_back);
+        auto fiveCardDrawButton = tgui::Button::create("5-Card draw");
+        fiveCardDrawButton->setPosition({Constants::buttonWidth + 2 * Constants::gap, 100.f});
 
 
+        std::vector<tgui::Button::Ptr> buttonsGameMode;
 
-        std::vector<tgui::Button::Ptr> game_mode_buttons;
-
-        game_mode_buttons.emplace_back(texasHoldem);
-        game_mode_buttons.emplace_back(five_card_draw);
-        game_mode_buttons.emplace_back(back_menu_button);
+        buttonsGameMode.emplace_back(texasHoldemButton);
+        buttonsGameMode.emplace_back(fiveCardDrawButton);
+        buttonsGameMode.emplace_back(backToMenu);
 
 
-        for(size_t i = 0; i < game_mode_buttons.size(); i++){
-            if (game_mode_buttons[i] != back_menu_button){
-                game_mode_buttons[i]->setTextSize(33);
+        for(auto button : buttonsGameMode){
+            if (button != backToMenu){
+                button->setTextSize(33);
             }
-            if(game_mode_buttons[i] == back_menu_button){
-                game_mode_buttons[i]->setSize({loginPanelWidth - startX * 2, buttonHeight/3});
+            if(button == backToMenu){
+                button->setSize({Constants::totalWidth - 2 * Constants::gap , 70});
             }
             else {
-                game_mode_buttons[i]->setSize({buttonWidth,buttonHeight});
+                button->setSize({Constants::buttonWidth,Constants::buttonHeight});
             }
 
-            game_mode_buttons[i]->getRenderer()->setBackgroundColor(color.panel2);
-            game_mode_buttons[i]->getRenderer()->setBackgroundColorDownHover(color.border);
-            game_mode_buttons[i]->getRenderer()->setBackgroundColorDown(color.border);
-            game_mode_buttons[i]->getRenderer()->setBackgroundColorHover(color.border);
+            button->getRenderer()->setBackgroundColor(color.panel2);
+            button->getRenderer()->setBackgroundColorDownHover(color.down);
+            button->getRenderer()->setBackgroundColorDown(color.down);
+            button->getRenderer()->setBackgroundColorHover(color.down);
 
-            game_mode_buttons[i]->getRenderer()->setTextColor(color.text);
-            game_mode_buttons[i]->getRenderer()->setTextColorDisabled(tgui::Color(160, 150, 130));
-            game_mode_buttons[i]->getRenderer()->setTextColorHover(sf::Color(0,0,0));
-            game_mode_buttons[i]->getRenderer()->setTextColorDown(sf::Color(0,0,0));
-            game_mode_buttons[i]->getRenderer()->setBorders(0);
+            button->getRenderer()->setTextColor(color.text);
+            button->getRenderer()->setTextColorDisabled(color.text);
+            button->getRenderer()->setTextColorHover(color.text);
+            button->getRenderer()->setTextColorDown(sf::Color(0,0,0));
+            button->getRenderer()->setBorders(0);
+
+            gameMenu->add(button);
         }
 
 
-        bindSoundOnClick(texasHoldem, [this]{
+        bindSoundOnClick(texasHoldemButton, [this]{
             if(onGame) onGame();
         });
 
-        bindSoundOnClick(five_card_draw, [this]{
+
+        auto texasHoldemText = tgui::Label::create();
+        texasHoldemText->setPosition(Constants::gap + 10, 200);
+        texasHoldemText->setTextSize(20);
+        texasHoldemText->setText("Two cards\nCommunity board\nBest five-card hand.");
+        texasHoldemText->setVisible(false);
+        gameMenu->add(texasHoldemText);
+        texasHoldemText->getRenderer()->setTextColor(color.text);
+
+        texasHoldemButton->onMouseEnter([texasHoldemButton,texasHoldemText, color]{
+            texasHoldemButton->setTextPosition({200,50},{0.5f,0.5f});
+            texasHoldemButton->getRenderer()->setTextColorDown(sf::Color(0,0,0));
+            texasHoldemText->setVisible(true);
+        });
+
+        texasHoldemButton->onMousePress([texasHoldemText]{
+            texasHoldemText->getRenderer()->setTextColor(sf::Color(0,0,0));
+        });
+
+        texasHoldemButton->onMouseRelease([texasHoldemText, color]{
+            texasHoldemText->getRenderer()->setTextColor(color.text);
+        });
+
+        texasHoldemButton->onMouseLeave([texasHoldemButton,texasHoldemText, color]{
+            texasHoldemButton->setTextPosition({200,100},{0.5f,0.5f});
+            texasHoldemText->getRenderer()->setTextColor(color.text);
+            texasHoldemText->setVisible(false);
+        });
+
+
+
+
+        bindSoundOnClick(fiveCardDrawButton, [this]{
             if(onGame) onGame();
         });
 
-        bindSoundOnClick(back_icon, [game_menu, this, buttons]{
+        bindSoundOnClick(backIcon, [gameMenu, this, buttons]{
             for(auto x : buttons){
                 x->setVisible(true);
             }
-            root->remove(game_menu);
+            root->remove(gameMenu);
             hideOverlay();
         });
+
+
         
 
     }
+

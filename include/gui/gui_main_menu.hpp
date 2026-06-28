@@ -26,5 +26,6 @@ class MainMenu : public Gui_base {
         std::string logged_username;
 
         void showMainMenu();
-        void game_menu(GuiTheme color, std::vector<tgui::Button::Ptr> buttons);
+        void game_menu(std::vector<tgui::Button::Ptr> buttons);
+        void game_settings();
 };

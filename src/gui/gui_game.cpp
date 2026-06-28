@@ -106,6 +106,97 @@ void Game_GUI::refreshHud() {
     }
 }
 
+
+void Game_GUI::showEscapeMenu(){
+
+
+    if (escapeMenu){
+        return;
+    }
+    
+    opened = true;
+
+    showOverlay();
+    escapeMenu = tgui::Panel::create({Constants::signUpPanelWidth, Constants::signUpPanelHeight});
+    escapeMenu->setPosition({(getGuiWidth() - Constants::signUpPanelHeight) / 2.f, (getGuiHeight() - Constants::signUpPanelHeight) / 2.f});
+    escapeMenu->getRenderer()->setBackgroundColor(sf::Color(45, 35, 28, 230));
+    escapeMenu->getRenderer()->setRoundedBorderRadius(20.0);
+
+    root->add(escapeMenu);
+
+    GuiTheme color;
+
+    auto escapeMenuTitle = tgui::Label::create("Paused game");
+    escapeMenuTitle->setPosition({70,20});
+    escapeMenuTitle->setTextSize(28);
+    escapeMenuTitle->setSize({500, 60});
+    escapeMenuTitle->getRenderer()->setBackgroundColor(sf::Color(0,0,0,100));
+    escapeMenuTitle->getRenderer()->setTextColor(color.text);
+
+    escapeMenu->add(escapeMenuTitle);
+
+
+    std::vector<tgui::Button::Ptr> escapeButtons;
+
+    auto backToGameButton = tgui::Button::create("Back to Game");
+    backToGameButton->setPosition({70, 100});
+
+    auto restartGameButton = tgui::Button::create("Restart game");
+    restartGameButton->setPosition({70, 200});
+
+
+    auto backToMenuButton = tgui::Button::create({"Back to Menu"});
+    backToMenuButton->setPosition({70, 300});
+
+
+    auto quitGameButton = tgui::Button::create({"Exit Game"});
+    quitGameButton->setPosition({70, 400});
+
+    escapeButtons.push_back(backToGameButton);
+    escapeButtons.push_back(restartGameButton);
+    escapeButtons.push_back(backToMenuButton);
+    escapeButtons.push_back(quitGameButton);
+
+    
+    for (auto button : escapeButtons){
+        
+        button->setTextSize(28);
+        button->setSize({500, 60});
+        button->getRenderer()->setBackgroundColor(sf::Color(0,0,0,100));
+        button->getRenderer()->setTextColor(color.text);
+        button->getRenderer()->setTextColorHover(color.accent);
+        button->getRenderer()->setBackgroundColorDown(color.down);
+        button->getRenderer()->setBackgroundColorHover(color.bg);
+        button->getRenderer()->setBorders(0);
+
+        escapeMenu->add(button);
+    }
+
+
+    bindSoundOnClick(backToGameButton, [this]{
+        hideOverlay();
+        root->remove(escapeMenu);
+        escapeMenu = nullptr;
+    });
+
+    bindSoundOnClick(backToMenuButton, [this]{
+        hideOverlay();
+        root->remove(escapeMenu);
+        escapeMenu = nullptr;
+        onExit();
+    });
+
+    bindSoundOnClick(quitGameButton, [this]{
+        hideOverlay();
+        root->remove(escapeMenu);
+        escapeMenu = nullptr;
+        window.close();
+    });
+
+}
+
+
+
 void Game_GUI::game() {
     GuiTheme color;
 
@@ -120,7 +211,7 @@ void Game_GUI::game() {
     root->getRenderer()->setTextureBackground("assets/images/backgrounds/game_background.png");
     gui.add(root);
 
-    auto topBar = bar(root);
+    auto topBar = bar();
     volume(topBar, root, color, music);
 
     const float guiW = getGuiWidth();
@@ -198,19 +289,25 @@ void Game_GUI::game() {
         constexpr float btnW = 124.f;
         constexpr float btnH = 48.f;
         constexpr float btnGap = 12.f;
-        constexpr float startX = 270.f;
+        constexpr float startX = 50.f;
+        const float y = controlsY - (btnH + btnGap);
 
         actionStatus = tgui::Label::create("Choose action");
         
         actionStatus->setTextSize(20);
         actionStatus->getRenderer()->setTextColor(color.text);
-        actionStatus->setPosition({startX, controlsY - 34.f});
+        actionStatus->setPosition({startX, y + 80});
         root->add(actionStatus);
 
         auto placeActionButton = [&](const std::string& text, float x, ActionType action, std::string statusMsg, int raiseAmount = 0) {
             
             auto button = tgui::Button::create(text);
-            button->setPosition({x, controlsY});
+            if (action == ActionType::FOLD || action == ActionType::RAISE || action == ActionType::ALLIN){
+                button->setPosition({x, controlsY});
+            }
+            else {
+                button->setPosition({x, y});
+            }
             button->setSize({btnW, btnH});
             button->setTextSize(20);
             button->getRenderer()->setTextColor(color.text);
@@ -227,12 +324,15 @@ void Game_GUI::game() {
                 actionStatus->setText(msg);
                 refreshHud();
             });
+
+            // if ()
         };
 
-        placeActionButton("Fold",startX,ActionType::FOLD,  "Action: Fold");
-        placeActionButton("Check",startX + (btnW + btnGap) * 1.f,  ActionType::CHECK, "Action: Check");
-        placeActionButton("Call",startX + (btnW + btnGap) * 2.f,  ActionType::CALL,  "Action: Call");
-        placeActionButton("Raise +10",startX + (btnW + btnGap) * 3.f,  ActionType::RAISE, "Action: Raise", 10);
-        placeActionButton("All In",startX + (btnW + btnGap) * 4.f,  ActionType::ALLIN, "Action: All In");
+        placeActionButton("Fold",startX ,ActionType::FOLD,  "Action: Fold");
+        placeActionButton("Raise +10",startX + (btnW + btnGap) * 1.f,  ActionType::RAISE, "Action: Raise", 10);
+        placeActionButton("All In",startX + (btnW + btnGap) * 2.f,  ActionType::ALLIN, "Action: All In");
+
+        placeActionButton("Check",startX,  ActionType::CHECK, "Action: Check");
+        placeActionButton("Call",startX + (btnW + btnGap) * 1.f,  ActionType::CALL,  "Action: Call");
     }
 }

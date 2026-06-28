@@ -16,10 +16,16 @@ class Login : public Gui_base {
         tgui::Label::Ptr time_label;
         std::string last_time_text;
         sqlite3* db = nullptr;
+        tgui::Label::Ptr wrongLabel;
+        tgui::Panel::Ptr centerPanel;
 
+    
     public:
         Login(tgui::Gui& gui, sf::Music& music);
         std::function<void(std::string)> onLogin;
         std::string logged_username;
         void login_screen();
+        tgui::Panel::Ptr makePanel(float x, float y);
+
+
 };

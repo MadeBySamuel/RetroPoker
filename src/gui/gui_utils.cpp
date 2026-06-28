@@ -4,7 +4,7 @@
 
 
 
-tgui::Panel::Ptr Gui_base::bar(tgui::Panel::Ptr root){
+tgui::Panel::Ptr Gui_base::bar(){
     GuiTheme color;
 
     auto topBar = tgui::Panel::create({getGuiWidth(), Constants::topBarHeight});
@@ -20,6 +20,38 @@ tgui::Panel::Ptr Gui_base::bar(tgui::Panel::Ptr root){
 
     return topBar;
 }
+
+tgui::CheckBox::Ptr Gui_base::makeCheckBox(tgui::Panel::Ptr centerPanel, float x, float y){
+
+        GuiTheme color;
+        
+        auto checkBox = tgui::CheckBox::create();
+        checkBox->setPosition({x,y});
+        checkBox->setSize({20, 20});
+        checkBox->setText("");
+        checkBox->setTextSize(20);
+        centerPanel->add(checkBox);
+
+
+        checkBox->getRenderer()->setTextColor(color.text);
+        checkBox->getRenderer()->setTextColorHover(color.down);
+
+        checkBox->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
+        checkBox->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
+        checkBox->getRenderer()->setBackgroundColorDisabled(tgui::Color::Transparent);
+
+        checkBox->getRenderer()->setBorderColor(color.text);
+        checkBox->getRenderer()->setBorderColorHover(color.down);
+        checkBox->getRenderer()->setBorderColorFocused(color.text);
+
+        checkBox->getRenderer()->setCheckColor(color.text);
+        checkBox->getRenderer()->setCheckColorHover(color.down);
+
+
+        return checkBox;
+}
+
+
 
 tgui::Panel::Ptr Gui_base::overlay() {
         auto overlay = tgui::Panel::create({getGuiWidth(), getGuiHeight()});
@@ -43,59 +75,6 @@ void Gui_base::showOverlay() {
         hideOverlay();
         modalOverlay = overlay();
         root->add(modalOverlay);
-
-}
-
-
-void Gui_base::showEscapeMenu(){
-
-    showOverlay();
-
-    auto escapeMenu = tgui::Panel::create({Constants::signUpPanelWidth, Constants::signUpPanelHeight});
-    escapeMenu->setPosition({(getGuiWidth() - Constants::signUpPanelHeight) / 2.f, (getGuiHeight() - Constants::signUpPanelHeight) / 2.f});
-    escapeMenu->getRenderer()->setBackgroundColor(sf::Color(45, 35, 28, 230));
-    escapeMenu->getRenderer()->setRoundedBorderRadius(20.0);
-
-    gui.add(escapeMenu);
-
-    GuiTheme color;
-
-    std::vector<tgui::Button::Ptr> escapeButtons;
-
-    auto backToGameButton = tgui::Button::create("Back to Game");
-    backToGameButton->setPosition({70, 100});
-
-
-    auto restartGameButton = tgui::Button::create("Restart game");
-    restartGameButton->setPosition({70, 200});
-
-
-    auto backToMenuButton = tgui::Button::create({"Back to Menu"});
-    backToMenuButton->setPosition({70, 300});
-
-
-    auto quitGameButton = tgui::Button::create({"Exit Game"});
-    quitGameButton->setPosition({70, 400});
-
-    escapeButtons.push_back(backToGameButton);
-    escapeButtons.push_back(restartGameButton);
-    escapeButtons.push_back(backToMenuButton);
-    escapeButtons.push_back(quitGameButton);
-
-    
-    for (size_t i = 0; i < escapeButtons.size(); i++){
-        
-        escapeButtons[i]->setTextSize(28);
-        escapeButtons[i]->setSize({500, 60});
-        escapeButtons[i]->getRenderer()->setBackgroundColor(sf::Color(0,0,0,100));
-        escapeButtons[i]->getRenderer()->setTextColor(color.text);
-        escapeButtons[i]->getRenderer()->setTextColorHover(color.accent);
-        escapeButtons[i]->getRenderer()->setBackgroundColorDownHover(color.bg);
-        escapeButtons[i]->getRenderer()->setBackgroundColorDown(color.bg);
-        escapeButtons[i]->getRenderer()->setBackgroundColorHover(color.bg);
-
-        escapeMenu->add(escapeButtons[i]);
-    }
 
 }
 

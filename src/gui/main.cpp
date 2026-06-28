@@ -52,8 +52,6 @@ int main(){
 
     music.play();
     music.setLooping(true);
-
-
     music.setVolume(0);
     
 
@@ -116,10 +114,11 @@ int main(){
                 if(event->is<sf::Event::Closed>()){
                     window.close();
                 }
+
                 if (const auto* key = event->getIf<sf::Event::KeyPressed>()){
                     if (key->code == sf::Keyboard::Key::Escape){
                         if(currentPointer == &game){
-                            currentPointer->showEscapeMenu();
+                            game.showEscapeMenu(); 
                         }
                 }
                 }
