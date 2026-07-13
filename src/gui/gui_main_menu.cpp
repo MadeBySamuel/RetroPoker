@@ -16,13 +16,16 @@ MainMenu::MainMenu(tgui::Gui& gui, sf::RenderWindow& window, sf::Music& music)
 
 
 
-void MainMenu::game_settings(){
+void MainMenu::game_settings(std::vector<tgui::Button::Ptr> buttons){
 
     showOverlay();
     GuiTheme color;
-    
-    auto gameSettingsPanel = tgui::Panel::create({Constants::totalWidth, Constants::loginPanelHeight});
-    gameSettingsPanel->setPosition((getGuiWidth() - Constants::totalWidth) / 2.f, (getGuiHeight() - Constants::loginPanelHeight) / 2.f);
+
+
+    float gap = 12.f;
+
+    auto gameSettingsPanel = tgui::Panel::create({Constants::loginPanelWidth, Constants::loginPanelHeight * 2 });
+    gameSettingsPanel->setPosition((getGuiWidth() - Constants::loginPanelWidth) / 2.f, (getGuiHeight() - Constants::loginPanelHeight * 2) / 2.f);
     gameSettingsPanel->getRenderer()->setBackgroundColor(color.centerpanel);
     gameSettingsPanel->getRenderer()->setRoundedBorderRadius(10.f);
 
@@ -30,17 +33,70 @@ void MainMenu::game_settings(){
 
 
     auto settingsTitle = tgui::Label::create("Settings");
+
     settingsTitle->setTextSize(45);
-    settingsTitle->setPosition((Constants::totalWidth - settingsTitle->getSize().x) / 2.f, 20.f);
+    settingsTitle->setPosition((Constants::loginPanelWidth - settingsTitle->getSize().x) / 2.f, 20.f);
     settingsTitle->getRenderer()->setTextColor(color.text);
     gameSettingsPanel->add(settingsTitle);
 
+    float titleH = settingsTitle->getSize().y;
+    float titleW = settingsTitle->getSize().x;
 
+
+    auto audioTitle = tgui::Label::create("Audio");
+    audioTitle->setTextSize(32);
+    audioTitle->setPosition(20.f, titleH + 20.f);
+    audioTitle->getRenderer()->setTextColor(color.text);
+    gameSettingsPanel->add(audioTitle);
+
+    float audioH = audioTitle->getSize().y; 
+    float audioW = audioTitle->getSize().x;
+
+    auto musicTitle = tgui::Label::create("Music");
+    musicTitle->setTextSize(20);
+    musicTitle->setPosition(25.f, titleH + audioH + 2 * gap + 10);
+    musicTitle->getRenderer()->setTextColor(color.text);
+    gameSettingsPanel->add(musicTitle);
+
+
+    float music_y = musicTitle->getSize().y;
+
+    settingsMusicSlider = makeSlider(gameSettingsPanel, audioW + 2 * gap, titleH + audioH + 2 * gap + 20, Constants::loginPanelWidth - titleW, 10, music.getVolume());
+
+    settingsMusicSlider->onValueChange([this](float value){
+        music.setVolume(value);
+        if (volumeSlider) volumeSlider->setValue(value);
+    });
+
+    float effects_y = titleH + audioH + 2 * gap + 10;
+
+    auto effectsTitle = tgui::Label::create("Effects");
+    effectsTitle->setTextSize(20);
+    effectsTitle->setPosition(25.f, effects_y + music_y + gap);
+    effectsTitle->getRenderer()->setTextColor(color.text);
+    gameSettingsPanel->add(effectsTitle);
 
     auto soundEffectCheckBox = tgui::CheckBox::create();
 
+    auto effectsSlider = makeSlider(gameSettingsPanel,audioW + 2 * gap, effects_y + music_y + gap + 10.f, Constants::loginPanelWidth - titleW, 10, clickSound.getVolume());
 
 
+    effectsSlider->onValueChange([this](float value){
+        clickSound.setVolume(value);
+        clickSound.play();
+    });
+
+    auto backToMenu = makeBackToMenu(gap, Constants::loginPanelHeight * 2 - gap - 70 ,Constants::loginPanelWidth - Constants::gap, 70, gameSettingsPanel);
+
+
+    bindSoundOnClick(backToMenu, [gameSettingsPanel, this, buttons]{
+    for(auto x : buttons){
+        x->setVisible(true);
+    }
+    root->remove(gameSettingsPanel);
+    settingsMusicSlider = nullptr;
+    hideOverlay();
+    });
 
 }
 
@@ -176,29 +232,15 @@ void MainMenu::showMainMenu(){
 
     auto buttonCampaign = tgui::Button::create("Campaign");
     buttonCampaign->setPosition({25, 45});
-    buttonCampaign->setTextSize(33);
-    sideBar->add(buttonCampaign);
-
-
-
 
     auto buttonGameModes = tgui::Button::create("Game Modes");
     buttonGameModes->setPosition({25, 120});
-    buttonGameModes->setTextSize(30);
-    sideBar->add(buttonGameModes);
 
     auto buttonSettings = tgui::Button::create("Settings");
     buttonSettings->setPosition({25, 195});
-    buttonSettings->setTextSize(30);
-    sideBar->add(buttonSettings);
 
     auto quitButton = tgui::Button::create("Quit");
     quitButton->setPosition({25, 270});
-    quitButton->setTextSize(30);
-    sideBar->add(quitButton);
-
-
-
 
     std::vector<tgui::Button::Ptr> buttonsMainMenu;
     buttonsMainMenu.emplace_back(buttonCampaign);
@@ -223,6 +265,14 @@ void MainMenu::showMainMenu(){
 
         button->getRenderer()->setBorders(0);
 
+        if (button == buttonCampaign){
+            button->setTextSize(33);
+        }
+        else {
+            button->setTextSize(30);
+        }
+
+
         if(button != buttonCampaign){
             button->setSize({240, 48});
         }
@@ -230,6 +280,7 @@ void MainMenu::showMainMenu(){
            button->setSize({240, 62}); 
         }
 
+        sideBar->add(button);
     }
 
         bindSoundOnClick(buttonCampaign, [this]{
@@ -246,8 +297,8 @@ void MainMenu::showMainMenu(){
         });
 
 
-        bindSoundOnClick(buttonSettings, [this]{
-            game_settings();
+        bindSoundOnClick(buttonSettings, [this, buttonsMainMenu]{
+            game_settings(buttonsMainMenu);
         });
 
 
@@ -258,57 +309,14 @@ void MainMenu::showMainMenu(){
 
             showOverlay();
 
+            tgui::ChildWindow::Ptr quitLabel = makeQuitLabel();
+            std::vector<tgui::Button::Ptr> quitButtons = makeQuitButtons(quitLabel);
 
-            auto quitLabel = tgui::ChildWindow::create("Do you really want to quit ?", tgui::ChildWindow::TitleButton::None);
+            tgui::Button::Ptr yesButton = quitButtons.at(0);
+            tgui::Button::Ptr noButton = quitButtons.at(1);
 
-            quitLabel->setPosition({(getGuiWidth() - 420.f) / 2.f, (getGuiHeight() - 190.f) / 2.f});
-            quitLabel->setTextSize(20);
-            quitLabel->setTitleTextSize(17);
-            quitLabel->setSize({420, 190});
-            quitLabel->setPositionLocked(true);
-            quitLabel->getRenderer()->setBackgroundColor(color.bg);
-            quitLabel->getRenderer()->setBorderBelowTitleBar(1.00);
+            
 
-            root->add(quitLabel);
-
-            auto yesButton = tgui::Button::create("Yes");
-            yesButton->setPosition({45, 60});
-
-            auto noButton = tgui::Button::create("No");
-            noButton->setPosition({235, 60});
-
-            std::vector<tgui::Button::Ptr> quitButtons;
-
-            quitButtons.push_back(yesButton);
-            quitButtons.push_back(noButton);
-
-
-            for (auto button : quitButtons){
-                button->setSize({130, 58});
-                button->getRenderer()->setBackgroundColor(color.panel2);
-
-                if (button == noButton){
-                    button->getRenderer()->setBackgroundColorDown(color.down);
-                    button->getRenderer()->setBackgroundColorHover(color.down);
-                }
-                else {
-                    button->getRenderer()->setBackgroundColorDown(color.yes_quit);
-                    button->getRenderer()->setBackgroundColorHover(color.yes_quit);
-                }
-
-                button->getRenderer()->setBackgroundColorDisabled(color.disabled);
-
-                button->getRenderer()->setTextColor(color.text);
-                button->getRenderer()->setTextColorHover(color.text);
-                button->getRenderer()->setTextColorDown(color.bg);
-
-    
-                button->getRenderer()->setBorders(0);
-                button->getRenderer()->setRoundedBorderRadius(10.f);
-
-                quitLabel->add(yesButton);
-                quitLabel->add(noButton);
-            }
 
             bindSoundOnClick(yesButton, [this]
             {
@@ -370,10 +378,8 @@ void MainMenu::game_menu(std::vector<tgui::Button::Ptr> buttons){
         gameMenu->add(gameMenuTitle);
 
 
-        auto backToMenu = tgui::Button::create("Back to Main Menu");
-        backToMenu->setTextSize(25);
-        backToMenu->getRenderer()->setTextColor(color.text);
-        backToMenu->setPosition({Constants::gap, 550.f});
+        auto backToMenu = makeBackToMenu(Constants::gap, 550.f, Constants::totalWidth - 2 * Constants::gap , 70, gameMenu);
+
 
 
         auto backIcon = tgui::Picture::create("assets/images/arrow__left.png");
@@ -410,13 +416,10 @@ void MainMenu::game_menu(std::vector<tgui::Button::Ptr> buttons){
         for(auto button : buttonsGameMode){
             if (button != backToMenu){
                 button->setTextSize(33);
-            }
-            if(button == backToMenu){
-                button->setSize({Constants::totalWidth - 2 * Constants::gap , 70});
-            }
-            else {
                 button->setSize({Constants::buttonWidth,Constants::buttonHeight});
+                gameMenu->add(button);
             }
+        
 
             button->getRenderer()->setBackgroundColor(color.panel2);
             button->getRenderer()->setBackgroundColorDownHover(color.down);
@@ -429,7 +432,6 @@ void MainMenu::game_menu(std::vector<tgui::Button::Ptr> buttons){
             button->getRenderer()->setTextColorDown(sf::Color(0,0,0));
             button->getRenderer()->setBorders(0);
 
-            gameMenu->add(button);
         }
 
 

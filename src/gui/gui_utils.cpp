@@ -52,6 +52,70 @@ tgui::CheckBox::Ptr Gui_base::makeCheckBox(tgui::Panel::Ptr centerPanel, float x
 }
 
 
+std::vector<tgui::Button::Ptr> Gui_base::makeQuitButtons(tgui::ChildWindow::Ptr quitLabel){
+
+    GuiTheme color;
+
+    std::vector<tgui::Button::Ptr> quitButtons;
+
+    auto yesButton = tgui::Button::create("Yes");
+    yesButton->setPosition({235, 60});
+
+    auto noButton = tgui::Button::create("No");
+    noButton->setPosition({45, 60});
+    
+    quitButtons.push_back(yesButton);
+    quitButtons.push_back(noButton);
+
+    for (auto button : quitButtons){
+
+        button->setSize({130, 58});
+        button->getRenderer()->setBackgroundColor(color.panel2);
+
+        if (button == noButton){
+            button->getRenderer()->setBackgroundColorDown(color.down);
+            button->getRenderer()->setBackgroundColorHover(color.down);
+        }
+        else {
+            button->getRenderer()->setBackgroundColorDown(color.yes_quit);
+            button->getRenderer()->setBackgroundColorHover(color.yes_quit);
+        }
+
+        button->getRenderer()->setBackgroundColorDisabled(color.disabled);
+
+        button->getRenderer()->setTextColor(color.text);
+        button->getRenderer()->setTextColorHover(color.text);
+        button->getRenderer()->setTextColorDown(color.bg);
+
+        button->getRenderer()->setBorders(0);
+        button->getRenderer()->setRoundedBorderRadius(10.f);
+        
+        quitLabel->add(button);
+
+    }
+
+    return quitButtons;
+
+}
+
+tgui::ChildWindow::Ptr Gui_base::makeQuitLabel(){
+    GuiTheme color;
+    auto quitLabel = tgui::ChildWindow::create("Do you really want to quit ?", tgui::ChildWindow::TitleButton::None);
+    quitLabel->setPosition({(getGuiWidth() - 420.f) / 2.f, (getGuiHeight() - 190.f) / 2.f});
+    quitLabel->setTextSize(20);
+    quitLabel->setTitleTextSize(17);
+    quitLabel->setSize({420, 190});
+    quitLabel->setPositionLocked(true);
+    quitLabel->getRenderer()->setBackgroundColor(color.bg);
+    quitLabel->getRenderer()->setBorderBelowTitleBar(1.00);
+
+    root->add(quitLabel);
+    
+    return quitLabel;
+
+}      
+
+
 
 tgui::Panel::Ptr Gui_base::overlay() {
         auto overlay = tgui::Panel::create({getGuiWidth(), getGuiHeight()});
@@ -98,70 +162,114 @@ void Gui_base::update_time(){
             last_time_text = currentTimeText;
         }
 }
+tgui::Button::Ptr Gui_base::makeBackToMenu(float pos_x, float pos_y, float size_x, float size_y, tgui::Panel::Ptr panel){
+
+    GuiTheme color;
+
+    auto backToMenu = tgui::Button::create("Back to Main Menu");
+    backToMenu->setTextSize(25);
+    backToMenu->getRenderer()->setTextColor(color.text);
+    backToMenu->setPosition({pos_x, pos_y});
+    backToMenu->setSize({size_x, size_y});
+
+    backToMenu->getRenderer()->setBackgroundColor(color.panel2);
+    backToMenu->getRenderer()->setBackgroundColorDownHover(color.down);
+    backToMenu->getRenderer()->setBackgroundColorDown(color.down);
+    backToMenu->getRenderer()->setBackgroundColorHover(color.down);
+    backToMenu->getRenderer()->setTextColor(color.text);
+    backToMenu->getRenderer()->setTextColorDisabled(color.text);
+    backToMenu->getRenderer()->setTextColorHover(color.text);
+    backToMenu->getRenderer()->setTextColorDown(sf::Color(0,0,0));
+    backToMenu->getRenderer()->setBorders(0);
+
+    panel->add(backToMenu);
+    
+    
+    return backToMenu;
+
+}
+
+
+
+tgui::Slider::Ptr Gui_base::makeSlider(tgui::Panel::Ptr panel, float pos_x, float pos_y, float size_x, float size_y, float startValue) {
+
+        GuiTheme color;
+
+        auto slider = tgui::Slider::create();
+        slider->setPosition({pos_x, pos_y});
+        slider->setMinimum(0);
+        slider->setMaximum(100);
+        slider->setValue(startValue);
+        slider->setSize({size_x, size_y});
+
+        slider->getRenderer()->setThumbColor(color.text);
+        slider->getRenderer()->setTrackColor(color.text);
+
+        slider->getRenderer()->setThumbColorHover(color.down);
+        slider->getRenderer()->setTrackColorHover(color.text);
+
+        panel->add(slider);
+        
+
+        return slider;
+}
 
 
 void Gui_base::volume(tgui::Panel::Ptr topBar, tgui::Panel::Ptr root, GuiTheme color, sf::Music &music){
-    auto volume_icon = tgui::Picture::create(tgui::Texture("assets/images/volume/volume_muted.png", {}, {}, true));
-        volume_icon->setPosition({getGuiWidth() - 200.f, 12});
-        volume_icon->setSize({40, 31});
-        topBar->add(volume_icon);
+    auto volumeIcon = tgui::Picture::create(tgui::Texture("assets/images/volume/volume_muted.png", {}, {}, true));
+        volumeIcon->setPosition({getGuiWidth() - 200.f, 12});
+        volumeIcon->setSize({40, 31});
+        topBar->add(volumeIcon);
         
-        auto volume_panel = tgui::Panel::create({300, 90});
-        volume_panel->setPosition({getGuiWidth() - 330.f, Constants::topBarHeight + 10.f});
-        volume_panel->getRenderer()->setBackgroundColor(color.down);
-        volume_panel->getRenderer()->setRoundedBorderRadius(20.0);
-        root->add(volume_panel);
-        volume_panel->setVisible(false);
+        auto volumePanel = tgui::Panel::create({300, 90});
+        volumePanel->setPosition({getGuiWidth() - 330.f, Constants::topBarHeight + 10.f});
+        volumePanel->getRenderer()->setBackgroundColor(color.down);
+        volumePanel->getRenderer()->setRoundedBorderRadius(20.0);
+        root->add(volumePanel);
+        volumePanel->setVisible(false);
 
 
-        auto volume_label = tgui::Label::create("Sound");
-        volume_label->setPosition({18, 12});
-        volume_label->getRenderer()->setTextColor(color.text);
-        volume_label->setTextSize(20);
-        volume_panel->add(volume_label);
+        auto volumeLabel = tgui::Label::create("Sound");
+        volumeLabel->setPosition({18, 12});
+        volumeLabel->getRenderer()->setTextColor(color.text);
+        volumeLabel->setTextSize(20);
+        volumePanel->add(volumeLabel);
 
+        volumeSlider = makeSlider(volumePanel, 18, 52, 264, 12, music.getVolume());
 
-        auto volume_slider = tgui::Slider::create();
-        volume_slider->setPosition({18, 52});
-        volume_slider->setMinimum(0);
-        volume_slider->setMaximum(100);
-        volume_slider->setValue(0);
-        volume_slider->setSize({264, 12});
-
-        volume_slider->getRenderer()->setThumbColor(color.text);
-        volume_slider->getRenderer()->setTrackColor(color.text);
-
-        volume_slider->getRenderer()->setThumbColorHover(color.down);
-        volume_slider->getRenderer()->setTrackColorHover(color.text);
-
-        volume_panel->add(volume_slider);
-
-
-        volume_slider->onValueChange([volume_icon, &music](float value){
-            if (value == 0) volume_icon->getRenderer()->setTexture("assets/images/volume/volume_muted_click.png");
-            else if (value > 0 && value < 30) volume_icon->getRenderer()->setTexture("assets/images/volume/volume_first_click.png");
-            else if (value >= 30 && value < 60) volume_icon->getRenderer()->setTexture("assets/images/volume/volume_second_click.png");
-            else volume_icon->getRenderer()->setTexture("assets/images/volume/volume_full_click.png");
+        volumeSlider->onValueChange([this, volumeIcon, volumePanel, &music](float value){
+            if (volumePanel->isVisible()){
+                if (value == 0) volumeIcon->getRenderer()->setTexture("assets/images/volume/volume_muted_click.png");
+                else if (value > 0 && value < 30) volumeIcon->getRenderer()->setTexture("assets/images/volume/volume_first_click.png");
+                else if (value >= 30 && value < 60) volumeIcon->getRenderer()->setTexture("assets/images/volume/volume_second_click.png");
+                else volumeIcon->getRenderer()->setTexture("assets/images/volume/volume_full_click.png");
+            }
+            else {
+                if(volumeSlider->getValue() == 0) volumeIcon->getRenderer()->setTexture("assets/images/volume/volume_muted.png");
+                else if (volumeSlider->getValue() > 0 && volumeSlider->getValue() < 30) volumeIcon->getRenderer()->setTexture("assets/images/volume/volume_first.png");
+                else if (volumeSlider->getValue() >= 30 && volumeSlider->getValue() < 60) volumeIcon->getRenderer()->setTexture("assets/images/volume/volume_second.png");
+                else volumeIcon->getRenderer()->setTexture("assets/images/volume/volume_full.png");
+            }
+            musicVolume = value;
             music.setVolume(value);
+            if (settingsMusicSlider) settingsMusicSlider->setValue(value);
         });
     
-
-
-        volume_icon->onClick([this, volume_panel,volume_icon, volume_slider]{
+        volumeIcon->onClick([this, volumePanel,volumeIcon]{
         play_button();
-        volume_panel->setVisible(!volume_panel->isVisible());
+        volumePanel->setVisible(!volumePanel->isVisible());
 
-        if (volume_panel->isVisible()){
-            if(volume_slider->getValue() == 0) volume_icon->getRenderer()->setTexture("assets/images/volume/volume_muted_click.png");
-            else if (volume_slider->getValue() > 0 && volume_slider->getValue() < 30) volume_icon->getRenderer()->setTexture("assets/images/volume/volume_first_click.png");
-            else if (volume_slider->getValue() >= 30 && volume_slider->getValue() < 60) volume_icon->getRenderer()->setTexture("assets/images/volume/volume_second_click.png");
-            else volume_icon->getRenderer()->setTexture("assets/images/volume/volume_full_click.png");
+        if (volumePanel->isVisible()){
+            if(volumeSlider->getValue() == 0) volumeIcon->getRenderer()->setTexture("assets/images/volume/volume_muted_click.png");
+            else if (volumeSlider->getValue() > 0 && volumeSlider->getValue() < 30) volumeIcon->getRenderer()->setTexture("assets/images/volume/volume_first_click.png");
+            else if (volumeSlider->getValue() >= 30 && volumeSlider->getValue() < 60) volumeIcon->getRenderer()->setTexture("assets/images/volume/volume_second_click.png");
+            else volumeIcon->getRenderer()->setTexture("assets/images/volume/volume_full_click.png");
         }
         else {
-            if(volume_slider->getValue() == 0) volume_icon->getRenderer()->setTexture("assets/images/volume/volume_muted.png");
-            else if (volume_slider->getValue() > 0 && volume_slider->getValue() < 30) volume_icon->getRenderer()->setTexture("assets/images/volume/volume_first.png");
-            else if (volume_slider->getValue() >= 30 && volume_slider->getValue() < 60) volume_icon->getRenderer()->setTexture("assets/images/volume/volume_second.png");
-            else volume_icon->getRenderer()->setTexture("assets/images/volume/volume_full.png");
+            if(volumeSlider->getValue() == 0) volumeIcon->getRenderer()->setTexture("assets/images/volume/volume_muted.png");
+            else if (volumeSlider->getValue() > 0 && volumeSlider->getValue() < 30) volumeIcon->getRenderer()->setTexture("assets/images/volume/volume_first.png");
+            else if (volumeSlider->getValue() >= 30 && volumeSlider->getValue() < 60) volumeIcon->getRenderer()->setTexture("assets/images/volume/volume_second.png");
+            else volumeIcon->getRenderer()->setTexture("assets/images/volume/volume_full.png");
         }
         });
 
@@ -186,7 +294,6 @@ std::vector<Card> gui_utils::game_cards (){
     cards_images.emplace_back(tgui::Picture::create("assets/cards/heart/hearts_J.png")); 
     cards_images.emplace_back(tgui::Picture::create("assets/cards/heart/hearts_K.png")); 
     cards_images.emplace_back(tgui::Picture::create("assets/cards/heart/hearts_Q.png")); 
-
 
     cards_images.emplace_back(tgui::Picture::create("assets/cards/diamond/diamonds_2.png")); 
     cards_images.emplace_back(tgui::Picture::create("assets/cards/diamond/diamonds_3.png")); 

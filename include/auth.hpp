@@ -24,17 +24,10 @@ struct LoginResult {
 
 bool createUsersTable(sqlite3* db);
 
-LoginResult userExists(sqlite3* db,
-                const std::string& username,
-                const std::string& email);
+LoginResult userExists(sqlite3* db, const std::string& username, const std::string& email);
 
-LoginResult registerUser(sqlite3* db,
-                  const std::string& username,
-                  const std::string& email,
-                  const std::string& plainPassword);
+LoginResult registerUser(sqlite3* db, const std::string& username, const std::string& email, const std::string& plainPassword);
 
-LoginResult loginUser(sqlite3* db,
-               const std::string& usernameOrEmail,
-               const std::string& plainPassword);
+LoginResult loginUser(sqlite3* db, const std::string& usernameOrEmail, const std::string& plainPassword);
 
 }

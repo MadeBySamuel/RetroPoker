@@ -27,5 +27,5 @@ class MainMenu : public Gui_base {
 
         void showMainMenu();
         void game_menu(std::vector<tgui::Button::Ptr> buttons);
-        void game_settings();
+        void game_settings(std::vector<tgui::Button::Ptr> buttons);
 };

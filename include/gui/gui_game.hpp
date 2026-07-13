@@ -26,6 +26,9 @@ class Game_GUI : public Gui_base {
         tgui::Label::Ptr actionStatus;
         std::vector<tgui::Button::Ptr> actionButtons;
         tgui::Panel::Ptr escapeMenu;
+        tgui::Slider::Ptr raiseSlider;
+        tgui::Button::Ptr confirmButton;
+        tgui::Label::Ptr raiseMoney;
 
 
 

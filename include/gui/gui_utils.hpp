@@ -41,9 +41,9 @@ class Gui_base{
         std::string last_time_text;
         tgui::Panel::Ptr modalOverlay;
         tgui::CheckBox::Ptr checkBox;
-
-
-        
+        tgui::Slider::Ptr volumeSlider;
+        tgui::Slider::Ptr settingsMusicSlider;
+        float musicVolume = 0.f;
 
 
 
@@ -65,12 +65,17 @@ class Gui_base{
 
     tgui::CheckBox::Ptr makeCheckBox(tgui::Panel::Ptr centerPanel, float x, float y);
 
+    tgui::Slider::Ptr makeSlider(tgui::Panel::Ptr panel, float pos_x, float pos_y, float size_x, float size_y, float startValue);
+    tgui::Button::Ptr makeBackToMenu(float pos_x, float pos_y, float size_x, float size_y, tgui::Panel::Ptr panel);
+
 
 
     tgui::Panel::Ptr overlay();
 
     void showOverlay();
     void hideOverlay();
+    std::vector<tgui::Button::Ptr> makeQuitButtons(tgui::ChildWindow::Ptr quitLabel);
+    tgui::ChildWindow::Ptr makeQuitLabel();
 
 
     template<typename WidgetPtr, typename Callback>

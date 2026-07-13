@@ -23,7 +23,6 @@ void sound(){
     time_label->getRenderer()->setTextColor(color.down);
     time_label->setPosition("85%", "10%");
     time_label->setTextSize(20);
-
 }
 
 
@@ -55,16 +54,16 @@ int main(){
     music.setVolume(0);
     
 
-    ScreenState screen = ScreenState::Login;
+    ScreenState screen = ScreenState::Game_GUI;
     
     
-    Login login(gui, music);
+    Login login(gui,window, music);
     MainMenu mainmenu(gui, window, music);
     Game_GUI game(gui, window, music);
     
-    login.login_screen();
+    game.game();
 
-    Gui_base* currentPointer = &login;
+    Gui_base* currentPointer = &game;
 
     std::string logged_username = "";
 
@@ -76,10 +75,6 @@ int main(){
         mainmenu.logged_username = username;
         mainmenu.showMainMenu(); 
     };
-
-
-
-
 
 
     mainmenu.onGame = [&]{
@@ -101,9 +96,6 @@ int main(){
         screen = ScreenState::MainMenu;
         mainmenu.showMainMenu();
     };
-
-    
-
 
     std::string last_time_text;
 

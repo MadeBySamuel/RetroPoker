@@ -130,6 +130,7 @@ void Game_GUI::showEscapeMenu(){
     escapeMenuTitle->setPosition({70,20});
     escapeMenuTitle->setTextSize(28);
     escapeMenuTitle->setSize({500, 60});
+    escapeMenuTitle->getRenderer()->setBorders(0);
     escapeMenuTitle->getRenderer()->setBackgroundColor(sf::Color(0,0,0,100));
     escapeMenuTitle->getRenderer()->setTextColor(color.text);
 
@@ -194,7 +195,6 @@ void Game_GUI::showEscapeMenu(){
     });
 
 }
-
 
 
 void Game_GUI::game() {
@@ -288,26 +288,58 @@ void Game_GUI::game() {
         const float controlsY = getGuiHeight() - 70.f; 
         constexpr float btnW = 124.f;
         constexpr float btnH = 48.f;
-        constexpr float btnGap = 12.f;
-        constexpr float startX = 50.f;
+        constexpr float btnGap = 20.f;
+        constexpr float startX = 400.f;
         const float y = controlsY - (btnH + btnGap);
 
         actionStatus = tgui::Label::create("Choose action");
-        
         actionStatus->setTextSize(20);
         actionStatus->getRenderer()->setTextColor(color.text);
-        actionStatus->setPosition({startX, y + 80});
+        actionStatus->setPosition({startX, y});
         root->add(actionStatus);
 
-        auto placeActionButton = [&](const std::string& text, float x, ActionType action, std::string statusMsg, int raiseAmount = 0) {
+        root->remove(raiseSlider);
+        root->remove(confirmButton);
+
+        raiseSlider = nullptr;
+        confirmButton = nullptr;
+
+        confirmButton = tgui::Button::create("Confirm");
+        confirmButton->setPosition({startX + (btnW + btnGap) * 8.f, controlsY});
+        confirmButton->setSize({btnW, btnH});
+        confirmButton->setTextSize(20);
+        confirmButton->getRenderer()->setTextColor(color.text);
+        confirmButton->getRenderer()->setTextColorDisabled(tgui::Color(190, 178, 150));
+        confirmButton->getRenderer()->setBackgroundColor(color.panel2);
+        confirmButton->getRenderer()->setBackgroundColorHover(color.border);
+        confirmButton->getRenderer()->setBackgroundColorDown(color.down);
+        confirmButton->getRenderer()->setBackgroundColorDisabled(tgui::Color(74, 66, 58, 230));
+        confirmButton->setVisible(false);
+        root->add(confirmButton);
+
+
+        raiseMoney = tgui::Label::create("Choose action");
+        raiseMoney->setTextSize(20);
+        raiseMoney->getRenderer()->setTextColor(color.text);
+        raiseMoney->setPosition({startX + (btnW + btnGap) * 7.f, controlsY});
+        root->add(raiseMoney);
+
+
+
+        bindSoundOnClick(confirmButton, [this]{
+            if (!raiseSlider) return;
+            int amount = static_cast<int>(raiseSlider->getValue());
+            engine->playerAction(ActionType::RAISE, amount);
+            raiseSlider->setVisible(false);
+            confirmButton->setVisible(false);
+            actionStatus->setText("Action: Raise " + std::to_string(amount));
+            refreshHud();
+        });
+
+        auto placeActionButton = [&](const std::string& text, float x, ActionType action, std::string statusMsg) {
             
             auto button = tgui::Button::create(text);
-            if (action == ActionType::FOLD || action == ActionType::RAISE || action == ActionType::ALLIN){
-                button->setPosition({x, controlsY});
-            }
-            else {
-                button->setPosition({x, y});
-            }
+            button->setPosition({x, controlsY});
             button->setSize({btnW, btnH});
             button->setTextSize(20);
             button->getRenderer()->setTextColor(color.text);
@@ -318,20 +350,46 @@ void Game_GUI::game() {
             button->getRenderer()->setBackgroundColorDisabled(tgui::Color(74, 66, 58, 230));
             root->add(button);
             actionButtons.push_back(button);
-            
-            bindSoundOnClick(button, [this, action, msg = std::move(statusMsg), raiseAmount] {
-                engine->playerAction(action, raiseAmount);
+
+
+            bindSoundOnClick(button, [this, &players, action, msg = std::move(statusMsg), controlsY] {
+
+                if (action == ActionType::RAISE){
+                    if (!raiseSlider){
+                        raiseSlider = makeSlider(root, startX + (btnW + btnGap) * 5.f, controlsY + 20.f , 200, 10, 0);
+                        raiseSlider->setMaximum(players[humanPlayerIndex]->getMoney());
+                        confirmButton->setVisible(true);
+
+                        raiseSlider->onValueChange([this]{
+                            raiseMoney->setText(std::to_string((int)raiseSlider->getValue()) + "$");
+                        });
+
+                    } else {
+                        bool show = !raiseSlider->isVisible();
+                        raiseSlider->setVisible(show);
+                        confirmButton->setVisible(show);
+                    }
+                    return;
+                }
+
+                if (raiseSlider){
+                    raiseSlider->setVisible(false);
+                }
+                confirmButton->setVisible(false);
+
+                engine->playerAction(action, 0);
                 actionStatus->setText(msg);
                 refreshHud();
             });
 
-            // if ()
-        };
+        
+        };        
 
-        placeActionButton("Fold",startX ,ActionType::FOLD,  "Action: Fold");
-        placeActionButton("Raise +10",startX + (btnW + btnGap) * 1.f,  ActionType::RAISE, "Action: Raise", 10);
-        placeActionButton("All In",startX + (btnW + btnGap) * 2.f,  ActionType::ALLIN, "Action: All In");
+        
 
+        placeActionButton("Fold", startX + (btnW + btnGap) * 3.f, ActionType::FOLD,  "Action: Fold");
+        placeActionButton("Raise", startX + (btnW + btnGap) * 4.f,  ActionType::RAISE, "Action: Raise");
+        placeActionButton("All in", startX + (btnW + btnGap) * 2.f,  ActionType::ALLIN, "Action: All In");
         placeActionButton("Check",startX,  ActionType::CHECK, "Action: Check");
         placeActionButton("Call",startX + (btnW + btnGap) * 1.f,  ActionType::CALL,  "Action: Call");
     }

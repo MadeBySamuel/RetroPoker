@@ -18,7 +18,7 @@
 #include "constants.hpp"
 
 
-Login::Login(tgui::Gui& gui, sf::Music& music) : Gui_base(gui), music(music) {}
+Login::Login(tgui::Gui& gui, sf::RenderWindow& window, sf::Music& music) : Gui_base(gui), window(window), music(music) {}
 
 
 tgui::Panel::Ptr Login::makePanel(float x, float y){
@@ -78,8 +78,7 @@ void Login::login_screen(){
         auto topBar = bar();
 
         volume(topBar, root, color, music);
-
-
+    
         centerPanel = makePanel(Constants::loginPanelWidth, Constants::loginPanelHeight);
 
         auto loginTitle = tgui::Label::create("Welcome!");
@@ -258,9 +257,8 @@ void Login::login_screen(){
         wrongLabel->setPosition({70, 270});
         wrongLabel->getRenderer()->setTextColor(sf::Color(160, 42, 16));
         centerPanel->add(wrongLabel);
-
-
-        bindSoundOnClick(login_button, [this, usernameBox, passwordBox, color]{
+        
+        auto tryLogin = [this, usernameBox, passwordBox]{
             if (usernameBox->getText().length() == 0 && passwordBox->getText().length() == 0){
                 passwordBox->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
                 usernameBox->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
@@ -301,7 +299,68 @@ void Login::login_screen(){
                     if (onLogin) onLogin(loginresult.username);
                 }
             }
+        };
+
+
+        bindSoundOnClick(login_button, tryLogin);
+
+        usernameBox->onReturnKeyPress([this, tryLogin]{
+            play_button();
+            tryLogin();
         });
+
+        passwordBox->onReturnKeyPress([this, tryLogin]{
+            play_button();
+            tryLogin();
+        });
+
+
+        auto quitButton = tgui::Button::create("Quit");
+        quitButton->setPosition({0,5});
+        quitButton->setSize({120, 62}); 
+        quitButton->setTextSize(30);
+
+
+        quitButton->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
+        quitButton->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
+        quitButton->getRenderer()->setBackgroundColorDown(tgui::Color::Transparent);
+        quitButton->getRenderer()->setBackgroundColorDisabled(tgui::Color::Transparent);
+
+
+        quitButton->getRenderer()->setTextColor(color.text);
+        quitButton->getRenderer()->setTextColorHover(color.down);
+        quitButton->getRenderer()->setTextColorDown(color.down);
+        quitButton->getRenderer()->setTextColorDisabled(tgui::Color(160, 150, 130));
+
+        quitButton->getRenderer()->setBorders(0);
+
+        topBar->add(quitButton);
+
+        bindSoundOnClick(quitButton, [this, color] {
+
+            showOverlay();
+            centerPanel->setVisible(false);
+
+            tgui::ChildWindow::Ptr quitLabel = makeQuitLabel();
+            std::vector<tgui::Button::Ptr> quitButtons = makeQuitButtons(quitLabel);
+
+            tgui::Button::Ptr yesButton = quitButtons.at(0);
+            tgui::Button::Ptr noButton = quitButtons.at(1);
+
+            bindSoundOnClick(yesButton, [this]
+            {
+                window.close();
+            });
+
+            bindSoundOnClick(noButton, [this, quitLabel]
+            {
+                hideOverlay();
+                root->remove(quitLabel);
+                centerPanel->setVisible(true);
+            });
+        });
+
+
 
 
 
