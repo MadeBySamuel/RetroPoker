@@ -56,14 +56,14 @@ int main(){
 
     ScreenState screen = ScreenState::Game_GUI;
     
+    Gui_base gui_base(gui, music);
+    Login login(gui, music, window);
+    MainMenu mainmenu(gui, music, window);
+    Game_GUI game(gui, music, window);
     
-    Login login(gui,window, music);
-    MainMenu mainmenu(gui, window, music);
-    Game_GUI game(gui, window, music);
-    
-    game.game();
+    mainmenu.showMainMenu();
 
-    Gui_base* currentPointer = &game;
+    Gui_base* currentPointer = &mainmenu;
 
     std::string logged_username = "";
 

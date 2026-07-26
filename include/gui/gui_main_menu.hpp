@@ -15,17 +15,15 @@ class MainMenu : public Gui_base {
     private:
         sf::RenderWindow& window;
         tgui::Panel::Ptr topBar;
-        sf::Music& music;
         tgui::Label::Ptr time_label;
         std::string last_time_text;
 
     public:
-        MainMenu(tgui::Gui& gui, sf::RenderWindow& window, sf::Music& music);
+        MainMenu(tgui::Gui& gui, sf::Music& music, sf::RenderWindow& window);
         std::function<void()> onGame;
         std::function<void()> onLogout;
         std::string logged_username;
 
         void showMainMenu();
         void game_menu(std::vector<tgui::Button::Ptr> buttons);
-        void game_settings(std::vector<tgui::Button::Ptr> buttons);
 };

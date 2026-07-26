@@ -18,7 +18,7 @@
 #include "constants.hpp"
 
 
-Login::Login(tgui::Gui& gui, sf::RenderWindow& window, sf::Music& music) : Gui_base(gui), window(window), music(music) {}
+Login::Login(tgui::Gui& gui, sf::Music& music, sf::RenderWindow& window) : Gui_base(gui, music), window(window) {}
 
 
 tgui::Panel::Ptr Login::makePanel(float x, float y){
@@ -147,7 +147,7 @@ void Login::login_screen(){
         }
 
 
-        auto rememberBox = makeCheckBox(centerPanel, 50, 390);
+        auto rememberBox = makeCheckBox({50, 390}, centerPanel);
 
         auto rememberLabel = tgui::Label::create("Remember me");
         rememberLabel->setPosition({80, 390});
@@ -320,7 +320,6 @@ void Login::login_screen(){
         quitButton->setSize({120, 62}); 
         quitButton->setTextSize(30);
 
-
         quitButton->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
         quitButton->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
         quitButton->getRenderer()->setBackgroundColorDown(tgui::Color::Transparent);
@@ -340,9 +339,10 @@ void Login::login_screen(){
 
             showOverlay();
             centerPanel->setVisible(false);
+            const std::string quitPanelTitle = "Do you want to exit?";
 
-            tgui::ChildWindow::Ptr quitLabel = makeQuitLabel();
-            std::vector<tgui::Button::Ptr> quitButtons = makeQuitButtons(quitLabel);
+            tgui::ChildWindow::Ptr quitPanel = makePopUpPanel(quitPanelTitle);
+            std::vector<tgui::Button::Ptr> quitButtons = makePopUpButtons(quitPanel);
 
             tgui::Button::Ptr yesButton = quitButtons.at(0);
             tgui::Button::Ptr noButton = quitButtons.at(1);
@@ -352,16 +352,13 @@ void Login::login_screen(){
                 window.close();
             });
 
-            bindSoundOnClick(noButton, [this, quitLabel]
+            bindSoundOnClick(noButton, [this, quitPanel]
             {
                 hideOverlay();
-                root->remove(quitLabel);
+                root->remove(quitPanel);
                 centerPanel->setVisible(true);
             });
         });
-
-
-
 
 
         bindSoundOnClick(forgotPasswordButton, [this, color]{
@@ -454,9 +451,7 @@ void Login::login_screen(){
         bindSoundOnClick(signUpButton, [this, color]{
 
             centerPanel->setVisible(false);
-
             auto signUpPanel = makePanel(Constants::signUpPanelWidth,Constants::signUpPanelHeight);
-
             auto login_title = tgui::Label::create("Sign up");
             login_title->setPosition({40, 30});
             login_title->setTextSize(45);   

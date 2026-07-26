@@ -15,7 +15,6 @@
 class Game_GUI : public Gui_base {
 
     private:
-        sf::Music& music;
         sf::RenderWindow& window;
         std::unique_ptr<Game> engine;
 
@@ -25,10 +24,9 @@ class Game_GUI : public Gui_base {
         tgui::Label::Ptr balanceLabel;
         tgui::Label::Ptr actionStatus;
         std::vector<tgui::Button::Ptr> actionButtons;
-        tgui::Panel::Ptr escapeMenu;
         tgui::Slider::Ptr raiseSlider;
         tgui::Button::Ptr confirmButton;
-        tgui::Label::Ptr raiseMoney;
+        tgui::Label::Ptr raiseMoneyLabel;
 
 
 
@@ -52,7 +50,7 @@ class Game_GUI : public Gui_base {
         void disableActions();
 
     public:
-        Game_GUI(tgui::Gui& gui, sf::RenderWindow& window, sf::Music& music);
+        Game_GUI(tgui::Gui& gui, sf::Music& music, sf::RenderWindow& window);
         std::function<void()> onExit;
         void showEscapeMenu();
         void game();

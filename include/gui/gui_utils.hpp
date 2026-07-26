@@ -29,53 +29,47 @@ struct GuiTheme {
     tgui::Color centerpanel{45, 35, 28, 230};
 };
 
-
 class Gui_base{
     protected:
         tgui::Gui& gui;
+        sf::Music& music; 
         tgui::Panel::Ptr root;
         std::vector<tgui::Button::Ptr> buttons_sound;
         sf::SoundBuffer clickBuffer;  
-        sf::Sound clickSound;         
+        sf::Sound clickSound;  
         tgui::Label::Ptr time_label;
         std::string last_time_text;
         tgui::Panel::Ptr modalOverlay;
         tgui::CheckBox::Ptr checkBox;
         tgui::Slider::Ptr volumeSlider;
         tgui::Slider::Ptr settingsMusicSlider;
+        tgui::Panel::Ptr gameSettingsPanel;
+        tgui::Panel::Ptr escapeMenu;
+
         float musicVolume = 0.f;
 
-
-
-
     public: 
-    Gui_base(tgui::Gui& gui) : gui(gui), clickSound(clickBuffer) {
+    Gui_base(tgui::Gui& gui, sf::Music& music);
+    
 
-        if (!clickBuffer.loadFromFile("assets/sound/button_press.ogg")) {
-            std::cerr << "Failed to load click sound\n";
-        }
-        clickSound.setBuffer(clickBuffer);
-
-        }
-        
 
     void play_button(){
         clickSound.play();
     }
 
-    tgui::CheckBox::Ptr makeCheckBox(tgui::Panel::Ptr centerPanel, float x, float y);
+    tgui::CheckBox::Ptr makeCheckBox(tgui::Vector2f pos, tgui::Panel::Ptr centerPanel);
 
-    tgui::Slider::Ptr makeSlider(tgui::Panel::Ptr panel, float pos_x, float pos_y, float size_x, float size_y, float startValue);
-    tgui::Button::Ptr makeBackToMenu(float pos_x, float pos_y, float size_x, float size_y, tgui::Panel::Ptr panel);
-
+    tgui::Slider::Ptr makeSlider(tgui::Vector2f pos, tgui::Vector2f size, float startValue, tgui::Panel::Ptr panel);
+    tgui::Button::Ptr makeBackToMenu(tgui::Vector2f pos, tgui::Vector2f size, tgui::Panel::Ptr panel);
+    void game_settings(std::vector<tgui::Button::Ptr> buttons);
 
 
     tgui::Panel::Ptr overlay();
 
     void showOverlay();
     void hideOverlay();
-    std::vector<tgui::Button::Ptr> makeQuitButtons(tgui::ChildWindow::Ptr quitLabel);
-    tgui::ChildWindow::Ptr makeQuitLabel();
+    std::vector<tgui::Button::Ptr> makePopUpButtons(tgui::ChildWindow::Ptr quitLabel);
+    tgui::ChildWindow::Ptr makePopUpPanel(const std::string text);
 
 
     template<typename WidgetPtr, typename Callback>

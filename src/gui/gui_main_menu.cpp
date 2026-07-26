@@ -10,95 +10,9 @@
 #include "gui_utils.hpp"
 #include "constants.hpp"
 
-MainMenu::MainMenu(tgui::Gui& gui, sf::RenderWindow& window, sf::Music& music)
-    : Gui_base(gui), window(window), music(music) {}
+MainMenu::MainMenu(tgui::Gui& gui, sf::Music& music, sf::RenderWindow& window)
+    : Gui_base(gui, music), window(window) {}
 
-
-
-
-void MainMenu::game_settings(std::vector<tgui::Button::Ptr> buttons){
-
-    showOverlay();
-    GuiTheme color;
-
-
-    float gap = 12.f;
-
-    auto gameSettingsPanel = tgui::Panel::create({Constants::loginPanelWidth, Constants::loginPanelHeight * 2 });
-    gameSettingsPanel->setPosition((getGuiWidth() - Constants::loginPanelWidth) / 2.f, (getGuiHeight() - Constants::loginPanelHeight * 2) / 2.f);
-    gameSettingsPanel->getRenderer()->setBackgroundColor(color.centerpanel);
-    gameSettingsPanel->getRenderer()->setRoundedBorderRadius(10.f);
-
-    root->add(gameSettingsPanel);
-
-
-    auto settingsTitle = tgui::Label::create("Settings");
-
-    settingsTitle->setTextSize(45);
-    settingsTitle->setPosition((Constants::loginPanelWidth - settingsTitle->getSize().x) / 2.f, 20.f);
-    settingsTitle->getRenderer()->setTextColor(color.text);
-    gameSettingsPanel->add(settingsTitle);
-
-    float titleH = settingsTitle->getSize().y;
-    float titleW = settingsTitle->getSize().x;
-
-
-    auto audioTitle = tgui::Label::create("Audio");
-    audioTitle->setTextSize(32);
-    audioTitle->setPosition(20.f, titleH + 20.f);
-    audioTitle->getRenderer()->setTextColor(color.text);
-    gameSettingsPanel->add(audioTitle);
-
-    float audioH = audioTitle->getSize().y; 
-    float audioW = audioTitle->getSize().x;
-
-    auto musicTitle = tgui::Label::create("Music");
-    musicTitle->setTextSize(20);
-    musicTitle->setPosition(25.f, titleH + audioH + 2 * gap + 10);
-    musicTitle->getRenderer()->setTextColor(color.text);
-    gameSettingsPanel->add(musicTitle);
-
-
-    float music_y = musicTitle->getSize().y;
-
-    settingsMusicSlider = makeSlider(gameSettingsPanel, audioW + 2 * gap, titleH + audioH + 2 * gap + 20, Constants::loginPanelWidth - titleW, 10, music.getVolume());
-
-    settingsMusicSlider->onValueChange([this](float value){
-        music.setVolume(value);
-        if (volumeSlider) volumeSlider->setValue(value);
-    });
-
-    float effects_y = titleH + audioH + 2 * gap + 10;
-
-    auto effectsTitle = tgui::Label::create("Effects");
-    effectsTitle->setTextSize(20);
-    effectsTitle->setPosition(25.f, effects_y + music_y + gap);
-    effectsTitle->getRenderer()->setTextColor(color.text);
-    gameSettingsPanel->add(effectsTitle);
-
-    auto soundEffectCheckBox = tgui::CheckBox::create();
-
-    auto effectsSlider = makeSlider(gameSettingsPanel,audioW + 2 * gap, effects_y + music_y + gap + 10.f, Constants::loginPanelWidth - titleW, 10, clickSound.getVolume());
-
-
-    effectsSlider->onValueChange([this](float value){
-        clickSound.setVolume(value);
-        clickSound.play();
-    });
-
-    auto backToMenu = makeBackToMenu(gap, Constants::loginPanelHeight * 2 - gap - 70 ,Constants::loginPanelWidth - Constants::gap, 70, gameSettingsPanel);
-
-
-    bindSoundOnClick(backToMenu, [gameSettingsPanel, this, buttons]{
-    for(auto x : buttons){
-        x->setVisible(true);
-    }
-    root->remove(gameSettingsPanel);
-    settingsMusicSlider = nullptr;
-    hideOverlay();
-    });
-
-}
 
 void MainMenu::showMainMenu(){
 
@@ -309,14 +223,15 @@ void MainMenu::showMainMenu(){
 
             showOverlay();
 
-            tgui::ChildWindow::Ptr quitLabel = makeQuitLabel();
-            std::vector<tgui::Button::Ptr> quitButtons = makeQuitButtons(quitLabel);
+            const std::string quitPanelTitle = "Do you want to exit?";
+
+            tgui::ChildWindow::Ptr quitLabel = makePopUpPanel(quitPanelTitle);
+            std::vector<tgui::Button::Ptr> quitButtons = makePopUpButtons(quitLabel);
 
             tgui::Button::Ptr yesButton = quitButtons.at(0);
             tgui::Button::Ptr noButton = quitButtons.at(1);
 
-            
-
+        
 
             bindSoundOnClick(yesButton, [this]
             {
@@ -347,7 +262,6 @@ void MainMenu::showMainMenu(){
 
 }
 
-   
 
 void MainMenu::game_menu(std::vector<tgui::Button::Ptr> buttons){
 
@@ -378,7 +292,7 @@ void MainMenu::game_menu(std::vector<tgui::Button::Ptr> buttons){
         gameMenu->add(gameMenuTitle);
 
 
-        auto backToMenu = makeBackToMenu(Constants::gap, 550.f, Constants::totalWidth - 2 * Constants::gap , 70, gameMenu);
+        auto backToMenu = makeBackToMenu({Constants::gap, 550.f}, {Constants::totalWidth - 2 * Constants::gap , 70}, gameMenu);
 
 
 

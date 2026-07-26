@@ -28,8 +28,8 @@ float seatPairCenterX(const TableSeat& seat, float guiW) {
 
 }
 
-Game_GUI::Game_GUI(tgui::Gui& gui, sf::RenderWindow& window, sf::Music& music)
-    : Gui_base(gui), window(window), music(music) {}
+Game_GUI::Game_GUI(tgui::Gui& gui, sf::Music& music, sf::RenderWindow& window)
+    : Gui_base(gui, music),  window(window){}
 
 void Game_GUI::placeCard(tgui::Panel::Ptr parent, const Card& card, float x, float y, float w, float h) {
     if (!card.image) return;
@@ -96,6 +96,8 @@ void Game_GUI::refreshHud() {
     potLabel->setText("Pot: " + std::to_string(engine->getPot()) + "$");
     centerLabel(potLabel, getGuiWidth() / 2.f, communityY - potLabel->getSize().y - 18.f);
 
+    placeCenteredLabel(root, actionStatus, guiW/2.f, 80, 20.f, guiW - 20.f);
+
     winnerLabel->setText(engine->getWinnerMessage());
     centerLabel(winnerLabel, getGuiWidth() / 2.f, communityY + communityCardH + 22.f);
 
@@ -109,16 +111,14 @@ void Game_GUI::refreshHud() {
 
 void Game_GUI::showEscapeMenu(){
 
-
     if (escapeMenu){
         return;
     }
     
-    opened = true;
-
     showOverlay();
+    
     escapeMenu = tgui::Panel::create({Constants::signUpPanelWidth, Constants::signUpPanelHeight});
-    escapeMenu->setPosition({(getGuiWidth() - Constants::signUpPanelHeight) / 2.f, (getGuiHeight() - Constants::signUpPanelHeight) / 2.f});
+    escapeMenu->setPosition({(getGuiWidth() - Constants::signUpPanelWidth) / 2.f, (getGuiHeight() - Constants::signUpPanelHeight) / 2.f});
     escapeMenu->getRenderer()->setBackgroundColor(sf::Color(45, 35, 28, 230));
     escapeMenu->getRenderer()->setRoundedBorderRadius(20.0);
 
@@ -126,14 +126,10 @@ void Game_GUI::showEscapeMenu(){
 
     GuiTheme color;
 
-    auto escapeMenuTitle = tgui::Label::create("Paused game");
-    escapeMenuTitle->setPosition({70,20});
-    escapeMenuTitle->setTextSize(28);
-    escapeMenuTitle->setSize({500, 60});
-    escapeMenuTitle->getRenderer()->setBorders(0);
-    escapeMenuTitle->getRenderer()->setBackgroundColor(sf::Color(0,0,0,100));
+    auto escapeMenuTitle = tgui::Label::create("Paused");
+    escapeMenuTitle->setTextSize(36);
+    escapeMenuTitle->setPosition({(Constants::signUpPanelWidth - escapeMenuTitle->getSize().x) / 2.f, 20});
     escapeMenuTitle->getRenderer()->setTextColor(color.text);
-
     escapeMenu->add(escapeMenuTitle);
 
 
@@ -143,18 +139,22 @@ void Game_GUI::showEscapeMenu(){
     backToGameButton->setPosition({70, 100});
 
     auto restartGameButton = tgui::Button::create("Restart game");
-    restartGameButton->setPosition({70, 200});
+    restartGameButton->setPosition({70, 180});
 
+
+    auto settingsButton = tgui::Button::create({"Settings"});
+    settingsButton->setPosition({70, 260});
 
     auto backToMenuButton = tgui::Button::create({"Back to Menu"});
-    backToMenuButton->setPosition({70, 300});
-
+    backToMenuButton->setPosition({70, 340});
 
     auto quitGameButton = tgui::Button::create({"Exit Game"});
-    quitGameButton->setPosition({70, 400});
+    quitGameButton->setPosition({70, 420});
+
 
     escapeButtons.push_back(backToGameButton);
     escapeButtons.push_back(restartGameButton);
+    escapeButtons.push_back(settingsButton);
     escapeButtons.push_back(backToMenuButton);
     escapeButtons.push_back(quitGameButton);
 
@@ -180,6 +180,9 @@ void Game_GUI::showEscapeMenu(){
         escapeMenu = nullptr;
     });
 
+    bindSoundOnClick(settingsButton, [this, escapeButtons]{
+        game_settings(escapeButtons);
+    });
     bindSoundOnClick(backToMenuButton, [this]{
         hideOverlay();
         root->remove(escapeMenu);
@@ -188,10 +191,25 @@ void Game_GUI::showEscapeMenu(){
     });
 
     bindSoundOnClick(quitGameButton, [this]{
-        hideOverlay();
-        root->remove(escapeMenu);
-        escapeMenu = nullptr;
-        window.close();
+        escapeMenu->setVisible(false);
+        auto quitPanel = makePopUpPanel("Do you want to exit the game");
+        auto quitButtons = makePopUpButtons(quitPanel);
+
+        tgui::Button::Ptr yesButton = quitButtons.at(0);
+        tgui::Button::Ptr noButton = quitButtons.at(1);
+
+        bindSoundOnClick(yesButton, [this]
+        {
+            root->remove(escapeMenu);
+            escapeMenu = nullptr;
+            window.close();
+        });
+
+        bindSoundOnClick(noButton, [this, quitPanel]
+        {
+            root->remove(quitPanel);
+            escapeMenu->setVisible(true);
+        });
     });
 
 }
@@ -266,7 +284,6 @@ void Game_GUI::game() {
             balanceY = std::max(Constants::topBarHeight + 10.f, seatY - balanceLabel->getSize().y - 14.f);
             placeCenteredLabel(root, balanceLabel, balanceCenterX, balanceY, 20.f, guiW - 20.f);
 
-            placePlayerName(root, "You", seat, guiW, guiH, color);
         } else {
             placeFaceDownPair(root, seatX, seatY, cardW, cardH, gap);
             placePlayerName(root, player->getName(), seat, guiW, guiH, color);
@@ -295,8 +312,7 @@ void Game_GUI::game() {
         actionStatus = tgui::Label::create("Choose action");
         actionStatus->setTextSize(20);
         actionStatus->getRenderer()->setTextColor(color.text);
-        actionStatus->setPosition({startX, y});
-        root->add(actionStatus);
+        placeCenteredLabel(root, actionStatus, guiW/2.f, 80, 20.f, guiW - 20.f);
 
         root->remove(raiseSlider);
         root->remove(confirmButton);
@@ -305,7 +321,7 @@ void Game_GUI::game() {
         confirmButton = nullptr;
 
         confirmButton = tgui::Button::create("Confirm");
-        confirmButton->setPosition({startX + (btnW + btnGap) * 8.f, controlsY});
+        confirmButton->setPosition({startX + (btnW + btnGap) * 7.f, controlsY});
         confirmButton->setSize({btnW, btnH});
         confirmButton->setTextSize(20);
         confirmButton->getRenderer()->setTextColor(color.text);
@@ -317,22 +333,22 @@ void Game_GUI::game() {
         confirmButton->setVisible(false);
         root->add(confirmButton);
 
-
-        raiseMoney = tgui::Label::create("Choose action");
-        raiseMoney->setTextSize(20);
-        raiseMoney->getRenderer()->setTextColor(color.text);
-        raiseMoney->setPosition({startX + (btnW + btnGap) * 7.f, controlsY});
-        root->add(raiseMoney);
+        raiseMoneyLabel = tgui::Label::create("");
+        raiseMoneyLabel->setTextSize(20);
+        raiseMoneyLabel->getRenderer()->setTextColor(color.text);
+        root->add(raiseMoneyLabel);
 
 
-
-        bindSoundOnClick(confirmButton, [this]{
+        bindSoundOnClick(confirmButton, [this, &players]{
             if (!raiseSlider) return;
             int amount = static_cast<int>(raiseSlider->getValue());
             engine->playerAction(ActionType::RAISE, amount);
+            raiseSlider->setMaximum(players[humanPlayerIndex]->getMoney());
             raiseSlider->setVisible(false);
+            raiseSlider->setValue(0);
             confirmButton->setVisible(false);
-            actionStatus->setText("Action: Raise " + std::to_string(amount));
+            raiseMoneyLabel->setVisible(false);
+            actionStatus->setText("Action: Raise to " + std::to_string(amount) + " $");
             refreshHud();
         });
 
@@ -351,31 +367,52 @@ void Game_GUI::game() {
             root->add(button);
             actionButtons.push_back(button);
 
-
-            bindSoundOnClick(button, [this, &players, action, msg = std::move(statusMsg), controlsY] {
+            bindSoundOnClick(button, [this, action, msg = std::move(statusMsg), controlsY] {
 
                 if (action == ActionType::RAISE){
                     if (!raiseSlider){
-                        raiseSlider = makeSlider(root, startX + (btnW + btnGap) * 5.f, controlsY + 20.f , 200, 10, 0);
+                        auto& players = engine->getPlayers();
+
+                        raiseSlider = makeSlider({startX + (btnW + btnGap) * 5.f, controlsY + 20.f}, {btnW * 2 + btnGap, 10}, 0, root);
+
+                        float thumbX = raiseSlider->getPosition().x + 0.0 * raiseSlider->getSize().x;
+
                         raiseSlider->setMaximum(players[humanPlayerIndex]->getMoney());
-                        confirmButton->setVisible(true);
+                        
+                        raiseMoneyLabel->setPosition({thumbX - 12, raiseSlider->getPosition().y - 25.f});
+                        raiseMoneyLabel->setVisible(true);
+                        raiseMoneyLabel->setText("0$");
+                        
+                        raiseSlider->onValueChange([this](float value){
 
-                        raiseSlider->onValueChange([this]{
-                            raiseMoney->setText(std::to_string((int)raiseSlider->getValue()) + "$");
+                            if(value > 1) {
+                                confirmButton->setVisible(true);
+                            }
+                            if (value < 1){
+                                confirmButton->setVisible(false);
+                            }
+                            play_button();
+                            float ratio = (value - raiseSlider->getMinimum()) / (raiseSlider->getMaximum() - raiseSlider->getMinimum());
+                            float thumbX = raiseSlider->getPosition().x + ratio * raiseSlider->getSize().x;
+
+                            raiseMoneyLabel->setPosition({thumbX - 12, raiseSlider->getPosition().y - 25.f});
+                            raiseMoneyLabel->setText(std::to_string((int)value) + "$");
                         });
-
                     } else {
+                        confirmButton->setVisible(false);
                         bool show = !raiseSlider->isVisible();
                         raiseSlider->setVisible(show);
-                        confirmButton->setVisible(show);
+                        raiseMoneyLabel->setVisible(show);
                     }
                     return;
                 }
 
                 if (raiseSlider){
                     raiseSlider->setVisible(false);
+                    confirmButton->setVisible(false);
+                    raiseMoneyLabel->setVisible(false);
                 }
-                confirmButton->setVisible(false);
+                
 
                 engine->playerAction(action, 0);
                 actionStatus->setText(msg);
@@ -384,6 +421,11 @@ void Game_GUI::game() {
 
         
         };        
+
+
+
+
+
 
         
 
