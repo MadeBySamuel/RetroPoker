@@ -1,6 +1,7 @@
 #include "gui_login.hpp"
 #include "gui_main_menu.hpp"
 #include "gui_game.hpp"
+#include "gui_utils.hpp"
 
 #include "auth.hpp"
 #include "gui_utils.hpp"
@@ -65,14 +66,14 @@ int main(){
 
     Gui_base* currentPointer = &mainmenu;
 
-    std::string logged_username = "";
+    std::string loggedUsername = "";
 
     login.onLogin = [&](std::string username){
         std::cout << username;
-        logged_username = username;
+        loggedUsername = username;
         currentPointer = &mainmenu;
         screen = ScreenState::MainMenu;
-        mainmenu.logged_username = username;
+        mainmenu.loggedUsername = username;
         mainmenu.showMainMenu(); 
     };
 
@@ -84,8 +85,8 @@ int main(){
     };
 
     mainmenu.onLogout = [&]{
-        logged_username.clear();
-        mainmenu.logged_username.clear();
+        loggedUsername.clear();
+        mainmenu.loggedUsername.clear();
         currentPointer = &login;
         screen = ScreenState::Login;
         login.login_screen();
@@ -98,7 +99,7 @@ int main(){
     };
 
     std::string last_time_text;
-
+    bool escapeMenuOpen = false;
 
         while(window.isOpen()){
             while(const auto event = window.pollEvent()){
@@ -108,15 +109,34 @@ int main(){
                 }
 
                 if (const auto* key = event->getIf<sf::Event::KeyPressed>()){
-                    if (key->code == sf::Keyboard::Key::Escape){
-                        if(currentPointer == &game){
+                    if (key->code == sf::Keyboard::Key::Escape && currentPointer == &game){
+                        escapeMenuOpen = !escapeMenuOpen;
+                        if (escapeMenuOpen){
                             game.showEscapeMenu(); 
                         }
+                        else {
+                            game.hideEscapeMenu();
+                        }
+
+                    }
+                    if (key->code == sf::Keyboard::Key::Escape && currentPointer == &mainmenu){
+                        if (mainmenu.openedSettingsPanel){
+                            mainmenu.hide_game_settings();
+                        }
+                        if(mainmenu.openedGameMenuPanel){
+                            mainmenu.hide_game_menu();
+                        }
+                
+                    }
                 }
-                }
+
             }
             currentPointer->update_time();
 
+            if(game.restartPending && game.restartClock.getElapsedTime().asSeconds() >= 3.f){
+                game.restartPending = false;
+                game.nextHand();
+            } 
             gui.draw();
             window.display();
         }

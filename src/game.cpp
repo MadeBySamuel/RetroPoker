@@ -8,6 +8,7 @@
 #include "hand_evaluator.hpp"
 #include "constants.hpp"
 #include "player.hpp"
+#include "gui_game.hpp"
 
 
 int& Game::getPot(){
@@ -84,6 +85,7 @@ void Game::setup_once_per_game(std::vector<std::unique_ptr<Player>>& players, st
     }
 }
 
+
 const std::vector<Card>& Game::getCommunityCards() const {
     return communityCards;
 }
@@ -99,6 +101,24 @@ std::vector<Card> Game::getVisibleCommunityCards() const {
 
 const std::string& Game::getWinnerMessage() const {
     return winnerMessage;
+}
+
+void Game::newHand() {
+    pot = 0;
+    currentBet = 0;
+    currentPhase = GamePhase::PRE_FLOP;
+    winnerMessage.clear();
+    communityCards.clear();
+
+    std::vector<Card> game_cards = gui_utils::game_cards();
+    std::vector<int> used_cards_index;
+
+    const int playerCount = static_cast<int>(players.size());
+    int smallBlindPosition = playerCount - 1;
+    int bigBlindPosition   = playerCount - 2;
+
+    setup_once_per_game(players, game_cards, used_cards_index, communityCards,
+                         smallBlindPosition, bigBlindPosition);
 }
 
 void Game::game() {
@@ -130,7 +150,10 @@ void Game::game() {
 void Game::playerAction(ActionType action, int raiseAmount) {
     int humanIdx = -1;
     for (size_t i = 0; i < players.size(); i++) {
-        if (players[i]->getName() == "Player") { humanIdx = static_cast<int>(i); break; }
+        if (players[i]->getName() == "Player") { 
+            humanIdx = static_cast<int>(i); 
+            break; 
+        }
     }
 
     if (humanIdx != -1 && players[humanIdx]->getInGame()) {
@@ -268,4 +291,5 @@ void Game::resolveShowdown() {
             }
         }
     }
+
 }

@@ -75,7 +75,7 @@ void Login::login_screen(){
         gui.add(root);
 
     
-        auto topBar = bar();
+            auto topBar = makeBar();
 
         volume(topBar, root, color, music);
     

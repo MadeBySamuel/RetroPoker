@@ -22,7 +22,7 @@ class MainMenu : public Gui_base {
         MainMenu(tgui::Gui& gui, sf::Music& music, sf::RenderWindow& window);
         std::function<void()> onGame;
         std::function<void()> onLogout;
-        std::string logged_username;
+        std::string loggedUsername;
 
         void showMainMenu();
         void game_menu(std::vector<tgui::Button::Ptr> buttons);

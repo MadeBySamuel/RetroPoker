@@ -46,8 +46,7 @@ class Game {
     void setup_once_per_game(std::vector<std::unique_ptr<Player>>& players, std::vector<Card>& game_cards, 
         std::vector<int>& used_cards_index, std::vector<Card>& community_cards, int& bigBlindPosition, int& smallBlindPosition);
     
-    // void show_game(std::vector<Player> players, std::vector<Card>& community_cards);
-
+    void newHand();
     void game();
     void playerAction(ActionType action, int raiseAmount = 0);
 

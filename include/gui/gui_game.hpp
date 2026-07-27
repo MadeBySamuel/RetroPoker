@@ -27,11 +27,9 @@ class Game_GUI : public Gui_base {
         tgui::Slider::Ptr raiseSlider;
         tgui::Button::Ptr confirmButton;
         tgui::Label::Ptr raiseMoneyLabel;
-
-
+        
 
         bool opened = false;
-
         float balanceCenterX = 0.f;
         float balanceY = 0.f;
         float communityY = 0.f;
@@ -50,8 +48,17 @@ class Game_GUI : public Gui_base {
         void disableActions();
 
     public:
+        sf::Clock restartClock;
+        bool restartPending = false;
+        void hideEscapeMenu();
+
         Game_GUI(tgui::Gui& gui, sf::Music& music, sf::RenderWindow& window);
+
+        void nextHand();
+        void buildTable();
         std::function<void()> onExit;
         void showEscapeMenu();
         void game();
+        void restartGame();
+
 };

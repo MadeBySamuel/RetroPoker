@@ -44,13 +44,20 @@ class Gui_base{
         tgui::Slider::Ptr volumeSlider;
         tgui::Slider::Ptr settingsMusicSlider;
         tgui::Panel::Ptr gameSettingsPanel;
+        tgui::Panel::Ptr gameMenuPanel;
         tgui::Panel::Ptr escapeMenu;
+        std::vector<tgui::Button::Ptr> buttonsMainMenu;
+
 
         float musicVolume = 0.f;
+        
+
 
     public: 
-    Gui_base(tgui::Gui& gui, sf::Music& music);
-    
+        Gui_base(tgui::Gui& gui, sf::Music& music);
+
+        bool openedSettingsPanel = false;
+        bool openedGameMenuPanel = false;
 
 
     void play_button(){
@@ -61,11 +68,14 @@ class Gui_base{
 
     tgui::Slider::Ptr makeSlider(tgui::Vector2f pos, tgui::Vector2f size, float startValue, tgui::Panel::Ptr panel);
     tgui::Button::Ptr makeBackToMenu(tgui::Vector2f pos, tgui::Vector2f size, tgui::Panel::Ptr panel);
-    void game_settings(std::vector<tgui::Button::Ptr> buttons);
-
-
+    void game_settings();
+    tgui::Button::Ptr makeButton (std::string title, const tgui::Vector2f size, int8_t TextSize, tgui::Panel::Ptr panel);
+    void audio_settings();
+    
     tgui::Panel::Ptr overlay();
 
+    void hide_game_settings();
+    void hide_game_menu();
     void showOverlay();
     void hideOverlay();
     std::vector<tgui::Button::Ptr> makePopUpButtons(tgui::ChildWindow::Ptr quitLabel);
@@ -97,7 +107,7 @@ class Gui_base{
 
     void volume(tgui::Panel::Ptr topBar, tgui::Panel::Ptr root, GuiTheme color, sf::Music &music);
 
-    tgui::Panel::Ptr bar();  
+    tgui::Panel::Ptr makeBar();  
 
 
     std::string getCurrentTimeString();

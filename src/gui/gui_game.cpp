@@ -105,9 +105,39 @@ void Game_GUI::refreshHud() {
 
     if (engine->getPhase() == GamePhase::SHOWDOWN) {
         disableActions();
+
+        if(!restartPending){
+            restartPending = true;
+            restartClock.restart();
+        }
     }
 }
 
+void Game_GUI::restartGame(){
+    gui.removeAllWidgets();
+    actionButtons.clear();
+    communityPanel = nullptr;
+    actionButtons.clear();
+    communityPanel = nullptr;
+    balanceLabel = nullptr;
+    potLabel = nullptr;
+    winnerLabel = nullptr;
+    actionStatus = nullptr;
+    raiseSlider = nullptr;
+    raiseMoneyLabel = nullptr;
+    confirmButton = nullptr;
+    escapeMenu = nullptr;
+
+    engine = std::make_unique<Game>();
+    game();      
+
+}
+
+void Game_GUI::hideEscapeMenu(){
+    hideOverlay();
+    root->remove(escapeMenu);
+    escapeMenu = nullptr;
+}
 
 void Game_GUI::showEscapeMenu(){
 
@@ -175,13 +205,11 @@ void Game_GUI::showEscapeMenu(){
 
 
     bindSoundOnClick(backToGameButton, [this]{
-        hideOverlay();
-        root->remove(escapeMenu);
-        escapeMenu = nullptr;
+        hideEscapeMenu();
     });
 
     bindSoundOnClick(settingsButton, [this, escapeButtons]{
-        game_settings(escapeButtons);
+        game_settings();
     });
     bindSoundOnClick(backToMenuButton, [this]{
         hideOverlay();
@@ -225,11 +253,26 @@ void Game_GUI::game() {
     engine = std::make_unique<Game>();
     engine->game();
 
+    buildTable();
+}
+
+void Game_GUI::nextHand(){
+    gui.removeAllWidgets();
+    actionButtons.clear();
+    tgui::Font::setGlobalFont("assets/fonts/Shelten.ttf");
+    engine->newHand();
+    buildTable();
+}
+
+
+
+void Game_GUI::buildTable(){
+    GuiTheme color;
+
     root = tgui::Panel::create({getGuiWidth(), getGuiHeight()});
     root->getRenderer()->setTextureBackground("assets/images/backgrounds/game_background.png");
     gui.add(root);
-
-    auto topBar = bar();
+    auto topBar = makeBar();
     volume(topBar, root, color, music);
 
     const float guiW = getGuiWidth();
@@ -276,6 +319,13 @@ void Game_GUI::game() {
                 holeX += cardW + gap;
             }
 
+            if(player->getMoney() <= 0 ){
+
+                auto gameOverPanel = makePopUpPanel("Game Over");
+                auto gameOverButtons = makePopUpButtons(gameOverPanel);
+
+            }
+            
             balanceLabel = tgui::Label::create("Balance: " + std::to_string(player->getMoney()) + "$");
             balanceLabel->setTextSize(scaledTextSize(guiH, 0.021f, 20, 30));
             balanceLabel->getRenderer()->setTextColor(color.text);
@@ -339,7 +389,8 @@ void Game_GUI::game() {
         root->add(raiseMoneyLabel);
 
 
-        bindSoundOnClick(confirmButton, [this, &players]{
+        bindSoundOnClick(confirmButton, [this]{
+            auto& players = engine->getPlayers();
             if (!raiseSlider) return;
             int amount = static_cast<int>(raiseSlider->getValue());
             engine->playerAction(ActionType::RAISE, amount);
@@ -421,13 +472,6 @@ void Game_GUI::game() {
 
         
         };        
-
-
-
-
-
-
-        
 
         placeActionButton("Fold", startX + (btnW + btnGap) * 3.f, ActionType::FOLD,  "Action: Fold");
         placeActionButton("Raise", startX + (btnW + btnGap) * 4.f,  ActionType::RAISE, "Action: Raise");
