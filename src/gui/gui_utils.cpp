@@ -13,14 +13,11 @@ Gui_base::Gui_base(tgui::Gui& gui, sf::Music& music) : gui(gui), music(music), c
     }
         
 
-
-
 tgui::Panel::Ptr Gui_base::makeBar(){
-    GuiTheme color;
 
     auto topBar = tgui::Panel::create({getGuiWidth(), Constants::topBarHeight});
     topBar->setPosition({0, 0});
-    topBar->getRenderer()-> setBackgroundColor(color.bar_color);
+    topBar->getRenderer()->setBackgroundColor(color.bar_color);
     root->add(topBar);
 
     time_label = tgui::Label::create(""); 
@@ -32,9 +29,20 @@ tgui::Panel::Ptr Gui_base::makeBar(){
     return topBar;
 }
 
-tgui::CheckBox::Ptr Gui_base::makeCheckBox(tgui::Vector2f pos, tgui::Panel::Ptr centerPanel){
 
-        GuiTheme color;
+
+tgui::Panel::Ptr Gui_base::makePanel(tgui::Vector2f size, tgui::Color backgroundColor){
+   
+    auto panel = tgui::Panel::create(size);
+    panel->setPosition({(getGuiWidth() - size.x) / 2.f, (getGuiHeight() - size.y) / 2.f});
+    panel->getRenderer()->setBackgroundColor(backgroundColor);
+    panel->getRenderer()->setRoundedBorderRadius(20.0);
+    root->add(panel);
+
+    return panel;
+}
+
+tgui::CheckBox::Ptr Gui_base::makeCheckBox(tgui::Vector2f pos, tgui::Panel::Ptr centerPanel){
         
         auto checkBox = tgui::CheckBox::create();
         checkBox->setPosition(pos);
@@ -63,72 +71,142 @@ tgui::CheckBox::Ptr Gui_base::makeCheckBox(tgui::Vector2f pos, tgui::Panel::Ptr 
 }
 
 
-std::vector<tgui::Button::Ptr> Gui_base::makePopUpButtons(tgui::ChildWindow::Ptr quitLabel){
-
-    GuiTheme color;
-
-    std::vector<tgui::Button::Ptr> quitButtons;
-
-    auto yesButton = tgui::Button::create("Yes");
-    yesButton->setPosition({235, 60});
-
-    auto noButton = tgui::Button::create("No");
-    noButton->setPosition({45, 60});
+tgui::EditBox::Ptr Gui_base::makeEditBox(const std::string title, tgui::Vector2f pos, tgui::Panel::Ptr panel){
     
-    quitButtons.push_back(yesButton);
-    quitButtons.push_back(noButton);
+    auto editBox = tgui::EditBox::create();
+    editBox->setTextSize(20);
+    editBox->setSize({450, 42});
+    editBox->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
+    editBox->getRenderer()->setBorders(0);
+    editBox->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
+    editBox->getRenderer()->setTextColor(color.text);
+    editBox->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 2});
+    editBox->getRenderer()->setBorderColor(sf::Color(0,0,0));
+    editBox->getRenderer()->setDefaultTextColor(sf::Color(125, 125, 125));
+    editBox->setDefaultText(title);
+    editBox->setPosition(pos);
 
-    for (auto button : quitButtons){
+    panel->add(editBox);
 
-        button->setSize({130, 58});
-        button->getRenderer()->setBackgroundColor(color.panel2);
+    return editBox;
+}
 
-        if (button == noButton){
-            button->getRenderer()->setBackgroundColorDown(color.down);
-            button->getRenderer()->setBackgroundColorHover(color.down);
-        }
-        else {
-            button->getRenderer()->setBackgroundColorDown(color.yes_quit);
-            button->getRenderer()->setBackgroundColorHover(color.yes_quit);
-        }
+tgui::ChildWindow::Ptr Gui_base::makePopUpPanel(const std::string title, tgui::Vector2f size, const int8_t sizeTitleText, tgui::Color titleBarColor, tgui::Color titleTextColor){
 
-        button->getRenderer()->setBackgroundColorDisabled(color.disabled);
+    showOverlay();
+    auto popUpPanel = tgui::ChildWindow::create(title, tgui::ChildWindow::TitleButton::None);
+    popUpPanel->setPosition({(getGuiWidth() - size.x) / 2.f, (getGuiHeight() - size.y) / 2.f});
+    popUpPanel->getRenderer()->setTitleBarHeight(50.f);
+    popUpPanel->setTitleTextSize(sizeTitleText);
+    popUpPanel->setSize(size);
+    popUpPanel->setPositionLocked(true);
+    popUpPanel->getRenderer()->setTitleBarColor(titleBarColor);
+    popUpPanel->getRenderer()->setTitleColor(titleTextColor);
+    popUpPanel->getRenderer()->setBackgroundColor(color.bg);
+    popUpPanel->getRenderer()->setBorderBelowTitleBar(1.00);
 
-        button->getRenderer()->setTextColor(color.text);
-        button->getRenderer()->setTextColorHover(color.text);
-        button->getRenderer()->setTextColorDown(color.bg);
+    root->add(popUpPanel);
+    
+    return popUpPanel;
 
-        button->getRenderer()->setBorders(0);
-        button->getRenderer()->setRoundedBorderRadius(10.f);
-        
-        quitLabel->add(button);
+}      
 
+
+
+tgui::Button::Ptr Gui_base::makePopUpButton(const std::string title, tgui::Vector2f pos, const tgui::Vector2f size, const int8_t sizeTitle, tgui::ChildWindow::Ptr quitPanel){
+
+    auto button = tgui::Button::create(title);
+    button->setPosition(pos);
+    button->setSize(size);
+    button->setTextSize(sizeTitle);
+
+    button->getRenderer()->setBackgroundColor(color.panel2);
+    button->getRenderer()->setBackgroundColorDown(color.down);
+    button->getRenderer()->setBackgroundColorHover(color.down);
+
+    if (title == "Yes"){
+        button->getRenderer()->setBackgroundColorDown(color.yes_quit);
+        button->getRenderer()->setBackgroundColorHover(color.yes_quit);
     }
 
-    return quitButtons;
+    button->getRenderer()->setBackgroundColorDisabled(color.disabled);
+    button->getRenderer()->setTextColor(color.text);
+    button->getRenderer()->setTextColorHover(color.text);
+    button->getRenderer()->setTextColorDown(color.bg);
+    button->getRenderer()->setBorders(0);
+    button->getRenderer()->setRoundedBorderRadius(10.f);
+    quitPanel->add(button);
+
+    return button;
 
 }
 
 
-tgui::Button::Ptr Gui_base::makeButton (std::string title, tgui::Vector2f size, int8_t sizeText,tgui::Panel::Ptr panel){
-    GuiTheme color;
+tgui::Button::Ptr Gui_base::makeButton (const std::string title, tgui::Vector2f pos, const tgui::Vector2f size, const int8_t sizeText,tgui::Panel::Ptr panel){
 
     auto button = tgui::Button::create();
+
+
     button->setText(title);
+    button->setPosition(pos);
     button->setSize(size);
     button->setTextSize(sizeText);
 
-    button->getRenderer()->setBackgroundColor(color.panel2);
-    button->getRenderer()->setBackgroundColorDownHover(color.down);
-    button->getRenderer()->setBackgroundColorDown(color.down);
-    button->getRenderer()->setBackgroundColorHover(color.down);
-
     button->getRenderer()->setTextColor(color.text);
-    button->getRenderer()->setTextColorDisabled(color.text);
-    button->getRenderer()->setTextColorHover(color.text);
-    button->getRenderer()->setTextColorDown(sf::Color(0,0,0));
-    button->getRenderer()->setBorders(0);
+    button->getRenderer()->setTextColorHover(color.down);
+    button->getRenderer()->setTextColorDown(color.down);
+    button->getRenderer()->setTextColorFocused(color.text);
+    button->getRenderer()->setTextColorDownFocused(color.down);
 
+    button->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
+    button->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
+    button->getRenderer()->setBackgroundColorDown(tgui::Color::Transparent);
+    button->getRenderer()->setBackgroundColorFocused(tgui::Color::Transparent);
+    button->getRenderer()->setBackgroundColorDownFocused(tgui::Color::Transparent);
+    button->getRenderer()->setBackgroundColorDisabled(tgui::Color::Transparent);
+
+    button->getRenderer()->setBorderColor(color.text);
+    button->getRenderer()->setBorderColorHover(color.down);
+    button->getRenderer()->setBorderColorDown(color.down);
+    button->getRenderer()->setBorderColorDownHover(color.down);
+    button->getRenderer()->setBorderColorFocused(color.text);
+    button->getRenderer()->setBorderColorDownFocused(color.down);
+
+    if(panel == topBar){
+        button->getRenderer()->setBorders(0);
+    }
+
+    if(panel == gameSettingsPanel || panel == gameMenuPanel || title == "Logout"){
+        button->getRenderer()->setBackgroundColorFocused(color.panel2);
+        button->getRenderer()->setTextColorDownFocused(sf::Color(0,0,0));
+        button->getRenderer()->setBackgroundColor(color.panel2);
+        button->getRenderer()->setBackgroundColorDownHover(color.down);
+        button->getRenderer()->setBackgroundColorDown(color.down);
+        button->getRenderer()->setBackgroundColorHover(color.down);
+        button->getRenderer()->setBackgroundColorDisabled(color.down);
+        button->getRenderer()->setBackgroundColorDownFocused(color.down);
+        button->getRenderer()->setTextColorDisabled(color.text);
+        button->getRenderer()->setTextColorHover(color.text);
+        button->getRenderer()->setTextColorDown(color.text);
+        button->getRenderer()->setBorders(0);
+    }
+    
+
+    if(panel == centerPanel && title == "LOGIN"){
+        button->getRenderer()->setBorders(0);
+        button->getRenderer()->setBackgroundColor(sf::Color(0,0,0,100));
+        button->getRenderer()->setTextColorHover(color.down);
+        button->getRenderer()->setTextColorDown(color.down);
+        button->getRenderer()->setBackgroundColorDownHover(color.bg);
+        button->getRenderer()->setBackgroundColorDown(color.bg);
+        button->getRenderer()->setBackgroundColorHover(color.bg);
+        button->getRenderer()->setBackgroundColorDown(sf::Color(0,0,0,100));
+        button->getRenderer()->setBackgroundColorFocused(sf::Color(0,0,0,100));
+        button->getRenderer()->setBackgroundColorDownFocused(sf::Color(0,0,0,100));
+        button->getRenderer()->setBackgroundColorDisabled(sf::Color(0,0,0,100));
+
+    }
+    
     panel->add(button);
 
     return button;
@@ -138,13 +216,20 @@ tgui::Button::Ptr Gui_base::makeButton (std::string title, tgui::Vector2f size, 
  void Gui_base::audio_settings(){
 
     float gap = 12.f;
-    GuiTheme color;
+
+    audioSettingsPanel = tgui::Panel::create({Constants::loginPanelWidth, Constants::loginPanelHeight * 2});
+    audioSettingsPanel->setPosition((getGuiWidth() - Constants::loginPanelWidth) / 2.f, (getGuiHeight() - Constants::loginPanelHeight * 2) / 2.f);
+    audioSettingsPanel->getRenderer()->setBackgroundColor(color.centerpanel);
+    audioSettingsPanel->getRenderer()->setRoundedBorderRadius(10.f);
+
+    root->add(audioSettingsPanel);
+
 
     auto audioTitle = tgui::Label::create("Audio Settings");
     audioTitle->setTextSize(45);
     audioTitle->setPosition((Constants::loginPanelWidth - audioTitle->getSize().x) / 2.f, 20.f);
     audioTitle->getRenderer()->setTextColor(color.text);
-    gameSettingsPanel->add(audioTitle);
+    audioSettingsPanel->add(audioTitle);
 
     float audioH = audioTitle->getSize().y; 
     float audioW = audioTitle->getSize().x;
@@ -153,18 +238,18 @@ tgui::Button::Ptr Gui_base::makeButton (std::string title, tgui::Vector2f size, 
     musicTitle->setTextSize(24);
     musicTitle->setPosition(25.f, audioTitle->getSize().y + 2*gap);
     musicTitle->getRenderer()->setTextColor(color.text);
-    gameSettingsPanel->add(musicTitle);
+    audioSettingsPanel->add(musicTitle);
 
 
     float music_y = musicTitle->getSize().y;
 
-    settingsMusicSlider = makeSlider({musicTitle->getSize().y + 6 * gap, audioTitle->getSize().y  + gap + 22}, {Constants::loginPanelWidth - 190, 10}, music.getVolume(), gameSettingsPanel);
+    settingsMusicSlider = makeSlider({musicTitle->getSize().y + 6 * gap, audioTitle->getSize().y  + gap + 22}, {Constants::loginPanelWidth - 190, 10}, music.getVolume(), audioSettingsPanel);
 
     auto musicValue = tgui::Label::create("0");
     musicValue->setTextSize(24);
     musicValue->setPosition(gameSettingsPanel->getSize().x - 50.f, audioTitle->getSize().y + 2*gap);
     musicValue->getRenderer()->setTextColor(color.text);
-    gameSettingsPanel->add(musicValue);
+    audioSettingsPanel->add(musicValue);
 
     settingsMusicSlider->onValueChange([this, musicValue](float value){
         musicValue->setText(std::to_string((int)value));
@@ -176,18 +261,15 @@ tgui::Button::Ptr Gui_base::makeButton (std::string title, tgui::Vector2f size, 
     effectsTitle->setTextSize(22);
     effectsTitle->setPosition(25.f, audioTitle->getSize().y + musicTitle->getSize().y * 2);
     effectsTitle->getRenderer()->setTextColor(color.text);
-    gameSettingsPanel->add(effectsTitle);
+    audioSettingsPanel->add(effectsTitle);
 
-    auto soundEffectCheckBox = tgui::CheckBox::create();
-
-    auto effectsSlider = makeSlider({musicTitle->getSize().y + 6 * gap, audioTitle->getSize().y + musicTitle->getSize().y * 2 + 10}, {Constants::loginPanelWidth - 190, 10}, clickSound.getVolume(), gameSettingsPanel);
-
+    auto effectsSlider = makeSlider({musicTitle->getSize().y + 6 * gap, audioTitle->getSize().y + musicTitle->getSize().y * 2 + 10}, {Constants::loginPanelWidth - 190, 10}, clickSound.getVolume(), audioSettingsPanel);
 
     auto effectsValue = tgui::Label::create("100");
     effectsValue->setTextSize(24);
     effectsValue->setPosition(gameSettingsPanel->getSize().x - 50.f, audioTitle->getSize().y + musicTitle->getSize().y * 2);
     effectsValue->getRenderer()->setTextColor(color.text);
-    gameSettingsPanel->add(effectsValue);
+    audioSettingsPanel->add(effectsValue);
 
 
     effectsSlider->onValueChange([this, effectsValue](float value){
@@ -195,7 +277,14 @@ tgui::Button::Ptr Gui_base::makeButton (std::string title, tgui::Vector2f size, 
         clickSound.setVolume(value);
         clickSound.play();
     });
+    
+    auto backToSettingsButton = makeBackToMenu({gap, Constants::loginPanelHeight * 2 - gap - 70}, {Constants::loginPanelWidth - 2 * gap, 70}, audioSettingsPanel);
+    backToSettingsButton->setText("Back to Settings");
 
+    bindSoundOnClick(backToSettingsButton, [this]{
+        root->remove(audioSettingsPanel);
+        gameSettingsPanel->setVisible(true);
+    });
  }
 
 void Gui_base::hide_game_settings(){
@@ -229,9 +318,9 @@ void Gui_base::game_settings(){
         escapeMenu->setVisible(false);
     }
     else {
+
         showOverlay();
     }
-    GuiTheme color;
 
     gameSettingsPanel = tgui::Panel::create({Constants::loginPanelWidth, Constants::loginPanelHeight * 2});
     gameSettingsPanel->setPosition((getGuiWidth() - Constants::loginPanelWidth) / 2.f, (getGuiHeight() - Constants::loginPanelHeight * 2) / 2.f);
@@ -249,28 +338,34 @@ void Gui_base::game_settings(){
 
     float titleH = settingsTitle->getSize().y;
     float titleW = settingsTitle->getSize().x;
-    
-    auto videoButton = makeButton("Video", {480, 62}, 28, gameSettingsPanel);
+
+    std::vector<tgui::Button::Ptr> buttons;
+
+    tgui::Button::Ptr videoButton = makeButton("Video", {480, 62}, {300,66} ,28 , gameSettingsPanel);
     videoButton->setPosition((gameSettingsPanel->getSize().x - videoButton->getSize().x) / 2.f, 150);
 
-    auto gameplayButton = makeButton("Gameplay", {480, 62}, 28, gameSettingsPanel);
+    tgui::Button::Ptr gameplayButton = makeButton("Gameplay", {480, 62}, {300,66}, 28 , gameSettingsPanel);
     gameplayButton->setPosition((gameSettingsPanel->getSize().x - videoButton->getSize().x) / 2.f, 250);
 
-    auto audioButton = makeButton("Audio", {480, 62}, 32, gameSettingsPanel);
+    tgui::Button::Ptr audioButton = makeButton("Audio", {480, 62},{300,66}, 28, gameSettingsPanel);
     audioButton->setPosition((gameSettingsPanel->getSize().x - videoButton->getSize().x) / 2.f, 350);
 
+    buttons.push_back(videoButton);
+    buttons.push_back(gameplayButton);
+    buttons.push_back(audioButton);
 
-    bindSoundOnClick(audioButton, [settingsTitle, videoButton, gameplayButton, audioButton, this]{
-        settingsTitle->setVisible(false);
-        videoButton->setVisible(false);
-        gameplayButton->setVisible(false);
-        audioButton->setVisible(false);
-        audio_settings();  
+
+    auto backToMenu = makeBackToMenu({gap, Constants::loginPanelHeight * 2 - gap - 70}, {Constants::loginPanelWidth - 2 * gap, 70}, gameSettingsPanel); 
+
+
+    bindSoundOnClick(audioButton, [this]{
+        gameSettingsPanel->setVisible(false);
+        std::cout << std::endl;
+        audio_settings();
     });
 
 
 
-    auto backToMenu = makeBackToMenu({gap, Constants::loginPanelHeight * 2 - gap - 70}, {Constants::loginPanelWidth - 2 * gap, 70}, gameSettingsPanel); 
 
 
     bindSoundOnClick(backToMenu, [this]{
@@ -288,30 +383,6 @@ void Gui_base::game_settings(){
     });
 
 }
-
-// 420.f a 190.f 
-
-tgui::ChildWindow::Ptr Gui_base::makePopUpPanel(const std::string text){
-
-    GuiTheme color;
-    showOverlay();
-    auto popUpPanel = tgui::ChildWindow::create(text, tgui::ChildWindow::TitleButton::None);
-    popUpPanel->setPosition({(getGuiWidth() - 420.f) / 2.f, (getGuiHeight() - 190.f) / 2.f});
-    popUpPanel->setTextSize(20);
-    popUpPanel->setTitleTextSize(17);
-    popUpPanel->setSize({420, 190});
-    popUpPanel->setPositionLocked(true);
-    popUpPanel->getRenderer()->setBackgroundColor(color.bg);
-    popUpPanel->getRenderer()->setBorderBelowTitleBar(1.00);
-
-    root->add(popUpPanel);
-    
-    return popUpPanel;
-
-}      
-
-
-// tgui::Panel::Ptr
 
 
 tgui::Panel::Ptr Gui_base::overlay() {
@@ -335,7 +406,9 @@ void Gui_base::showOverlay() {
         }
         hideOverlay();
         modalOverlay = overlay();
+
         root->add(modalOverlay);
+
 
 }
 
@@ -361,9 +434,9 @@ void Gui_base::update_time(){
 }
 
 
-tgui::Button::Ptr Gui_base::makeBackToMenu(const tgui::Vector2f pos, const tgui::Vector2f size, tgui::Panel::Ptr panel){
+//lol 
 
-    GuiTheme color;
+tgui::Button::Ptr Gui_base::makeBackToMenu(const tgui::Vector2f pos, const tgui::Vector2f size, tgui::Panel::Ptr panel){
 
     auto backToMenu = tgui::Button::create("Back to Main Menu");
     backToMenu->setTextSize(25);
@@ -392,8 +465,6 @@ tgui::Button::Ptr Gui_base::makeBackToMenu(const tgui::Vector2f pos, const tgui:
 
 tgui::Slider::Ptr Gui_base::makeSlider(tgui::Vector2f pos, tgui::Vector2f size, float startValue, tgui::Panel::Ptr panel) {
 
-        GuiTheme color;
-
         auto slider = tgui::Slider::create();
         slider->setPosition(pos);
         slider->setMinimum(0);
@@ -414,7 +485,7 @@ tgui::Slider::Ptr Gui_base::makeSlider(tgui::Vector2f pos, tgui::Vector2f size, 
 }
 
 
-void Gui_base::volume(tgui::Panel::Ptr topBar, tgui::Panel::Ptr root, GuiTheme color, sf::Music &music){
+void Gui_base::volume(tgui::Panel::Ptr topBar, tgui::Panel::Ptr root, sf::Music &music){
     auto volumeIcon = tgui::Picture::create(tgui::Texture("assets/images/volume/volume_muted.png", {}, {}, true));
         volumeIcon->setPosition({getGuiWidth() - 200.f, 12});
         volumeIcon->setSize({40, 31});

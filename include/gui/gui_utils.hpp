@@ -14,26 +14,14 @@
 #include <TGUI/Backend/SFML-Graphics.hpp>
 #include <vector>
 
-struct GuiTheme {
-    tgui::Color bg{28, 24, 20};        
-    tgui::Color panel{8, 46, 38};    
-    tgui::Color panel2{72, 58, 48};    
-    tgui::Color accent{212, 160, 23};  
-    tgui::Color text{244, 230, 200};   
-    tgui::Color hover{201, 106, 43};   
-    tgui::Color border{120, 92, 60};   
-    tgui::Color down{160, 110, 25};    
-    tgui::Color disabled{80, 70, 60};  
-    tgui::Color yes_quit{133, 22, 22};
-    tgui::Color bar_color{28, 22, 18, 200};
-    tgui::Color centerpanel{45, 35, 28, 230};
-};
+
 
 class Gui_base{
     protected:
         tgui::Gui& gui;
         sf::Music& music; 
         tgui::Panel::Ptr root;
+        tgui::Panel::Ptr topBar;
         std::vector<tgui::Button::Ptr> buttons_sound;
         sf::SoundBuffer clickBuffer;  
         sf::Sound clickSound;  
@@ -47,29 +35,50 @@ class Gui_base{
         tgui::Panel::Ptr gameMenuPanel;
         tgui::Panel::Ptr escapeMenu;
         std::vector<tgui::Button::Ptr> buttonsMainMenu;
+        tgui::Panel::Ptr audioSettingsPanel;
+        tgui::Panel::Ptr centerPanel;
 
+
+        
+        struct GuiTheme {
+            tgui::Color bg{28, 24, 20};        
+            tgui::Color panel{8, 46, 38};    
+            tgui::Color panel2{72, 58, 48};    
+            tgui::Color accent{212, 160, 23};  
+            tgui::Color text{244, 230, 200};   
+            tgui::Color hover{201, 106, 43};   
+            tgui::Color border{120, 92, 60};   
+            tgui::Color down{160, 110, 25};    
+            tgui::Color disabled{80, 70, 60};  
+            tgui::Color yes_quit{133, 22, 22};
+            tgui::Color bar_color{28, 22, 18, 200};
+            tgui::Color centerpanel{45, 35, 28, 230};
+        };
 
         float musicVolume = 0.f;
+        int8_t borderRadius = 20.f;
         
 
 
     public: 
         Gui_base(tgui::Gui& gui, sf::Music& music);
-
+        GuiTheme color;
         bool openedSettingsPanel = false;
         bool openedGameMenuPanel = false;
-
-
+        
     void play_button(){
         clickSound.play();
     }
 
+    tgui::Panel::Ptr makePanel(tgui::Vector2f size, tgui::Color backgroundColor);
+
     tgui::CheckBox::Ptr makeCheckBox(tgui::Vector2f pos, tgui::Panel::Ptr centerPanel);
+    tgui::EditBox::Ptr makeEditBox(const std::string title, tgui::Vector2f pos, tgui::Panel::Ptr panel);
 
     tgui::Slider::Ptr makeSlider(tgui::Vector2f pos, tgui::Vector2f size, float startValue, tgui::Panel::Ptr panel);
     tgui::Button::Ptr makeBackToMenu(tgui::Vector2f pos, tgui::Vector2f size, tgui::Panel::Ptr panel);
     void game_settings();
-    tgui::Button::Ptr makeButton (std::string title, const tgui::Vector2f size, int8_t TextSize, tgui::Panel::Ptr panel);
+    tgui::Button::Ptr makeButton (const std::string title, tgui::Vector2f pos, const tgui::Vector2f size, const int8_t sizeText, tgui::Panel::Ptr panel);
     void audio_settings();
     
     tgui::Panel::Ptr overlay();
@@ -78,8 +87,8 @@ class Gui_base{
     void hide_game_menu();
     void showOverlay();
     void hideOverlay();
-    std::vector<tgui::Button::Ptr> makePopUpButtons(tgui::ChildWindow::Ptr quitLabel);
-    tgui::ChildWindow::Ptr makePopUpPanel(const std::string text);
+    tgui::Button::Ptr makePopUpButton(const std::string title, tgui::Vector2f pos, const tgui::Vector2f size, const int8_t sizeTitle, tgui::ChildWindow::Ptr quitPanel);
+    tgui::ChildWindow::Ptr makePopUpPanel(const std::string title, tgui::Vector2f size, const int8_t sizeTitleText, tgui::Color titleBarColor, tgui::Color titleTextColor);
 
 
     template<typename WidgetPtr, typename Callback>
@@ -105,7 +114,7 @@ class Gui_base{
             return static_cast<float>(gui.getWindow()->getSize().y);
     }
 
-    void volume(tgui::Panel::Ptr topBar, tgui::Panel::Ptr root, GuiTheme color, sf::Music &music);
+    void volume(tgui::Panel::Ptr topBar, tgui::Panel::Ptr root, sf::Music &music);
 
     tgui::Panel::Ptr makeBar();  
 

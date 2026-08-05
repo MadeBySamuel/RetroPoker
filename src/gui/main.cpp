@@ -16,37 +16,19 @@ enum class ScreenState{
     Game_GUI
 };  
 
-
-
-void sound(){
-    GuiTheme color;
-    auto time_label = tgui::Label::create("");
-    time_label->getRenderer()->setTextColor(color.down);
-    time_label->setPosition("85%", "10%");
-    time_label->setTextSize(20);
-}
-
-
 int main(){
 
     using namespace std::chrono_literals;
-    GuiTheme color;
 
     sf::ContextSettings settings;
-    settings.antiAliasingLevel = 8;
+    settings.antiAliasingLevel = 16;
 
     sf:: VideoMode desktop = sf::VideoMode::getDesktopMode();
 
     sf::RenderWindow window(desktop, "Retro Poker", sf::Style::Default, sf::State::Fullscreen, settings);
     window.setFramerateLimit(60);
 
-
     tgui::Gui gui{window};
-
-    const auto windowSize = gui.getWindow()->getSize();
-    const float guiWidth = static_cast<float>(windowSize.x);
-    const float guiHeight = static_cast<float>(windowSize.y);
-
 
     sf::Music music("assets/sound/song2.ogg");
 
@@ -54,7 +36,6 @@ int main(){
     music.setLooping(true);
     music.setVolume(0);
     
-
     ScreenState screen = ScreenState::Game_GUI;
     
     Gui_base gui_base(gui, music);
@@ -62,9 +43,9 @@ int main(){
     MainMenu mainmenu(gui, music, window);
     Game_GUI game(gui, music, window);
     
-    mainmenu.showMainMenu();
+    login.login_screen();
 
-    Gui_base* currentPointer = &mainmenu;
+    Gui_base* currentPointer = &login;
 
     std::string loggedUsername = "";
 
@@ -117,7 +98,6 @@ int main(){
                         else {
                             game.hideEscapeMenu();
                         }
-
                     }
                     if (key->code == sf::Keyboard::Key::Escape && currentPointer == &mainmenu){
                         if (mainmenu.openedSettingsPanel){

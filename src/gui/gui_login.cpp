@@ -20,22 +20,8 @@
 
 Login::Login(tgui::Gui& gui, sf::Music& music, sf::RenderWindow& window) : Gui_base(gui, music), window(window) {}
 
-
-tgui::Panel::Ptr Login::makePanel(float x, float y){
-   
-    GuiTheme color;
-    auto panel = tgui::Panel::create({x, y});
-    panel->setPosition({(getGuiWidth() - x) / 2.f, (getGuiHeight() - y) / 2.f});
-    panel->getRenderer()->setBackgroundColor(color.centerpanel);
-    panel->getRenderer()->setRoundedBorderRadius(20.0);
-    root->add(panel);
-
-    return panel;
-}
-
-tgui::Button::Ptr makeBackToLoginButton(float x, float y){
-
-    GuiTheme color;
+// ??? toto pojde preoč 
+tgui::Button::Ptr Login::makeBackToLoginButton(float x, float y){
 
     auto backToLogin = tgui::Button::create("Back to login");
     backToLogin->setPosition({x,y});
@@ -61,25 +47,23 @@ void Login::login_screen(){
         else {
             std::cerr << "Failed to open Database" << sqlite3_errmsg(db) << std::endl;
         }
-
-        GuiTheme color;
         
         gui.removeAllWidgets();
 
         tgui::Font::setGlobalFont("assets/fonts/Shelten.ttf");
 
-
-
         root = tgui::Panel::create({getGuiWidth(), getGuiWidth()});
         root->getRenderer()->setTextureBackground("assets/images/backgrounds/login_background.jpeg");
         gui.add(root);
+        topBar = makeBar();
 
+        volume(topBar, root, music);
     
-            auto topBar = makeBar();
 
-        volume(topBar, root, color, music);
-    
-        centerPanel = makePanel(Constants::loginPanelWidth, Constants::loginPanelHeight);
+//        color.centerpanel
+
+
+        centerPanel = makePanel({Constants::loginPanelWidth, Constants::loginPanelHeight}, color.centerpanel);
 
         auto loginTitle = tgui::Label::create("Welcome!");
         loginTitle->setPosition({55, 35});
@@ -99,52 +83,11 @@ void Login::login_screen(){
         centerPanel->add(lock_icon);
 
 
+        auto signUpButton = makeButton("Sign up", {400,40}, {170,28}, 20, centerPanel);
+        signUpButton->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 0});
 
-        std::vector<tgui::Button::Ptr> loginButtons;
-
-
-        auto signUpButton = tgui::Button::create("Sign up");
-        signUpButton->setPosition({400, 40});
-
-        auto forgotPasswordButton = tgui::Button::create("Forgot password");
-        forgotPasswordButton->setPosition({400, 390});
-
-        loginButtons.emplace_back(signUpButton);
-        loginButtons.emplace_back(forgotPasswordButton);
-
-        for(auto button : loginButtons){
-            button->setTextSize(18);
-            button->setSize({170, 28});
-
-            if (button == forgotPasswordButton){
-                button->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 2});
-            }
-            else if (button == signUpButton) {
-                button->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 0});
-            }
-
-            button->getRenderer()->setTextColor(color.text);
-            button->getRenderer()->setTextColorHover(color.down);
-            button->getRenderer()->setTextColorDown(color.down);
-            button->getRenderer()->setTextColorFocused(color.text);
-            button->getRenderer()->setTextColorDownFocused(color.down);
-
-            button->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
-            button->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
-            button->getRenderer()->setBackgroundColorDown(tgui::Color::Transparent);
-            button->getRenderer()->setBackgroundColorFocused(tgui::Color::Transparent);
-            button->getRenderer()->setBackgroundColorDownFocused(tgui::Color::Transparent);
-            button->getRenderer()->setBackgroundColorDisabled(tgui::Color::Transparent);
-
-            button->getRenderer()->setBorderColor(color.text);
-            button->getRenderer()->setBorderColorHover(color.down);
-            button->getRenderer()->setBorderColorDown(color.down);
-            button->getRenderer()->setBorderColorDownHover(color.down);
-            button->getRenderer()->setBorderColorFocused(color.text);
-            button->getRenderer()->setBorderColorDownFocused(color.down);
-
-            centerPanel->add(button);
-        }
+        auto forgotPasswordButton = makeButton("Forgot password", {400, 390}, {170, 28}, 18, centerPanel);
+        forgotPasswordButton->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 2});
 
 
         auto rememberBox = makeCheckBox({50, 390}, centerPanel);
@@ -156,27 +99,23 @@ void Login::login_screen(){
         rememberLabel->getRenderer()->setBorderColor(color.text);
         centerPanel->add(rememberLabel);
 
-        bindSoundOnClick(rememberLabel, [rememberBox, color]{
+        bindSoundOnClick(rememberLabel, [this, rememberBox]{
             rememberBox->setChecked(!rememberBox->isChecked());
         });
 
-        sf::Color hoverColor = color.down;
-        sf::Color normalColor = color.text;
-
-
-        rememberLabel->onMouseEnter([hoverColor, rememberLabel, rememberBox]{
-            rememberLabel->getRenderer()->setTextColor(hoverColor);
-            rememberBox->getRenderer()->setBorderColor(hoverColor);
-            rememberBox->getRenderer()->setCheckColor(hoverColor);
+        rememberLabel->onMouseEnter([this, rememberLabel, rememberBox]{
+            rememberLabel->getRenderer()->setTextColor(color.down);
+            rememberBox->getRenderer()->setBorderColor(color.down);
+            rememberBox->getRenderer()->setCheckColor(color.down);
         });
 
-        rememberLabel->onMouseLeave([normalColor, rememberBox, rememberLabel]{
-            rememberLabel->getRenderer()->setTextColor(normalColor);
-            rememberBox->getRenderer()->setBorderColor(normalColor);
-            rememberBox->getRenderer()->setCheckColor(normalColor);
+        rememberLabel->onMouseLeave([this, rememberBox, rememberLabel]{
+            rememberLabel->getRenderer()->setTextColor(color.text);
+            rememberBox->getRenderer()->setBorderColor(color.text);
+            rememberBox->getRenderer()->setCheckColor(color.text);
         });
 
-        rememberLabel->onMousePress([color, rememberLabel,rememberBox]{
+        rememberLabel->onMousePress([this, rememberLabel,rememberBox]{
             rememberLabel->getRenderer()->setTextColor(color.down);
             rememberBox->getRenderer()->setTextColorHover(color.down);
             rememberBox->getRenderer()->setBorderColorHover(color.down);
@@ -184,43 +123,15 @@ void Login::login_screen(){
         });
 
         
-        auto usernameBox = tgui::EditBox::create();
-        usernameBox->setDefaultText("Username");
-        usernameBox->setPosition({100, 145});
 
-
-        auto passwordBox = tgui::EditBox::create();
-        passwordBox->setDefaultText("Password");
-        passwordBox->setPosition({100, 225});
+        auto usernameBox = makeEditBox("Username", {100,145},  centerPanel);
+        auto passwordBox = makeEditBox("Password", {100, 225}, centerPanel);
         passwordBox->setPasswordCharacter('*');
-
-        std::vector<tgui::EditBox::Ptr> loginEditBoxes;
-        
-        loginEditBoxes.emplace_back(usernameBox);
-        loginEditBoxes.emplace_back(passwordBox);
-
-
-        for(auto button : loginEditBoxes){
-            button->setTextSize(20);
-            button->setSize({450, 42});
-            button->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
-            button->getRenderer()->setBorders(0);
-            button->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
-            button->getRenderer()->setTextColor(color.text);
-            button->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 2});
-            button->getRenderer()->setBorderColor(sf::Color(0,0,0));
-            button->getRenderer()->setDefaultTextColor(sf::Color(125, 125, 125));
-
-            centerPanel->add(button);
-        }
 
         auto eye = tgui::Picture::create(tgui::Texture("assets/images/eye_off.png", {}, {}, true));
         eye->setPosition({500, 225});
         eye->setSize({32, 32});
         centerPanel->add(eye);
-
-
-
 
         bindSoundOnClick(eye, [eye, passwordBox]{
             std::cout << "YO" << std::endl;
@@ -234,22 +145,7 @@ void Login::login_screen(){
             }
         });
 
-
-
-
-        auto login_button = tgui::Button::create("LOGIN");
-        login_button->setPosition({70, 300});
-        login_button->setTextSize(28);
-        login_button->setSize({500, 60});
-        login_button->getRenderer()->setBorders(0);
-        login_button->getRenderer()->setBackgroundColor(sf::Color(0,0,0,100));
-        login_button->getRenderer()->setTextColor(color.text);
-        login_button->getRenderer()->setTextColorHover(color.down);
-        login_button->getRenderer()->setTextColorDown(color.down);
-        login_button->getRenderer()->setBackgroundColorDownHover(color.bg);
-        login_button->getRenderer()->setBackgroundColorDown(color.bg);
-        login_button->getRenderer()->setBackgroundColorHover(color.bg);
-        centerPanel->add(login_button);
+        auto loginButton = makeButton("LOGIN", {70, 300}, {500, 60}, 28, centerPanel);
 
 
         wrongLabel = tgui::Label::create("");
@@ -302,7 +198,7 @@ void Login::login_screen(){
         };
 
 
-        bindSoundOnClick(login_button, tryLogin);
+        bindSoundOnClick(loginButton, tryLogin);
 
         usernameBox->onReturnKeyPress([this, tryLogin]{
             play_button();
@@ -314,38 +210,17 @@ void Login::login_screen(){
             tryLogin();
         });
 
+        auto quitButton = makeButton("Quit", {0,5}, {120, 62}, 28, topBar);
 
-        auto quitButton = tgui::Button::create("Quit");
-        quitButton->setPosition({0,5});
-        quitButton->setSize({120, 62}); 
-        quitButton->setTextSize(30);
-
-        quitButton->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
-        quitButton->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
-        quitButton->getRenderer()->setBackgroundColorDown(tgui::Color::Transparent);
-        quitButton->getRenderer()->setBackgroundColorDisabled(tgui::Color::Transparent);
-
-
-        quitButton->getRenderer()->setTextColor(color.text);
-        quitButton->getRenderer()->setTextColorHover(color.down);
-        quitButton->getRenderer()->setTextColorDown(color.down);
-        quitButton->getRenderer()->setTextColorDisabled(tgui::Color(160, 150, 130));
-
-        quitButton->getRenderer()->setBorders(0);
-
-        topBar->add(quitButton);
-
-        bindSoundOnClick(quitButton, [this, color] {
+        bindSoundOnClick(quitButton, [this] {
 
             showOverlay();
             centerPanel->setVisible(false);
-            const std::string quitPanelTitle = "Do you want to exit?";
 
-            tgui::ChildWindow::Ptr quitPanel = makePopUpPanel(quitPanelTitle);
-            std::vector<tgui::Button::Ptr> quitButtons = makePopUpButtons(quitPanel);
+            tgui::ChildWindow::Ptr quitPanel = makePopUpPanel("Do you want to exit?", {420.f, 190.f}, 22, color.down, tgui::Color(253, 253, 253));
+            tgui::Button::Ptr yesButton = makePopUpButton("Yes", {45.f, 50.f}, {120,50}, 20, quitPanel);
+            tgui::Button::Ptr noButton = makePopUpButton("No", {235, 50.f}, {120,50}, 20, quitPanel);
 
-            tgui::Button::Ptr yesButton = quitButtons.at(0);
-            tgui::Button::Ptr noButton = quitButtons.at(1);
 
             bindSoundOnClick(yesButton, [this]
             {
@@ -361,10 +236,10 @@ void Login::login_screen(){
         });
 
 
-        bindSoundOnClick(forgotPasswordButton, [this, color]{
+        bindSoundOnClick(forgotPasswordButton, [this]{
             centerPanel->setVisible(false);
             
-            auto forgotPasswordPanel = makePanel(Constants::forgotPanelWidth, Constants::forgotPanelHeight);
+            auto forgotPasswordPanel = makePanel({Constants::forgotPanelWidth, Constants::forgotPanelHeight}, color.centerpanel );
 
             auto forgotPasswordLabel = tgui::Label::create("Write email of your account");
             forgotPasswordLabel->setPosition({40, 55});
@@ -372,20 +247,7 @@ void Login::login_screen(){
             forgotPasswordLabel->getRenderer()->setTextColor(color.text);
             forgotPasswordPanel->add(forgotPasswordLabel);
 
-
-            auto forgotPasswordBox = tgui::EditBox::create();
-            forgotPasswordBox->setDefaultText("email");
-            forgotPasswordBox->setPosition({100, 145});
-            forgotPasswordBox->setTextSize(20);
-            forgotPasswordBox->setSize({450, 42});
-            forgotPasswordBox->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
-            forgotPasswordBox->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
-            forgotPasswordBox->getRenderer()->setTextColor(color.text);
-            forgotPasswordBox->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 2});
-            forgotPasswordBox->getRenderer()->setBorderColor(sf::Color(0,0,0));
-            forgotPasswordBox->getRenderer()->setDefaultTextColor(sf::Color(125, 125, 125));
-
-            forgotPasswordPanel->add(forgotPasswordBox);
+            auto forgotPasswordBox = makeEditBox("email", {100, 145}, forgotPasswordPanel);
 
             auto emailIcon = tgui::Picture::create("assets/images/email_icon.png");
             emailIcon->setPosition({40, 150});
@@ -428,7 +290,7 @@ void Login::login_screen(){
                 centerPanel->setVisible(true);
             });
 
-            bindSoundOnClick(nextButton, [this, forgotPasswordBox, color, forgotPasswordPanel]{
+            bindSoundOnClick(nextButton, [this, forgotPasswordBox, forgotPasswordPanel]{
                 if(forgotPasswordBox->getText().length() == 0){
                     forgotPasswordBox->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
                 }                
@@ -448,10 +310,10 @@ void Login::login_screen(){
 
             });
 
-        bindSoundOnClick(signUpButton, [this, color]{
+        bindSoundOnClick(signUpButton, [this]{
 
             centerPanel->setVisible(false);
-            auto signUpPanel = makePanel(Constants::signUpPanelWidth,Constants::signUpPanelHeight);
+            auto signUpPanel = makePanel({Constants::signUpPanelWidth,Constants::signUpPanelHeight}, color.centerpanel);
             auto login_title = tgui::Label::create("Sign up");
             login_title->setPosition({40, 30});
             login_title->setTextSize(45);   

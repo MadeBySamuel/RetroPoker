@@ -17,7 +17,6 @@ class Login : public Gui_base {
         std::string last_time_text;
         sqlite3* db = nullptr;
         tgui::Label::Ptr wrongLabel;
-        tgui::Panel::Ptr centerPanel;
 
     
     public:
@@ -25,7 +24,7 @@ class Login : public Gui_base {
         std::function<void(std::string)> onLogin;
         std::string logged_username;
         void login_screen();
-        tgui::Panel::Ptr makePanel(float x, float y);
+        tgui::Button::Ptr makeBackToLoginButton(float x, float y);
 
 
 };

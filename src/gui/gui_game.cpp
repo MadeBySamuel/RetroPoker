@@ -154,8 +154,6 @@ void Game_GUI::showEscapeMenu(){
 
     root->add(escapeMenu);
 
-    GuiTheme color;
-
     auto escapeMenuTitle = tgui::Label::create("Paused");
     escapeMenuTitle->setTextSize(36);
     escapeMenuTitle->setPosition({(Constants::signUpPanelWidth - escapeMenuTitle->getSize().x) / 2.f, 20});
@@ -211,6 +209,7 @@ void Game_GUI::showEscapeMenu(){
     bindSoundOnClick(settingsButton, [this, escapeButtons]{
         game_settings();
     });
+
     bindSoundOnClick(backToMenuButton, [this]{
         hideOverlay();
         root->remove(escapeMenu);
@@ -220,11 +219,10 @@ void Game_GUI::showEscapeMenu(){
 
     bindSoundOnClick(quitGameButton, [this]{
         escapeMenu->setVisible(false);
-        auto quitPanel = makePopUpPanel("Do you want to exit the game");
-        auto quitButtons = makePopUpButtons(quitPanel);
 
-        tgui::Button::Ptr yesButton = quitButtons.at(0);
-        tgui::Button::Ptr noButton = quitButtons.at(1);
+        tgui::ChildWindow::Ptr quitPanel = makePopUpPanel("Do you want to exit?", {420.f, 190.f}, 22, color.down, sf::Color(253, 253, 253));
+        tgui::Button::Ptr yesButton = makePopUpButton("Yes", {45.f, 60.f}, {100,33}, 20, quitPanel);
+        tgui::Button::Ptr noButton = makePopUpButton("No", {235, 60.f}, {100,33}, 20, quitPanel);
 
         bindSoundOnClick(yesButton, [this]
         {
@@ -244,7 +242,6 @@ void Game_GUI::showEscapeMenu(){
 
 
 void Game_GUI::game() {
-    GuiTheme color;
 
     gui.removeAllWidgets();
     actionButtons.clear();
@@ -267,13 +264,12 @@ void Game_GUI::nextHand(){
 
 
 void Game_GUI::buildTable(){
-    GuiTheme color;
 
     root = tgui::Panel::create({getGuiWidth(), getGuiHeight()});
     root->getRenderer()->setTextureBackground("assets/images/backgrounds/game_background.png");
     gui.add(root);
     auto topBar = makeBar();
-    volume(topBar, root, color, music);
+    volume(topBar, root, music);
 
     const float guiW = getGuiWidth();
     const float guiH = getGuiHeight();
@@ -308,7 +304,7 @@ void Game_GUI::buildTable(){
         const float seatY = seat.topY * guiH;
         const float cardW = seat.cardW * guiW;
         const float cardH = seat.cardH * guiH;
-        const float gap   = seat.gap * guiW;
+        const float gap = seat.gap * guiW;
 
         if (isHuman) {
             humanPlayerIndex = i;
@@ -317,13 +313,6 @@ void Game_GUI::buildTable(){
             for (size_t j = 0; j < hole.size() && j < 2; j++) {
                 placeCard(root, hole[j], holeX, seatY, cardW, cardH);
                 holeX += cardW + gap;
-            }
-
-            if(player->getMoney() <= 0 ){
-
-                auto gameOverPanel = makePopUpPanel("Game Over");
-                auto gameOverButtons = makePopUpButtons(gameOverPanel);
-
             }
             
             balanceLabel = tgui::Label::create("Balance: " + std::to_string(player->getMoney()) + "$");
@@ -337,6 +326,22 @@ void Game_GUI::buildTable(){
         } else {
             placeFaceDownPair(root, seatX, seatY, cardW, cardH, gap);
             placePlayerName(root, player->getName(), seat, guiW, guiH, color);
+        }
+    }
+
+    for(size_t i = 0; i < players.size(); i++){
+            if(players[i]->getName() == "Player"){
+                if(players[i]->getMoney() <= 0 ){  
+                auto gameOverPanel = makePopUpPanel("Game Over", {840.f, 390.f}, 32, sf::Color(128, 30, 30), sf::Color(253, 253, 253));
+                tgui::Button::Ptr exitGameButton = makePopUpButton("Exit game", {45.f, 60.f}, {100,33}, 20, gameOverPanel);
+                tgui::Button::Ptr backToGameButton = makePopUpButton("Back to game", {235, 60.f}, {100,33}, 20, gameOverPanel);
+
+                bindSoundOnClick(exitGameButton, [gameOverPanel, this]{
+                    root->remove(gameOverPanel);
+                    onExit();
+                });
+                return;
+            }
         }
     }
 
