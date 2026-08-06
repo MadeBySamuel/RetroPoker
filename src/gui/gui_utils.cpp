@@ -206,11 +206,15 @@ tgui::Button::Ptr Gui_base::makeButton (const std::string title, tgui::Vector2f 
         button->getRenderer()->setBackgroundColorDisabled(sf::Color(0,0,0,100));
 
     }
+
+    if(panel == forgotPasswordPanel){
+        button->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 2});    
+    }
+    button->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 2});
     
     panel->add(button);
 
     return button;
-
 }
 
  void Gui_base::audio_settings(){

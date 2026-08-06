@@ -36,6 +36,7 @@ class Gui_base{
         tgui::Panel::Ptr escapeMenu;
         std::vector<tgui::Button::Ptr> buttonsMainMenu;
         tgui::Panel::Ptr audioSettingsPanel;
+        tgui::Panel::Ptr forgotPasswordPanel;
         tgui::Panel::Ptr centerPanel;
 
 

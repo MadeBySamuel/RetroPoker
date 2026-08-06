@@ -21,24 +21,6 @@
 Login::Login(tgui::Gui& gui, sf::Music& music, sf::RenderWindow& window) : Gui_base(gui, music), window(window) {}
 
 // ??? toto pojde preoč 
-tgui::Button::Ptr Login::makeBackToLoginButton(float x, float y){
-
-    auto backToLogin = tgui::Button::create("Back to login");
-    backToLogin->setPosition({x,y});
-    backToLogin->setSize({160, 30}); 
-    backToLogin->setTextSize(18);
-    backToLogin->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 2});
-    backToLogin->getRenderer()->setTextColor(color.text);
-    backToLogin->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
-    backToLogin->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
-    backToLogin->getRenderer()->setBackgroundColorDown(tgui::Color::Transparent);
-    backToLogin->getRenderer()->setBackgroundColorDisabled(tgui::Color::Transparent);
-    backToLogin->getRenderer()->setTextColorHover(color.down);
-    backToLogin->getRenderer()->setBorderColorHover(color.down);
-
-    return backToLogin;
-}
-
 void Login::login_screen(){
 
         if (sqlite3_open("users.db", &db) == SQLITE_OK){
@@ -239,7 +221,7 @@ void Login::login_screen(){
         bindSoundOnClick(forgotPasswordButton, [this]{
             centerPanel->setVisible(false);
             
-            auto forgotPasswordPanel = makePanel({Constants::forgotPanelWidth, Constants::forgotPanelHeight}, color.centerpanel );
+            forgotPasswordPanel = makePanel({Constants::forgotPanelWidth, Constants::forgotPanelHeight}, color.centerpanel );
 
             auto forgotPasswordLabel = tgui::Label::create("Write email of your account");
             forgotPasswordLabel->setPosition({40, 55});
@@ -254,43 +236,18 @@ void Login::login_screen(){
             emailIcon->setSize({32, 25});
             forgotPasswordPanel->add(emailIcon);
 
+          
+            auto backToLoginButton = makeButton("Back to login", {50, 300}, {160, 30}, 18, forgotPasswordPanel);
+            auto nextButton = makeButton("Next", {400,300}, {160, 30}, 18, forgotPasswordPanel );
 
 
-
-            std::vector<tgui::Button::Ptr> forgotPasswordButtons;
-
-
-            auto backToLoginButton = makeBackToLoginButton(50, 300);
-
-            auto nextButton = tgui::Button::create("Next");
-            nextButton->setPosition({400, 300});
-
-
-            forgotPasswordButtons.push_back(backToLoginButton);
-            forgotPasswordButtons.push_back(nextButton);
-
-            for(auto button : forgotPasswordButtons){
-                button->setSize({160, 30}); 
-                button->setTextSize(18);
-                button->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 2});
-                button->getRenderer()->setBorderColor(color.text);
-                button->getRenderer()->setTextColor(color.text);
-                button->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
-                button->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
-                button->getRenderer()->setBackgroundColorDown(tgui::Color::Transparent);
-                button->getRenderer()->setBackgroundColorDisabled(tgui::Color::Transparent);
-                button->getRenderer()->setTextColorHover(color.down);
-                button->getRenderer()->setBorderColorHover(color.down);
-
-                forgotPasswordPanel->add(button);
-            }
-
-            bindSoundOnClick(backToLoginButton, [this, forgotPasswordPanel]{
+        
+            bindSoundOnClick(backToLoginButton, [this]{
                 root->remove(forgotPasswordPanel);
                 centerPanel->setVisible(true);
             });
 
-            bindSoundOnClick(nextButton, [this, forgotPasswordBox, forgotPasswordPanel]{
+            bindSoundOnClick(nextButton, [this, forgotPasswordBox]{
                 if(forgotPasswordBox->getText().length() == 0){
                     forgotPasswordBox->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
                 }                
