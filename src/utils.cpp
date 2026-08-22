@@ -84,9 +84,9 @@ int utils::set_player_position(std::vector<std::string>& game_names){
         return -1;
     }
 
-    int player_position = rand() % static_cast<int>(game_names.size());
+    int player_position = 0;
     game_names[player_position] = "Player";
-
+    
     return player_position;
 }
 
@@ -168,12 +168,6 @@ void utils::community_cards_selection(std::vector<Card>& game_cards, std::vector
 
 void utils::blindSelection(std::vector<std::unique_ptr<Player>>& players, int& bigBlindPosition, int& smallBlindPositon){
     if (players.empty()) {
-        return;
-    }
-
-    if (bigBlindPosition < 0 || smallBlindPositon < 0 ||
-        bigBlindPosition >= static_cast<int>(players.size()) ||
-        smallBlindPositon >= static_cast<int>(players.size())) {
         return;
     }
 

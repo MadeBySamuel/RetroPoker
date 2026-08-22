@@ -17,8 +17,8 @@ class Game {
         std::vector<Card> communityCards;
         std::string winnerMessage;
         GamePhase currentPhase = GamePhase::PRE_FLOP;
-
-        void resolveShowdown();
+        int smallBlindPosition;
+        int bigBlindPosition;
 
  
 
@@ -44,7 +44,7 @@ class Game {
     void setup_once(std::vector<std::unique_ptr<Player>>& players, std::vector<std::string>& game_names);
 
     void setup_once_per_game(std::vector<std::unique_ptr<Player>>& players, std::vector<Card>& game_cards, 
-        std::vector<int>& used_cards_index, std::vector<Card>& community_cards, int& bigBlindPosition, int& smallBlindPosition);
+        std::vector<int>& used_cards_index, std::vector<Card>& community_cards);
     
     void newHand();
     void game();

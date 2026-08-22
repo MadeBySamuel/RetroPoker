@@ -19,13 +19,14 @@
 class Gui_base{
     protected:
         tgui::Gui& gui;
-        sf::Music& music; 
+        sf::Music& mainMenuMusic; 
+        sf::Music ambienceSound;
         tgui::Panel::Ptr root;
         tgui::Panel::Ptr topBar;
         std::vector<tgui::Button::Ptr> buttons_sound;
         sf::SoundBuffer clickBuffer;  
         sf::Sound clickSound;  
-        tgui::Label::Ptr time_label;
+        tgui::Label::Ptr timeLabel;
         std::string last_time_text;
         tgui::Panel::Ptr modalOverlay;
         tgui::CheckBox::Ptr checkBox;
@@ -33,11 +34,14 @@ class Gui_base{
         tgui::Slider::Ptr settingsMusicSlider;
         tgui::Panel::Ptr gameSettingsPanel;
         tgui::Panel::Ptr gameMenuPanel;
-        tgui::Panel::Ptr escapeMenu;
+        tgui::Panel::Ptr escapeMenuPanel;
         std::vector<tgui::Button::Ptr> buttonsMainMenu;
         tgui::Panel::Ptr audioSettingsPanel;
         tgui::Panel::Ptr forgotPasswordPanel;
+        tgui::Panel::Ptr signUpPanel;
         tgui::Panel::Ptr centerPanel;
+        tgui::Panel::Ptr sideBar;
+
 
 
         
@@ -54,6 +58,8 @@ class Gui_base{
             tgui::Color yes_quit{133, 22, 22};
             tgui::Color bar_color{28, 22, 18, 200};
             tgui::Color centerpanel{45, 35, 28, 230};
+            tgui::Color gamePanel{84, 47, 19, 200};  
+            tgui::Color title{0,0,0}; 
         };
 
         float musicVolume = 0.f;
@@ -71,26 +77,24 @@ class Gui_base{
         clickSound.play();
     }
 
-    tgui::Panel::Ptr makePanel(tgui::Vector2f size, tgui::Color backgroundColor);
+    tgui::Panel::Ptr makePanel(tgui::Vector2f size, tgui::Color backgroundColor, tgui::Panel::Ptr container);
 
     tgui::CheckBox::Ptr makeCheckBox(tgui::Vector2f pos, tgui::Panel::Ptr centerPanel);
-    tgui::EditBox::Ptr makeEditBox(const std::string title, tgui::Vector2f pos, tgui::Panel::Ptr panel);
+    tgui::EditBox::Ptr makeEditBox(const std::string& title, tgui::Vector2f pos, tgui::Panel::Ptr panel);
 
     tgui::Slider::Ptr makeSlider(tgui::Vector2f pos, tgui::Vector2f size, float startValue, tgui::Panel::Ptr panel);
-    tgui::Button::Ptr makeBackToMenu(tgui::Vector2f pos, tgui::Vector2f size, tgui::Panel::Ptr panel);
     void game_settings();
-    tgui::Button::Ptr makeButton (const std::string title, tgui::Vector2f pos, const tgui::Vector2f size, const int8_t sizeText, tgui::Panel::Ptr panel);
+    tgui::Button::Ptr makeButton (const std::string& title, tgui::Vector2f pos, const tgui::Vector2f size, const int8_t titleSize, tgui::Panel::Ptr panel);
     void audio_settings();
-    
-    tgui::Panel::Ptr overlay();
+    tgui::Picture::Ptr makeImage(const tgui::Texture& texture, tgui::Vector2f pos, tgui::Vector2f size, tgui::Panel::Ptr panel);
 
     void hide_game_settings();
     void hide_game_menu();
     void showOverlay();
     void hideOverlay();
-    tgui::Button::Ptr makePopUpButton(const std::string title, tgui::Vector2f pos, const tgui::Vector2f size, const int8_t sizeTitle, tgui::ChildWindow::Ptr quitPanel);
-    tgui::ChildWindow::Ptr makePopUpPanel(const std::string title, tgui::Vector2f size, const int8_t sizeTitleText, tgui::Color titleBarColor, tgui::Color titleTextColor);
-
+    tgui::Button::Ptr makePopUpButton(const std::string& title, tgui::Vector2f pos, const tgui::Vector2f size, const int8_t titleSize, tgui::ChildWindow::Ptr quitPanel);
+    tgui::ChildWindow::Ptr makePopUpPanel(const std::string& title, tgui::Vector2f size, const int8_t titleSize, tgui::Color titleBarColor, tgui::Color titleTextColor, bool showOverlay);
+    tgui::Label::Ptr makeLabel(const std::string& title, const int16_t titleSize, tgui::Color titleColor, tgui::Panel::Ptr panel);
 
     template<typename WidgetPtr, typename Callback>
     void bindSoundOnClick(const WidgetPtr& widget, Callback&& callback, bool soundOn = true) {
@@ -117,7 +121,7 @@ class Gui_base{
 
     void volume(tgui::Panel::Ptr topBar, tgui::Panel::Ptr root, sf::Music &music);
 
-    tgui::Panel::Ptr makeBar();  
+    tgui::Panel::Ptr makeBar(tgui::Vector2f pos);  
 
 
     std::string getCurrentTimeString();
@@ -132,13 +136,13 @@ class Gui_base{
 struct Card{
     int rank;
     std::string name;
-    tgui::Picture::Ptr image;
+    std::string imagePath;
 
-    std::string write_name(){
+    std::string write_name() const {
         return name + " " + rank_to_string(rank);
     }
 
-    std::string rank_to_string(int rank) {
+    std::string rank_to_string(int rank) const {
         if (rank == 11) return "J";
         if (rank == 12) return "Q";
         if (rank == 13) return "K";

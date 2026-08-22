@@ -8,7 +8,6 @@
 #include "hand_evaluator.hpp"
 #include "constants.hpp"
 #include "player.hpp"
-#include "gui_game.hpp"
 
 
 int& Game::getPot(){
@@ -55,10 +54,14 @@ void Game::setup_once(std::vector<std::unique_ptr<Player>>& players, std::vector
     utils::shuffle_players(game_names);
     utils::set_player_position(game_names);
     utils::createPlayers(game_names, players);
+    smallBlindPosition = 1;
+    bigBlindPosition = 2;
+    setSmallBlind(10);
+    setBigBlind(20);
 }
 
 void Game::setup_once_per_game(std::vector<std::unique_ptr<Player>>& players, std::vector<Card>& game_cards,
-    std::vector<int>& used_cards_index, std::vector<Card>& community_cards, int& bigBlindPosition, int& smallBlindPosition){
+    std::vector<int>& used_cards_index, std::vector<Card>& community_cards){
 
     used_cards_index.clear();
 
@@ -114,11 +117,15 @@ void Game::newHand() {
     std::vector<int> used_cards_index;
 
     const int playerCount = static_cast<int>(players.size());
-    int smallBlindPosition = playerCount - 1;
-    int bigBlindPosition   = playerCount - 2;
+    
+    smallBlindPosition++;
+    bigBlindPosition++;
 
-    setup_once_per_game(players, game_cards, used_cards_index, communityCards,
-                         smallBlindPosition, bigBlindPosition);
+    smallBlindPosition = smallBlindPosition == playerCount ? 0 : smallBlindPosition;
+    bigBlindPosition = bigBlindPosition == playerCount ? 0 : bigBlindPosition;
+
+
+    setup_once_per_game(players, game_cards, used_cards_index, communityCards);
 }
 
 void Game::game() {
@@ -130,21 +137,12 @@ void Game::game() {
     players.clear();
 
     std::vector<Card> game_cards = gui_utils::game_cards();
-
-    setSmallBlind(1);
-    setBigBlind(2);
-
     std::vector<std::string> game_names = Constants::NAMES;
     std::vector<int> used_cards_index;
 
     Game::setup_once(this->players, game_names);
-
-    const int playerCount = static_cast<int>(players.size());
-    int smallBlindPosition = playerCount - 1;
-    int bigBlindPosition = playerCount - 2;
-
-    Game::setup_once_per_game(this->players, game_cards, used_cards_index, communityCards,
-                               smallBlindPosition, bigBlindPosition);
+    
+    Game::setup_once_per_game(this->players, game_cards, used_cards_index, communityCards);
 }
 
 void Game::playerAction(ActionType action, int raiseAmount) {
@@ -223,73 +221,6 @@ void Game::playerAction(ActionType action, int raiseAmount) {
             currentPhase = GamePhase::SHOWDOWN; 
             break;
         default: break;
-    }
-
-    if (currentPhase == GamePhase::SHOWDOWN) {
-        resolveShowdown();
-    }
-}
-
-void Game::resolveShowdown() {
-    HandEvaluator handEvaluator;
-    std::vector<Card> cards;
-    std::vector<HandScore> evoluation_cards;
-
-    for (size_t i = 0; i < players.size(); i++) {
-        if (!players[i]->getInGame()) continue;
-        cards = utils::cards7collection(players, i, communityCards);
-        evoluation_cards.push_back(handEvaluator.evaluate(cards, players, communityCards, i));
-    }
-
-    if (evoluation_cards.empty()) {
-        winnerMessage = "No winner";
-        return;
-    }
-
-    utils::sort_function_hand_score(evoluation_cards);
-
-    std::vector<HandScore> ties;
-    for (int i = 0; i < static_cast<int>(evoluation_cards.size()) - 1; i++) {
-        if (evoluation_cards[i].rank == evoluation_cards[i+1].rank &&
-            evoluation_cards[i].sum_for_tie == evoluation_cards[i+1].sum_for_tie) {
-            ties.push_back(evoluation_cards[i]);
-            ties.push_back(evoluation_cards[i+1]);
-        }
-    }
-
-    HandScore winner = utils::max(evoluation_cards);
-
-    if (ties.empty()) {
-        winnerMessage = "Winner: " + winner.name;
-        for (size_t i = 0; i < players.size(); i++) {
-            if (winner.name == players[i]->getName())
-                players[i]->getMoney() += getPot();
-        }
-    } else {
-        HandScore tieswinner = utils::max(ties);
-        if (winner.sum_for_tie > tieswinner.sum_for_tie && winner.rank > tieswinner.rank) {
-            winnerMessage = "Winner: " + winner.name;
-            for (size_t i = 0; i < players.size(); i++) {
-                if (winner.name == players[i]->getName())
-                    players[i]->getMoney() += getPot();
-            }
-        } else {
-            std::vector<std::string> tied_names;
-            for (const auto& tie : ties) {
-                if (std::find(tied_names.begin(), tied_names.end(), tie.name) == tied_names.end())
-                    tied_names.push_back(tie.name);
-            }
-            winnerMessage = "Split pot: ";
-            for (size_t n = 0; n < tied_names.size(); n++) {
-                if (n > 0) winnerMessage += ", ";
-                winnerMessage += tied_names[n];
-            }
-            int part = getPot() / static_cast<int>(tied_names.size());
-            for (size_t i = 0; i < players.size(); i++) {
-                if (std::find(tied_names.begin(), tied_names.end(), players[i]->getName()) != tied_names.end())
-                    players[i]->getMoney() += part;
-            }
-        }
     }
 
 }

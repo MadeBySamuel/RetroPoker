@@ -37,32 +37,18 @@ void Login::login_screen(){
         root = tgui::Panel::create({getGuiWidth(), getGuiWidth()});
         root->getRenderer()->setTextureBackground("assets/images/backgrounds/login_background.jpeg");
         gui.add(root);
-        topBar = makeBar();
+        topBar = makeBar({0,0});
 
-        volume(topBar, root, music);
+        volume(topBar, root, mainMenuMusic);
     
 
-//        color.centerpanel
+        centerPanel = makePanel({Constants::Panel::loginWidth, Constants::Panel::loginHeight}, color.centerpanel, root);
 
-
-        centerPanel = makePanel({Constants::loginPanelWidth, Constants::loginPanelHeight}, color.centerpanel);
-
-        auto loginTitle = tgui::Label::create("Welcome!");
+        auto loginTitle = makeLabel("Welcome!", 45, color.text, centerPanel);
         loginTitle->setPosition({55, 35});
-        loginTitle->setTextSize(45);   
-        loginTitle->getRenderer()->setTextColor(color.text);
-        centerPanel->add(loginTitle);
 
-
-        auto login_icon = tgui::Picture::create("assets/images/login_icon.png");
-        login_icon->setPosition({55, 147});
-        login_icon->setSize({28, 28});
-        centerPanel->add(login_icon);
-
-        auto lock_icon = tgui::Picture::create("assets/images/lock_icon.png");
-        lock_icon->setPosition({52, 222});
-        lock_icon->setSize({34, 34});
-        centerPanel->add(lock_icon);
+        auto loginIcon = makeImage("assets/images/login_icon.png",{55, 147}, {28, 28}, centerPanel);
+        auto lockIcon = makeImage("assets/images/lock_icon.png", {52, 222},{34, 34}, centerPanel );
 
 
         auto signUpButton = makeButton("Sign up", {400,40}, {170,28}, 20, centerPanel);
@@ -74,12 +60,9 @@ void Login::login_screen(){
 
         auto rememberBox = makeCheckBox({50, 390}, centerPanel);
 
-        auto rememberLabel = tgui::Label::create("Remember me");
+        auto rememberLabel = makeLabel("Remember me", 18, color.text, centerPanel);
         rememberLabel->setPosition({80, 390});
-        rememberLabel->setTextSize(18);
-        rememberLabel->getRenderer()->setTextColor(color.text);
         rememberLabel->getRenderer()->setBorderColor(color.text);
-        centerPanel->add(rememberLabel);
 
         bindSoundOnClick(rememberLabel, [this, rememberBox]{
             rememberBox->setChecked(!rememberBox->isChecked());
@@ -105,36 +88,27 @@ void Login::login_screen(){
         });
 
         
-
         auto usernameBox = makeEditBox("Username", {100,145},  centerPanel);
         auto passwordBox = makeEditBox("Password", {100, 225}, centerPanel);
         passwordBox->setPasswordCharacter('*');
 
-        auto eye = tgui::Picture::create(tgui::Texture("assets/images/eye_off.png", {}, {}, true));
-        eye->setPosition({500, 225});
-        eye->setSize({32, 32});
-        centerPanel->add(eye);
+        auto eyeIcon = makeImage(tgui::Texture("assets/images/eye_off.png", {}, {}, true), {500, 225}, {32, 28}, centerPanel);
 
-        bindSoundOnClick(eye, [eye, passwordBox]{
-            std::cout << "YO" << std::endl;
+        bindSoundOnClick(eyeIcon, [eyeIcon, passwordBox]{
             if (passwordBox->getPasswordCharacter() == '*'){
-                eye->getRenderer()->setTexture("assets/images/eye_on.png");
+                eyeIcon->getRenderer()->setTexture("assets/images/eye_on.png");
                 passwordBox->setPasswordCharacter(false);
             }
             else {
-                eye->getRenderer()->setTexture("assets/images/eye_off.png");
+                eyeIcon->getRenderer()->setTexture("assets/images/eye_off.png");
                 passwordBox->setPasswordCharacter('*');
             }
         });
 
-        auto loginButton = makeButton("LOGIN", {70, 300}, {500, 60}, 28, centerPanel);
+        auto loginButton = makeButton("LOGIN", {(Constants::Panel::loginWidth - 500) /2.f, 300}, {500, 60}, 28, centerPanel);
 
-
-        wrongLabel = tgui::Label::create("");
-        wrongLabel->setTextSize(17);
+        wrongLabel = makeLabel("", 17, sf::Color(160, 42, 16), centerPanel);
         wrongLabel->setPosition({70, 270});
-        wrongLabel->getRenderer()->setTextColor(sf::Color(160, 42, 16));
-        centerPanel->add(wrongLabel);
         
         auto tryLogin = [this, usernameBox, passwordBox]{
             if (usernameBox->getText().length() == 0 && passwordBox->getText().length() == 0){
@@ -199,7 +173,7 @@ void Login::login_screen(){
             showOverlay();
             centerPanel->setVisible(false);
 
-            tgui::ChildWindow::Ptr quitPanel = makePopUpPanel("Do you want to exit?", {420.f, 190.f}, 22, color.down, tgui::Color(253, 253, 253));
+            tgui::ChildWindow::Ptr quitPanel = makePopUpPanel("Do you want to exit?", {420.f, 190.f}, 22, color.down, tgui::Color(253, 253, 253), false);
             tgui::Button::Ptr yesButton = makePopUpButton("Yes", {45.f, 50.f}, {120,50}, 20, quitPanel);
             tgui::Button::Ptr noButton = makePopUpButton("No", {235, 50.f}, {120,50}, 20, quitPanel);
 
@@ -221,22 +195,13 @@ void Login::login_screen(){
         bindSoundOnClick(forgotPasswordButton, [this]{
             centerPanel->setVisible(false);
             
-            forgotPasswordPanel = makePanel({Constants::forgotPanelWidth, Constants::forgotPanelHeight}, color.centerpanel );
+            forgotPasswordPanel = makePanel({Constants::Panel::forgotWidth, Constants::Panel::forgotHeight}, color.centerpanel, root);
 
-            auto forgotPasswordLabel = tgui::Label::create("Write email of your account");
+            auto forgotPasswordLabel = makeLabel("Write email of your account", 30, color.text, forgotPasswordPanel);
             forgotPasswordLabel->setPosition({40, 55});
-            forgotPasswordLabel->setTextSize(30);   
-            forgotPasswordLabel->getRenderer()->setTextColor(color.text);
-            forgotPasswordPanel->add(forgotPasswordLabel);
 
             auto forgotPasswordBox = makeEditBox("email", {100, 145}, forgotPasswordPanel);
-
-            auto emailIcon = tgui::Picture::create("assets/images/email_icon.png");
-            emailIcon->setPosition({40, 150});
-            emailIcon->setSize({32, 25});
-            forgotPasswordPanel->add(emailIcon);
-
-          
+            auto emailIcon = makeImage("assets/images/email_icon.png", {40, 150},{32, 25}, forgotPasswordPanel);
             auto backToLoginButton = makeButton("Back to login", {50, 300}, {160, 30}, 18, forgotPasswordPanel);
             auto nextButton = makeButton("Next", {400,300}, {160, 30}, 18, forgotPasswordPanel );
 
@@ -255,8 +220,8 @@ void Login::login_screen(){
 
                 root->remove(forgotPasswordPanel);
 
-                auto code_email_panel = tgui::Panel::create({Constants::forgotPanelWidth, Constants::forgotPanelHeight});
-                code_email_panel->setPosition({(getGuiWidth() - Constants::forgotPanelWidth) / 2.f, (getGuiHeight() - Constants::forgotPanelHeight) / 2.f});
+                auto code_email_panel = tgui::Panel::create({Constants::Panel::forgotWidth, Constants::Panel::forgotHeight});
+                code_email_panel->setPosition({(getGuiWidth() - Constants::Panel::forgotWidth) / 2.f, (getGuiHeight() - Constants::Panel::forgotHeight) / 2.f});
                 code_email_panel->getRenderer()->setBackgroundColor(color.panel2);
                 code_email_panel->getRenderer()->setRoundedBorderRadius(20.0);
                 
@@ -270,138 +235,75 @@ void Login::login_screen(){
         bindSoundOnClick(signUpButton, [this]{
 
             centerPanel->setVisible(false);
-            auto signUpPanel = makePanel({Constants::signUpPanelWidth,Constants::signUpPanelHeight}, color.centerpanel);
-            auto login_title = tgui::Label::create("Sign up");
-            login_title->setPosition({40, 30});
-            login_title->setTextSize(45);   
-            login_title->getRenderer()->setTextColor(color.text);
-            signUpPanel->add(login_title);
-
-
-            auto username_box = tgui::EditBox::create();
-            username_box->setDefaultText("Username");
-            username_box->setPosition({100, 145});
-            signUpPanel->add(username_box);
-
-
-            auto email_box = tgui::EditBox::create();
-            email_box->setDefaultText("Email");
-            email_box->setPosition({100, 225});
-            signUpPanel->add(email_box);
-
-            auto password_box = tgui::EditBox::create();
-            password_box->setDefaultText("Password");
-            password_box->setPosition({100, 305});
-            signUpPanel->add(password_box);
-
-
-            auto username_icon = tgui::Picture::create("assets/images/login_icon.png");
-            username_icon->setPosition({50, 150});
-            username_icon->setSize({32, 28});
-            signUpPanel->add(username_icon);
-
-
-            auto email_icon = tgui::Picture::create("assets/images/email_icon.png");
-            email_icon->setPosition({50, 230});
-            email_icon->setSize({32, 24});
-            signUpPanel->add(email_icon);
-
-
-            // treba upravit 
-            auto password_icon = tgui::Picture::create("assets/images/lock_icon.png");
-            password_icon->setPosition({50,310});
-            password_icon->setSize({32, 28});
-            signUpPanel->add(password_icon);
-
             
+            signUpPanel = makePanel({Constants::Panel::signUpWidth,Constants::Panel::signUpHeight}, color.centerpanel, root);
+            
+            auto loginTitle = makeLabel("Sign up", 45, color.text, signUpPanel);
+            
+            loginTitle->setPosition({40, 30});
 
-            auto backToLogin = makeBackToLoginButton(400, 500);
-            signUpPanel->add(backToLogin);
+            auto usernameBox = makeEditBox("username", {100,145}, signUpPanel);
+            auto emailBox = makeEditBox("email",{100, 225}, signUpPanel);
+            auto passwordBox = makeEditBox("password", {100,305}, signUpPanel);
 
+            auto usernameIcon = makeImage("assets/images/login_icon.png", {50, 150}, {32, 28}, signUpPanel);
 
-            auto eye = tgui::Picture::create(tgui::Texture("assets/images/eye_off.png", {}, {}, true));
-            eye->setPosition({500, 300});
-            eye->setSize({32, 32});
-            signUpPanel->add(eye);
+            auto emailIcon = makeImage("assets/images/email_icon.png", {50, 230}, {32, 24}, signUpPanel);
 
+            auto passwordIcon = makeImage("assets/images/lock_icon.png", {50,310}, {32, 28}, signUpPanel);
+            
+            auto backToLoginButton = makeButton("Back to login", {400,40}, {170,28}, 20, signUpPanel);
+            backToLoginButton->getRenderer()->setBorders({0,0,0,0});
 
-            bindSoundOnClick(eye, [eye, password_box]{
-                if (password_box->getPasswordCharacter() == '*'){
-                    eye->getRenderer()->setTexture("assets/images/eye_on.png");
-                    password_box->setPasswordCharacter(false);
+            auto eyeIcon = makeImage(tgui::Texture("assets/images/eye_off.png", {}, {}, true), {500, 300}, {32, 28}, signUpPanel);
+
+            bindSoundOnClick(eyeIcon, [eyeIcon, passwordBox]{
+                if (passwordBox->getPasswordCharacter() == '*'){
+                    eyeIcon->getRenderer()->setTexture("assets/images/eye_on.png");
+                    passwordBox->setPasswordCharacter(false);
                 }
                 else {
-                    eye->getRenderer()->setTexture("assets/images/eye_off.png");
-                    password_box->setPasswordCharacter('*');
+                    eyeIcon->getRenderer()->setTexture("assets/images/eye_off.png");
+                    passwordBox->setPasswordCharacter('*');
                 }
             });
 
-            bindSoundOnClick(backToLogin, [this, signUpPanel]{
+            bindSoundOnClick(backToLoginButton, [this]{
                 root->remove(signUpPanel);
                 centerPanel->setVisible(true);
             });
 
-            std::vector<tgui::EditBox::Ptr> login_boxes;
-        
-            login_boxes.emplace_back(username_box);
-            login_boxes.emplace_back(email_box);
-            login_boxes.emplace_back(password_box);
-
-        for(size_t i = 0; i < login_boxes.size(); i++){
-            login_boxes[i]->setTextSize(20);
-            login_boxes[i]->setSize({450, 42});
-            login_boxes[i]->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
-            login_boxes[i]->getRenderer()->setBorders(0);
-            login_boxes[i]->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
-            login_boxes[i]->getRenderer()->setTextColor(color.text);
-            login_boxes[i]->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 2});
-            login_boxes[i]->getRenderer()->setBorderColor(sf::Color(0,0,0));
-        }
+        auto signUpButton = makeButton("Create account", {(Constants::Panel::signUpWidth - 500) / 2.f, 420}, {500, 60}, 28, signUpPanel);
 
 
-
-            auto sign_up_button = tgui::Button::create("Create account");
-            sign_up_button->setPosition({70, 380});
-            sign_up_button->setTextSize(28);
-            sign_up_button->setSize({500, 60});
-            sign_up_button->getRenderer()->setBackgroundColor(sf::Color(0,0,0,100));
-            sign_up_button->getRenderer()->setTextColor(color.text);
-            sign_up_button->getRenderer()->setTextColorHover(color.down);
-            sign_up_button->getRenderer()->setBackgroundColorDownHover(color.bg);
-            sign_up_button->getRenderer()->setBackgroundColorDown(color.bg);
-            sign_up_button->getRenderer()->setBackgroundColorHover(color.bg);
-            signUpPanel->add(sign_up_button);
+        wrongLabel = tgui::Label::create("");
+        wrongLabel->setTextSize(17);
+        wrongLabel->setPosition({90, 420});
+        wrongLabel->getRenderer()->setTextColor(sf::Color(160, 42, 16));
+        signUpPanel->add(wrongLabel);
 
 
-
-            wrongLabel = tgui::Label::create("");
-            wrongLabel->setTextSize(17);
-            wrongLabel->setPosition({90, 420});
-            wrongLabel->getRenderer()->setTextColor(sf::Color(160, 42, 16));
-            signUpPanel->add(wrongLabel);
-
-
-        bindSoundOnClick(sign_up_button, [this, username_box, email_box, password_box]{
-            if (username_box->getText().length() == 0 && password_box->getText().length() == 0 && username_box->getText().length() == 0){
-                email_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
-                password_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
-                username_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
+        bindSoundOnClick(signUpButton, [this, usernameBox, emailBox, passwordBox]{
+            if (usernameBox->getText().length() == 0 && passwordBox->getText().length() == 0 && usernameBox->getText().length() == 0){
+                emailBox->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
+                passwordBox->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
+                usernameBox->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
             }
-            else if(username_box->getText().length() == 0){
-                username_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
+            else if(usernameBox->getText().length() == 0){
+                usernameBox->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
             }
-            else if (password_box->getText().length() == 0){
-                password_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
+            else if (passwordBox->getText().length() == 0){
+                passwordBox->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
             }
-            else if (email_box->getText().length() == 0){
-                email_box->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
+            else if (emailBox->getText().length() == 0){
+                emailBox->getRenderer()->setDefaultTextColor(sf::Color(160, 42, 16));
             }
 
             else{
 
-                std::string email = email_box->getText().toStdString();
-                std::string password = password_box->getText().toStdString();
-                std::string username = username_box->getText().toStdString();
+                std::string email = emailBox->getText().toStdString();
+                std::string password = passwordBox->getText().toStdString();
+                std::string username = usernameBox->getText().toStdString();
 
                 auth::LoginResult register_user = auth::registerUser(db, username, email, password);
 
@@ -426,12 +328,12 @@ void Login::login_screen(){
             });
         });
 
-        time_label = tgui::Label::create("");
-        time_label->setTextSize(30);
-        time_label->setPosition({getGuiWidth() - 125.f, 10});
-        time_label->getRenderer()->setTextColor(color.text);
+        timeLabel = tgui::Label::create("");
+        timeLabel->setTextSize(30);
+        timeLabel->setPosition({getGuiWidth() - 125.f, 10});
+        timeLabel->getRenderer()->setTextColor(color.text);
         
-        topBar->add(time_label);
+        topBar->add(timeLabel);
 
         
     }

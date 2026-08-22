@@ -32,21 +32,24 @@ Game_GUI::Game_GUI(tgui::Gui& gui, sf::Music& music, sf::RenderWindow& window)
     : Gui_base(gui, music),  window(window){}
 
 void Game_GUI::placeCard(tgui::Panel::Ptr parent, const Card& card, float x, float y, float w, float h) {
-    if (!card.image) return;
-    card.image->setPosition({x, y});
-    card.image->setSize({w, h});
-    parent->add(card.image);
+    if (card.imagePath.empty()) return;
+
+    auto image = tgui::Picture::create(tgui::Texture(card.imagePath, {}, {}, true));
+    image->setPosition({x, y});
+    image->setSize({w, h});
+    parent->add(image);
 }
 
 void Game_GUI::placeFaceDownPair(tgui::Panel::Ptr parent, float leftX, float topY, float cardW, float cardH, float gap) {
-    auto card1 = tgui::Picture::create(CARD_BACK_PATH);
-    auto card2 = tgui::Picture::create(CARD_BACK_PATH);
-    card1->setPosition({leftX, topY});
-    card1->setSize({cardW, cardH});
-    card2->setPosition({leftX + cardW + gap, topY});
-    card2->setSize({cardW, cardH});
-    parent->add(card1);
-    parent->add(card2);
+    const auto createCardBack = [parent, cardW, cardH](float x, float y) {
+        auto card = tgui::Panel::create({cardW, cardH});
+        card->setPosition({x, y});
+        card->getRenderer()->setTextureBackground(CARD_BACK_PATH);
+        parent->add(card);
+    };
+
+    createCardBack(leftX, topY);
+    createCardBack(leftX + cardW + gap, topY);
 }
 
 void Game_GUI::placeCenteredLabel(tgui::Panel::Ptr parent, const tgui::Label::Ptr& label, float centerX, float topY, float minX, float maxX) {
@@ -55,7 +58,19 @@ void Game_GUI::placeCenteredLabel(tgui::Panel::Ptr parent, const tgui::Label::Pt
     parent->add(label);
 }
 
-void Game_GUI::placePlayerName(tgui::Panel::Ptr parent, const std::string& name, const TableSeat& seat, float guiW, float guiH, const GuiTheme& color) {
+tgui::Panel::Ptr Game_GUI::makeCirclePanel(std::string& name, tgui::Vector2f pos){
+    const bool isPlayer = (name == "Player");
+
+    const float radius = isPlayer ? blindChipRadiusPlayer : blindChipRadiusClanker;
+    const float gap = isPlayer ? gapPlayer : gapClanker;
+
+    auto circle = makePanel({radius, radius}, color.centerpanel, root);
+    circle->getRenderer()->setRoundedBorderRadius(radius/2);
+    circle->setPosition(pos.x - gap, pos.y + gap - 30);
+    return circle;
+}
+
+void Game_GUI::placePlayerName(tgui::Panel::Ptr parent, const std::string& name, const TableSeat& seat, float guiW, float guiH) {
     auto label = tgui::Label::create(name);
     label->setTextSize(scaledTextSize(guiH, 0.018f, 18, 28));
     label->getRenderer()->setTextColor(color.text);
@@ -64,12 +79,21 @@ void Game_GUI::placePlayerName(tgui::Panel::Ptr parent, const std::string& name,
     placeCenteredLabel(parent, label, centerX, topY, 20.f, guiW - 20.f);
 }
 
+void Game_GUI::placeBlind(std::string& name, const std::string& title, tgui::Vector2f pos){
+    auto blindPanel = makeCirclePanel(name, pos);
+    auto blindLabel = makeLabel(title, 12, tgui::Color::White, blindPanel);
+    blindLabel->setSize({"100%", "100%"});
+    blindLabel->setHorizontalAlignment(tgui::HorizontalAlignment::Center);
+    blindLabel->setVerticalAlignment(tgui::VerticalAlignment::Center);
+}
+
+
 void Game_GUI::refreshCommunity() {
     communityPanel->removeAllWidgets();
     const auto visible = engine->getVisibleCommunityCards();
     float cx = 0.f;
     for (size_t i = 0; i < visible.size() && i < 5; i++) {
-        placeCard(communityPanel, visible[i], cx, 0.f, communityCardW, communityCardH);
+        placeCard(communityPanel, visible[i], cx + 15, 0.f + 15, communityCardW, communityCardH);
         cx += communityCardW + communityGap;
     }
 }
@@ -126,7 +150,7 @@ void Game_GUI::restartGame(){
     raiseSlider = nullptr;
     raiseMoneyLabel = nullptr;
     confirmButton = nullptr;
-    escapeMenu = nullptr;
+    escapeMenuPanel = nullptr;
 
     engine = std::make_unique<Game>();
     game();      
@@ -135,106 +159,67 @@ void Game_GUI::restartGame(){
 
 void Game_GUI::hideEscapeMenu(){
     hideOverlay();
-    root->remove(escapeMenu);
-    escapeMenu = nullptr;
+    root->remove(escapeMenuPanel);
+    escapeMenuPanel = nullptr;
 }
 
 void Game_GUI::showEscapeMenu(){
 
-    if (escapeMenu){
+    if (escapeMenuPanel){
         return;
     }
     
     showOverlay();
     
-    escapeMenu = tgui::Panel::create({Constants::signUpPanelWidth, Constants::signUpPanelHeight});
-    escapeMenu->setPosition({(getGuiWidth() - Constants::signUpPanelWidth) / 2.f, (getGuiHeight() - Constants::signUpPanelHeight) / 2.f});
-    escapeMenu->getRenderer()->setBackgroundColor(sf::Color(45, 35, 28, 230));
-    escapeMenu->getRenderer()->setRoundedBorderRadius(20.0);
+    escapeMenuPanel = makePanel({Constants::Panel::signUpWidth, Constants::Panel::loginHeight * 1.5}, color.centerpanel, root);
 
-    root->add(escapeMenu);
-
-    auto escapeMenuTitle = tgui::Label::create("Paused");
-    escapeMenuTitle->setTextSize(36);
-    escapeMenuTitle->setPosition({(Constants::signUpPanelWidth - escapeMenuTitle->getSize().x) / 2.f, 20});
-    escapeMenuTitle->getRenderer()->setTextColor(color.text);
-    escapeMenu->add(escapeMenuTitle);
+    auto escapeMenuTitle = makeLabel("Paused", 36, color.text, escapeMenuPanel);
+    escapeMenuTitle->setPosition({(Constants::Panel::signUpWidth - escapeMenuTitle->getSize().x) / 2.f, 20});
+    const float startX = (escapeMenuPanel->getSize().x - 500) / 2.f;
 
 
-    std::vector<tgui::Button::Ptr> escapeButtons;
-
-    auto backToGameButton = tgui::Button::create("Back to Game");
-    backToGameButton->setPosition({70, 100});
-
-    auto restartGameButton = tgui::Button::create("Restart game");
-    restartGameButton->setPosition({70, 180});
-
-
-    auto settingsButton = tgui::Button::create({"Settings"});
-    settingsButton->setPosition({70, 260});
-
-    auto backToMenuButton = tgui::Button::create({"Back to Menu"});
-    backToMenuButton->setPosition({70, 340});
-
-    auto quitGameButton = tgui::Button::create({"Exit Game"});
-    quitGameButton->setPosition({70, 420});
-
-
-    escapeButtons.push_back(backToGameButton);
-    escapeButtons.push_back(restartGameButton);
-    escapeButtons.push_back(settingsButton);
-    escapeButtons.push_back(backToMenuButton);
-    escapeButtons.push_back(quitGameButton);
-
+    auto backToGameButton = makeButton("Back to Game", {startX, 120}, {500, 66}, 28, escapeMenuPanel);
+    auto restartGameButton = makeButton("Restart game", {startX, 220},{500, 66}, 24, escapeMenuPanel);
+    auto settingsButton = makeButton("Settings",{startX, 320}, {500, 66}, 24, escapeMenuPanel);
+    auto backToMenuButton = makeButton("Back to Menu", {startX, 420},{500, 66}, 24, escapeMenuPanel);
+    auto quitGameButton = makeButton("Exit Game", {startX, 520}, {500, 66}, 24, escapeMenuPanel);
     
-    for (auto button : escapeButtons){
-        
-        button->setTextSize(28);
-        button->setSize({500, 60});
-        button->getRenderer()->setBackgroundColor(sf::Color(0,0,0,100));
-        button->getRenderer()->setTextColor(color.text);
-        button->getRenderer()->setTextColorHover(color.accent);
-        button->getRenderer()->setBackgroundColorDown(color.down);
-        button->getRenderer()->setBackgroundColorHover(color.bg);
-        button->getRenderer()->setBorders(0);
-
-        escapeMenu->add(button);
-    }
-
-
     bindSoundOnClick(backToGameButton, [this]{
         hideEscapeMenu();
     });
 
-    bindSoundOnClick(settingsButton, [this, escapeButtons]{
+    bindSoundOnClick(settingsButton, [this]{
         game_settings();
     });
 
     bindSoundOnClick(backToMenuButton, [this]{
+        ambienceSound.stop();
         hideOverlay();
-        root->remove(escapeMenu);
-        escapeMenu = nullptr;
+        root->remove(escapeMenuPanel);
+        escapeMenuPanel = nullptr;
         onExit();
     });
 
     bindSoundOnClick(quitGameButton, [this]{
-        escapeMenu->setVisible(false);
 
-        tgui::ChildWindow::Ptr quitPanel = makePopUpPanel("Do you want to exit?", {420.f, 190.f}, 22, color.down, sf::Color(253, 253, 253));
-        tgui::Button::Ptr yesButton = makePopUpButton("Yes", {45.f, 60.f}, {100,33}, 20, quitPanel);
-        tgui::Button::Ptr noButton = makePopUpButton("No", {235, 60.f}, {100,33}, 20, quitPanel);
+        escapeMenuPanel->setVisible(false);
+
+        tgui::ChildWindow::Ptr quitPanel = makePopUpPanel("Do you want to exit?", {420.f, 190.f}, 22, color.down, sf::Color(253, 253, 253), false);
+        tgui::Button::Ptr yesButton = makePopUpButton("Yes", {45.f, 50.f}, {120,50}, 20, quitPanel);
+        tgui::Button::Ptr noButton = makePopUpButton("No", {235, 50.f}, {120,50}, 20, quitPanel);
+
 
         bindSoundOnClick(yesButton, [this]
         {
-            root->remove(escapeMenu);
-            escapeMenu = nullptr;
+            root->remove(escapeMenuPanel);
+            escapeMenuPanel = nullptr;
             window.close();
         });
 
         bindSoundOnClick(noButton, [this, quitPanel]
         {
             root->remove(quitPanel);
-            escapeMenu->setVisible(true);
+            escapeMenuPanel->setVisible(true);
         });
     });
 
@@ -242,10 +227,18 @@ void Game_GUI::showEscapeMenu(){
 
 
 void Game_GUI::game() {
-
     gui.removeAllWidgets();
     actionButtons.clear();
     tgui::Font::setGlobalFont("assets/fonts/Shelten.ttf");
+
+    
+    if(!ambienceSound.openFromFile("assets/sound/ambienceSound.ogg")){
+        std::cerr<< "Ambience sound is not loaded or other big problem. its cooked\n";
+        return;
+    }
+    ambienceSound.play();
+    ambienceSound.setVolume(10);
+    ambienceSound.setLooping(true);
 
     engine = std::make_unique<Game>();
     engine->game();
@@ -264,15 +257,19 @@ void Game_GUI::nextHand(){
 
 
 void Game_GUI::buildTable(){
-
+    
     root = tgui::Panel::create({getGuiWidth(), getGuiHeight()});
     root->getRenderer()->setTextureBackground("assets/images/backgrounds/game_background.png");
     gui.add(root);
-    auto topBar = makeBar();
-    volume(topBar, root, music);
+    auto topBar = makeBar({0,0});
+    auto bottomBar = makeBar({0,getGuiHeight() - Constants::Bar::bottomHeight});
+    bottomBar->setSize({getGuiWidth(), Constants::Bar::bottomHeight});
+
+    volume(topBar, root, mainMenuMusic);
 
     const float guiW = getGuiWidth();
     const float guiH = getGuiHeight();
+
 
     // Community card panel
     const auto& communitySlot = TableLayout::COMMUNITY;
@@ -283,19 +280,21 @@ void Game_GUI::buildTable(){
     communityCardH = communitySlot.cardH * guiH;
     communityGap = communitySlot.gap * guiW;
 
-    const float communityPanelW = 5.f * communityCardW + 4.f * communityGap;
-
-    communityPanel = tgui::Panel::create({communityPanelW, communityCardH});
-    communityPanel->setPosition({communityStartX, communityY});
-    communityPanel->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
-    root->add(communityPanel);
+    const float communityPanelW = 5.f * communityCardW + 7.f * communityGap;
+    const float communityPanelH = communitySlot.cardH * guiH + 3 * communityGap;
+    
+    communityPanel = makePanel({communityPanelW, communityPanelH}, color.gamePanel, root);
+    communityPanel->setPosition({(getGuiWidth() - communityPanel->getSize().x) / 2.f, (getGuiHeight() - communityPanel->getSize().y) / 2.f });
 
     auto& players = engine->getPlayers();
     size_t aiSeat = 0;
     humanPlayerIndex = players.size();
 
+
+
     for (size_t i = 0; i < players.size(); ++i) {
         auto& player = players[i];
+        std::string name = player->getName();
         const bool isHuman = player->getName() == "Player";
         if (!isHuman && aiSeat >= TableLayout::OPPONENT_SEATS.size()) continue;
 
@@ -306,6 +305,12 @@ void Game_GUI::buildTable(){
         const float cardH = seat.cardH * guiH;
         const float gap = seat.gap * guiW;
 
+        if (player->getIsSmallBlind()){
+            placeBlind(name, "SMALL\nBLIND", {seatX,seatY});
+        }
+        if (player->getIsBigBlind()){
+            placeBlind(name, "BIG\nBLIND", {seatX,seatY});
+        }
         if (isHuman) {
             humanPlayerIndex = i;
             const auto& hole = player->getcard2();
@@ -315,26 +320,29 @@ void Game_GUI::buildTable(){
                 holeX += cardW + gap;
             }
             
-            balanceLabel = tgui::Label::create("Balance: " + std::to_string(player->getMoney()) + "$");
-            balanceLabel->setTextSize(scaledTextSize(guiH, 0.021f, 20, 30));
-            balanceLabel->getRenderer()->setTextColor(color.text);
+            balanceLabel = makeLabel("Balance: " + std::to_string(player->getMoney()) + "$", scaledTextSize(guiH, 0.021f, 20, 30), color.text, root);
 
             balanceCenterX = seatPairCenterX(seat, guiW);
-            balanceY = std::max(Constants::topBarHeight + 10.f, seatY - balanceLabel->getSize().y - 14.f);
+            balanceY = std::max(Constants::Bar::topHeight + 10.f, seatY - balanceLabel->getSize().y - 50.f);
             placeCenteredLabel(root, balanceLabel, balanceCenterX, balanceY, 20.f, guiW - 20.f);
 
         } else {
             placeFaceDownPair(root, seatX, seatY, cardW, cardH, gap);
-            placePlayerName(root, player->getName(), seat, guiW, guiH, color);
+            placePlayerName(root, player->getName(), seat, guiW, guiH);
         }
     }
 
     for(size_t i = 0; i < players.size(); i++){
             if(players[i]->getName() == "Player"){
                 if(players[i]->getMoney() <= 0 ){  
-                auto gameOverPanel = makePopUpPanel("Game Over", {840.f, 390.f}, 32, sf::Color(128, 30, 30), sf::Color(253, 253, 253));
-                tgui::Button::Ptr exitGameButton = makePopUpButton("Exit game", {45.f, 60.f}, {100,33}, 20, gameOverPanel);
-                tgui::Button::Ptr backToGameButton = makePopUpButton("Back to game", {235, 60.f}, {100,33}, 20, gameOverPanel);
+
+                tgui::ChildWindow::Ptr gameOverPanel = makePopUpPanel("Game Over", {Constants::Panel::loginWidth, 300.f}, 32, sf::Color(128, 30, 30), sf::Color(253, 253, 253), true);
+                tgui::Button::Ptr backToGameButton = makePopUpButton("Restart game", {(gameOverPanel->getSize().x - 500.f) / 2.f, 40.f}, {500,66}, 24, gameOverPanel);
+                tgui::Button::Ptr exitGameButton = makePopUpButton("Exit game", {(gameOverPanel->getSize().x - 500.f) / 2.f, 140.f}, {500,66}, 24, gameOverPanel);
+
+                bindSoundOnClick(backToGameButton,[this]{
+                    this->game();
+                });
 
                 bindSoundOnClick(exitGameButton, [gameOverPanel, this]{
                     root->remove(gameOverPanel);
@@ -345,28 +353,22 @@ void Game_GUI::buildTable(){
         }
     }
 
-    potLabel = tgui::Label::create("Pot: " + std::to_string(engine->getPot()) + "$");
-    potLabel->setTextSize(scaledTextSize(guiH, 0.026f, 24, 40));
-    potLabel->getRenderer()->setTextColor(color.accent);
+    potLabel = makeLabel("Pot: " + std::to_string(engine->getPot()) + "$", scaledTextSize(guiH, 0.026f, 24, 40), color.accent, root);
     placeCenteredLabel(root, potLabel, guiW / 2.f, communityY - potLabel->getSize().y - 18.f, 20.f, guiW - 20.f);
 
-    winnerLabel = tgui::Label::create("");
-    winnerLabel->setTextSize(scaledTextSize(guiH, 0.022f, 22, 34));
-    winnerLabel->getRenderer()->setTextColor(color.text);
+    winnerLabel = makeLabel("", scaledTextSize(guiH, 0.022f, 22, 34), color.text, root);
     placeCenteredLabel(root, winnerLabel, guiW / 2.f, communityY + communityCardH + 22.f, 20.f, guiW - 20.f);
     
 
     if (humanPlayerIndex < players.size()) {
-        const float controlsY = getGuiHeight() - 70.f; 
+        const float controlsY = getGuiHeight() - 60.f; 
         constexpr float btnW = 124.f;
         constexpr float btnH = 48.f;
         constexpr float btnGap = 20.f;
         constexpr float startX = 400.f;
         const float y = controlsY - (btnH + btnGap);
 
-        actionStatus = tgui::Label::create("Choose action");
-        actionStatus->setTextSize(20);
-        actionStatus->getRenderer()->setTextColor(color.text);
+        actionStatus = makeLabel("Choose action", 24, color.text, root);
         placeCenteredLabel(root, actionStatus, guiW/2.f, 80, 20.f, guiW - 20.f);
 
         root->remove(raiseSlider);
@@ -375,30 +377,19 @@ void Game_GUI::buildTable(){
         raiseSlider = nullptr;
         confirmButton = nullptr;
 
-        confirmButton = tgui::Button::create("Confirm");
-        confirmButton->setPosition({startX + (btnW + btnGap) * 7.f, controlsY});
-        confirmButton->setSize({btnW, btnH});
-        confirmButton->setTextSize(20);
-        confirmButton->getRenderer()->setTextColor(color.text);
-        confirmButton->getRenderer()->setTextColorDisabled(tgui::Color(190, 178, 150));
-        confirmButton->getRenderer()->setBackgroundColor(color.panel2);
-        confirmButton->getRenderer()->setBackgroundColorHover(color.border);
-        confirmButton->getRenderer()->setBackgroundColorDown(color.down);
-        confirmButton->getRenderer()->setBackgroundColorDisabled(tgui::Color(74, 66, 58, 230));
+        confirmButton = makeButton("Confirm", {startX + (btnW + btnGap) * 7.f, controlsY}, {btnW, btnH}, 20, root);
         confirmButton->setVisible(false);
-        root->add(confirmButton);
 
-        raiseMoneyLabel = tgui::Label::create("");
-        raiseMoneyLabel->setTextSize(20);
-        raiseMoneyLabel->getRenderer()->setTextColor(color.text);
-        root->add(raiseMoneyLabel);
-
+        raiseMoneyLabel = makeLabel("", 20, color.text, root);
 
         bindSoundOnClick(confirmButton, [this]{
             auto& players = engine->getPlayers();
             if (!raiseSlider) return;
             int amount = static_cast<int>(raiseSlider->getValue());
             engine->playerAction(ActionType::RAISE, amount);
+            if (engine->getPhase() == GamePhase::SHOWDOWN) {
+                resolveShowdown();
+            }
             raiseSlider->setMaximum(players[humanPlayerIndex]->getMoney());
             raiseSlider->setVisible(false);
             raiseSlider->setValue(0);
@@ -410,17 +401,7 @@ void Game_GUI::buildTable(){
 
         auto placeActionButton = [&](const std::string& text, float x, ActionType action, std::string statusMsg) {
             
-            auto button = tgui::Button::create(text);
-            button->setPosition({x, controlsY});
-            button->setSize({btnW, btnH});
-            button->setTextSize(20);
-            button->getRenderer()->setTextColor(color.text);
-            button->getRenderer()->setTextColorDisabled(tgui::Color(190, 178, 150));
-            button->getRenderer()->setBackgroundColor(color.panel2);
-            button->getRenderer()->setBackgroundColorHover(color.border);
-            button->getRenderer()->setBackgroundColorDown(color.down);
-            button->getRenderer()->setBackgroundColorDisabled(tgui::Color(74, 66, 58, 230));
-            root->add(button);
+            auto button = makeButton(text,{x, controlsY}, {btnW, btnH}, 20, root);
             actionButtons.push_back(button);
 
             bindSoundOnClick(button, [this, action, msg = std::move(statusMsg), controlsY] {
@@ -469,9 +450,13 @@ void Game_GUI::buildTable(){
                     raiseMoneyLabel->setVisible(false);
                 }
                 
-
                 engine->playerAction(action, 0);
-                actionStatus->setText(msg);
+                if (engine->getPhase() == GamePhase::SHOWDOWN) {
+                    resolveShowdown();
+                }
+                if(engine->getPhase() != GamePhase::SHOWDOWN){
+                   actionStatus->setText(msg);
+                }
                 refreshHud();
             });
 
@@ -483,5 +468,81 @@ void Game_GUI::buildTable(){
         placeActionButton("All in", startX + (btnW + btnGap) * 2.f,  ActionType::ALLIN, "Action: All In");
         placeActionButton("Check",startX,  ActionType::CHECK, "Action: Check");
         placeActionButton("Call",startX + (btnW + btnGap) * 1.f,  ActionType::CALL,  "Action: Call");
+
+
     }
+}
+
+
+void Game_GUI::resolveShowdown() {
+
+    auto& players = engine->getPlayers();
+
+
+    HandEvaluator handEvaluator;
+    std::vector<Card> cards;
+    std::vector<HandScore> evoluation_cards;
+    auto communityCards = engine->getCommunityCards();
+
+    for (size_t i = 0; i < players.size(); i++) {
+        if (!players[i]->getInGame()) continue;
+       
+        cards = utils::cards7collection(players, i, communityCards);
+        evoluation_cards.push_back(handEvaluator.evaluate(cards, players, communityCards, i));
+    }
+
+    if (evoluation_cards.empty()) {
+        actionStatus->setText("No winner");
+        return;
+    }
+
+    utils::sort_function_hand_score(evoluation_cards);
+
+    std::vector<HandScore> ties;
+    for (int i = 0; i < static_cast<int>(evoluation_cards.size()) - 1; i++) {
+        if (evoluation_cards[i].rank == evoluation_cards[i+1].rank &&
+            evoluation_cards[i].sum_for_tie == evoluation_cards[i+1].sum_for_tie) {
+            ties.push_back(evoluation_cards[i]);
+            ties.push_back(evoluation_cards[i+1]);
+        }
+    }
+
+    HandScore winner = utils::max(evoluation_cards);
+
+    if (ties.empty()) {
+        actionStatus->setText("Winner: " + winner.name);
+        for (auto& player: players) {
+            if (winner.name == player->getName())
+                player->getMoney() += engine->getPot();
+        }
+    } else {
+        HandScore tieswinner = utils::max(ties);
+        if (winner.sum_for_tie > tieswinner.sum_for_tie && winner.rank > tieswinner.rank) {
+            actionStatus->setText("Winner: " + winner.name);
+            for (auto& player: players) {
+                if (winner.name == player->getName())
+                    player->getMoney() += engine->getPot();
+            }
+        } else {
+            std::vector<std::string> tied_names;
+            for (const auto& tie : ties) {
+                if (std::find(tied_names.begin(), tied_names.end(), tie.name) == tied_names.end())
+                    tied_names.push_back(tie.name);
+            }
+            std::string winnerMessage = "";
+            for (size_t n = 0; n < tied_names.size(); n++) {
+                if (n > 0) winnerMessage += ", ";
+                winnerMessage += tied_names[n];
+            }
+            actionStatus->setText("Split pot: " + winnerMessage);
+
+            int part = engine->getPot() / static_cast<int>(tied_names.size());
+            for (auto& player: players) {
+                if (std::find(tied_names.begin(), tied_names.end(), player->getName()) != tied_names.end())
+                    player->getMoney() += part;
+            }
+        }
+    }
+    actionStatus->setTextSize(30);
+
 }

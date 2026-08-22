@@ -13,7 +13,7 @@ class Login : public Gui_base {
 
     private:
         sf::RenderWindow& window;
-        tgui::Label::Ptr time_label;
+        tgui::Label::Ptr timeLabel;
         std::string last_time_text;
         sqlite3* db = nullptr;
         tgui::Label::Ptr wrongLabel;
@@ -24,7 +24,6 @@ class Login : public Gui_base {
         std::function<void(std::string)> onLogin;
         std::string logged_username;
         void login_screen();
-        tgui::Button::Ptr makeBackToLoginButton(float x, float y);
 
 
 };

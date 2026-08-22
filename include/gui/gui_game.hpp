@@ -11,6 +11,7 @@
 #include "game.hpp"
 #include "gui_utils.hpp"
 #include "table_layout.hpp"
+#include "hand_evaluator.hpp"
 
 class Game_GUI : public Gui_base {
 
@@ -37,10 +38,16 @@ class Game_GUI : public Gui_base {
         float communityCardH = 0.f;
         float communityGap = 0.f;
         std::size_t humanPlayerIndex = 0;
+        float gapClanker = 70.f;
+        float gapPlayer = 90.f;
+        float blindChipRadiusClanker = 50.f;
+        float blindChipRadiusPlayer = 70.f;
+        
+
 
         void placeCard(tgui::Panel::Ptr parent, const Card& card, float x, float y, float w, float h);
         void placeFaceDownPair(tgui::Panel::Ptr parent, float leftX, float topY, float cardW, float cardH, float gap);
-        void placePlayerName(tgui::Panel::Ptr parent, const std::string& name, const TableSeat& seat, float guiW, float guiH, const GuiTheme& color);
+        void placePlayerName(tgui::Panel::Ptr parent, const std::string& name, const TableSeat& seat, float guiW, float guiH);
         void placeCenteredLabel(tgui::Panel::Ptr parent, const tgui::Label::Ptr& label, float centerX, float topY, float minX, float maxX);
 
         void refreshCommunity();
@@ -60,5 +67,7 @@ class Game_GUI : public Gui_base {
         void showEscapeMenu();
         void game();
         void restartGame();
-
-};
+        void resolveShowdown();
+        tgui::Panel::Ptr makeCirclePanel(std::string& name, tgui::Vector2f pos);
+        void placeBlind(std::string& name, const std::string& title, tgui::Vector2f pos);
+    };

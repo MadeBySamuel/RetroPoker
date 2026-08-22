@@ -13,6 +13,20 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_subdirectory(external/SFML)
 set(TGUI_BACKEND SFML_GRAPHICS)
 add_subdirectory(external/TGUI)
+
+# Keep third-party implementation details out of the debugger. Our own target
+# still builds with Debug symbols, so breakpoints and local variables work.
+foreach(third_party_target
+    sfml-system
+    sfml-window
+    sfml-graphics
+    sfml-audio
+    sfml-network
+    tgui
+)
+    target_compile_options(${third_party_target} PRIVATE $<$<CONFIG:Debug>:-g0>)
+endforeach()
+
 find_package(SQLite3 REQUIRED)
 
 add_executable(retro_poker
@@ -80,4 +94,3 @@ target_compile_options(retro_poker PRIVATE
     $<$<CONFIG:Debug>:-g -O0>
     $<$<CONFIG:Release>:-O2>
 )
-

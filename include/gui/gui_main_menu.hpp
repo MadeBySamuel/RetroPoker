@@ -15,7 +15,7 @@ class MainMenu : public Gui_base {
     private:
         sf::RenderWindow& window;
         tgui::Panel::Ptr topBar;
-        tgui::Label::Ptr time_label;
+        tgui::Label::Ptr timeLabel;
         std::string last_time_text;
 
     public:

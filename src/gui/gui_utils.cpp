@@ -3,7 +3,7 @@
 #include "gui_utils.hpp"
 
 
-Gui_base::Gui_base(tgui::Gui& gui, sf::Music& music) : gui(gui), music(music), clickSound(clickBuffer) 
+Gui_base::Gui_base(tgui::Gui& gui, sf::Music& music) : gui(gui), mainMenuMusic(music), clickSound(clickBuffer) 
     {
 
         if (!clickBuffer.loadFromFile("assets/sound/button_press.ogg")) {
@@ -13,43 +13,52 @@ Gui_base::Gui_base(tgui::Gui& gui, sf::Music& music) : gui(gui), music(music), c
     }
         
 
-tgui::Panel::Ptr Gui_base::makeBar(){
+tgui::Panel::Ptr Gui_base::makeBar(tgui::Vector2f pos){
 
-    auto topBar = tgui::Panel::create({getGuiWidth(), Constants::topBarHeight});
-    topBar->setPosition({0, 0});
-    topBar->getRenderer()->setBackgroundColor(color.bar_color);
-    root->add(topBar);
+    auto bar = tgui::Panel::create({getGuiWidth(), Constants::Bar::topHeight});
+    bar->setPosition(pos);
+    bar->getRenderer()->setBackgroundColor(color.bar_color);
+    root->add(bar);
 
-    time_label = tgui::Label::create(""); 
-    time_label->setPosition({"94%", "17%"});
-    time_label->setTextSize(30);
-    time_label->getRenderer()->setTextColor(color.text);
-    topBar->add(time_label);
+    if (pos == tgui::Vector2f{0,0}){
+        timeLabel = makeLabel("", 30, color.text, bar);
+        timeLabel->setPosition({"94%", "17%"});
+    }
+   
+    return bar;
+}
 
-    return topBar;
+
+tgui::Label::Ptr Gui_base::makeLabel(const std::string& title, const int16_t titleSize, tgui::Color titleColor, tgui::Panel::Ptr panel){
+
+    auto label = tgui::Label::create(title);
+    label->setTextSize(titleSize);
+    label->getRenderer()->setTextColor(color.text);
+    panel->add(label);
+    return label;
 }
 
 
 
-tgui::Panel::Ptr Gui_base::makePanel(tgui::Vector2f size, tgui::Color backgroundColor){
+tgui::Panel::Ptr Gui_base::makePanel(tgui::Vector2f size, tgui::Color backgroundColor, tgui::Panel::Ptr container){
    
     auto panel = tgui::Panel::create(size);
     panel->setPosition({(getGuiWidth() - size.x) / 2.f, (getGuiHeight() - size.y) / 2.f});
     panel->getRenderer()->setBackgroundColor(backgroundColor);
-    panel->getRenderer()->setRoundedBorderRadius(20.0);
-    root->add(panel);
+    panel->getRenderer()->setRoundedBorderRadius(borderRadius);
+    container->add(panel);
 
     return panel;
 }
 
-tgui::CheckBox::Ptr Gui_base::makeCheckBox(tgui::Vector2f pos, tgui::Panel::Ptr centerPanel){
+tgui::CheckBox::Ptr Gui_base::makeCheckBox(tgui::Vector2f pos, tgui::Panel::Ptr panel){
         
         auto checkBox = tgui::CheckBox::create();
         checkBox->setPosition(pos);
         checkBox->setSize({20, 20});
         checkBox->setText("");
         checkBox->setTextSize(20);
-        centerPanel->add(checkBox);
+        panel->add(checkBox);
 
 
         checkBox->getRenderer()->setTextColor(color.text);
@@ -71,7 +80,7 @@ tgui::CheckBox::Ptr Gui_base::makeCheckBox(tgui::Vector2f pos, tgui::Panel::Ptr 
 }
 
 
-tgui::EditBox::Ptr Gui_base::makeEditBox(const std::string title, tgui::Vector2f pos, tgui::Panel::Ptr panel){
+tgui::EditBox::Ptr Gui_base::makeEditBox(const std::string& title, tgui::Vector2f pos, tgui::Panel::Ptr panel){
     
     auto editBox = tgui::EditBox::create();
     editBox->setTextSize(20);
@@ -86,14 +95,17 @@ tgui::EditBox::Ptr Gui_base::makeEditBox(const std::string title, tgui::Vector2f
     editBox->setDefaultText(title);
     editBox->setPosition(pos);
 
+
     panel->add(editBox);
 
     return editBox;
 }
 
-tgui::ChildWindow::Ptr Gui_base::makePopUpPanel(const std::string title, tgui::Vector2f size, const int8_t sizeTitleText, tgui::Color titleBarColor, tgui::Color titleTextColor){
+tgui::ChildWindow::Ptr Gui_base::makePopUpPanel(const std::string& title, tgui::Vector2f size, const int8_t sizeTitleText, tgui::Color titleBarColor, tgui::Color titleTextColor, bool isOverlay){
 
-    showOverlay();
+    if (isOverlay == true){
+        showOverlay();
+    }
     auto popUpPanel = tgui::ChildWindow::create(title, tgui::ChildWindow::TitleButton::None);
     popUpPanel->setPosition({(getGuiWidth() - size.x) / 2.f, (getGuiHeight() - size.y) / 2.f});
     popUpPanel->getRenderer()->setTitleBarHeight(50.f);
@@ -113,7 +125,7 @@ tgui::ChildWindow::Ptr Gui_base::makePopUpPanel(const std::string title, tgui::V
 
 
 
-tgui::Button::Ptr Gui_base::makePopUpButton(const std::string title, tgui::Vector2f pos, const tgui::Vector2f size, const int8_t sizeTitle, tgui::ChildWindow::Ptr quitPanel){
+tgui::Button::Ptr Gui_base::makePopUpButton(const std::string& title, tgui::Vector2f pos, const tgui::Vector2f size, const int8_t sizeTitle, tgui::ChildWindow::Ptr quitPanel){
 
     auto button = tgui::Button::create(title);
     button->setPosition(pos);
@@ -134,7 +146,6 @@ tgui::Button::Ptr Gui_base::makePopUpButton(const std::string title, tgui::Vecto
     button->getRenderer()->setTextColorHover(color.text);
     button->getRenderer()->setTextColorDown(color.bg);
     button->getRenderer()->setBorders(0);
-    button->getRenderer()->setRoundedBorderRadius(10.f);
     quitPanel->add(button);
 
     return button;
@@ -142,7 +153,9 @@ tgui::Button::Ptr Gui_base::makePopUpButton(const std::string title, tgui::Vecto
 }
 
 
-tgui::Button::Ptr Gui_base::makeButton (const std::string title, tgui::Vector2f pos, const tgui::Vector2f size, const int8_t sizeText,tgui::Panel::Ptr panel){
+// toto treba premysliet lebo wtf 
+
+tgui::Button::Ptr Gui_base::makeButton(const std::string& title, tgui::Vector2f pos, const tgui::Vector2f size, const int8_t sizeText,tgui::Panel::Ptr panel){
 
     auto button = tgui::Button::create();
 
@@ -172,11 +185,11 @@ tgui::Button::Ptr Gui_base::makeButton (const std::string title, tgui::Vector2f 
     button->getRenderer()->setBorderColorFocused(color.text);
     button->getRenderer()->setBorderColorDownFocused(color.down);
 
-    if(panel == topBar){
+    if(panel == topBar || panel == sideBar){
         button->getRenderer()->setBorders(0);
     }
 
-    if(panel == gameSettingsPanel || panel == gameMenuPanel || title == "Logout"){
+    if(panel == gameSettingsPanel || panel == gameMenuPanel || title == "Logout" || panel == audioSettingsPanel || panel == root || panel == escapeMenuPanel){
         button->getRenderer()->setBackgroundColorFocused(color.panel2);
         button->getRenderer()->setTextColorDownFocused(sf::Color(0,0,0));
         button->getRenderer()->setBackgroundColor(color.panel2);
@@ -192,7 +205,7 @@ tgui::Button::Ptr Gui_base::makeButton (const std::string title, tgui::Vector2f 
     }
     
 
-    if(panel == centerPanel && title == "LOGIN"){
+    if((panel == centerPanel && title == "LOGIN" ) || (panel == signUpPanel && title == "Create account")){
         button->getRenderer()->setBorders(0);
         button->getRenderer()->setBackgroundColor(sf::Color(0,0,0,100));
         button->getRenderer()->setTextColorHover(color.down);
@@ -204,87 +217,116 @@ tgui::Button::Ptr Gui_base::makeButton (const std::string title, tgui::Vector2f 
         button->getRenderer()->setBackgroundColorFocused(sf::Color(0,0,0,100));
         button->getRenderer()->setBackgroundColorDownFocused(sf::Color(0,0,0,100));
         button->getRenderer()->setBackgroundColorDisabled(sf::Color(0,0,0,100));
-
     }
 
     if(panel == forgotPasswordPanel){
         button->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 2});    
+        button->getRenderer()->setBorders(0);
     }
-    button->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 2});
-    
+
     panel->add(button);
 
     return button;
 }
 
+
  void Gui_base::audio_settings(){
 
-    float gap = 12.f;
+    float gap = 24.f;
+    float valuePos = gameSettingsPanel->getSize().x - 50.f;
 
-    audioSettingsPanel = tgui::Panel::create({Constants::loginPanelWidth, Constants::loginPanelHeight * 2});
-    audioSettingsPanel->setPosition((getGuiWidth() - Constants::loginPanelWidth) / 2.f, (getGuiHeight() - Constants::loginPanelHeight * 2) / 2.f);
-    audioSettingsPanel->getRenderer()->setBackgroundColor(color.centerpanel);
-    audioSettingsPanel->getRenderer()->setRoundedBorderRadius(10.f);
-
-    root->add(audioSettingsPanel);
-
-
-    auto audioTitle = tgui::Label::create("Audio Settings");
-    audioTitle->setTextSize(45);
-    audioTitle->setPosition((Constants::loginPanelWidth - audioTitle->getSize().x) / 2.f, 20.f);
-    audioTitle->getRenderer()->setTextColor(color.text);
-    audioSettingsPanel->add(audioTitle);
-
-    float audioH = audioTitle->getSize().y; 
-    float audioW = audioTitle->getSize().x;
-
-    auto musicTitle = tgui::Label::create("Music");
-    musicTitle->setTextSize(24);
-    musicTitle->setPosition(25.f, audioTitle->getSize().y + 2*gap);
-    musicTitle->getRenderer()->setTextColor(color.text);
-    audioSettingsPanel->add(musicTitle);
+    audioSettingsPanel = makePanel({Constants::Panel::loginWidth, Constants::Panel::loginHeight * 2}, color.centerpanel, root);
+    auto musicPanel = makePanel({Constants::Panel::loginWidth, 2*gap}, color.panel2, audioSettingsPanel);
+    auto clickPanel = makePanel({Constants::Panel::loginWidth - 10, 2*gap}, color.panel2, audioSettingsPanel);
+    auto ambienceSoundPanel = makePanel({Constants::Panel::loginWidth * 2 - gap - 70, 2*gap}, color.panel2, audioSettingsPanel);
 
 
-    float music_y = musicTitle->getSize().y;
+    auto audioTitle = makeLabel("Audio Settings", 45, color.text, audioSettingsPanel);
+    auto musicTitle = makeLabel("Music", 22, color.text, audioSettingsPanel);
+    auto clickSoundTitle = makeLabel("Click", 20, color.text, audioSettingsPanel);
+    auto ambienceSoundTitle = makeLabel("Ambience", 20, color.text, audioSettingsPanel);
 
-    settingsMusicSlider = makeSlider({musicTitle->getSize().y + 6 * gap, audioTitle->getSize().y  + gap + 22}, {Constants::loginPanelWidth - 190, 10}, music.getVolume(), audioSettingsPanel);
+        
+    auto musicValue = makeLabel("0", 20, color.text, audioSettingsPanel);
+    auto clickSoundValue = makeLabel("100", 20, color.text, audioSettingsPanel);
+    auto ambienceSoundValue = makeLabel("100", 20, color.text, audioSettingsPanel);
 
-    auto musicValue = tgui::Label::create("0");
-    musicValue->setTextSize(24);
-    musicValue->setPosition(gameSettingsPanel->getSize().x - 50.f, audioTitle->getSize().y + 2*gap);
-    musicValue->getRenderer()->setTextColor(color.text);
-    audioSettingsPanel->add(musicValue);
+    float audioWidth = audioTitle->getSize().x;
+    float audioHeight = audioTitle->getSize().y; 
+
+    float musicWidth = musicTitle->getSize().x;
+    float musicHeight = musicTitle->getSize().y;
+
+    float clickWidth = clickSoundTitle->getSize().x;
+    float clickHeight = clickSoundTitle->getSize().y;
+
+    float audioTitleX = (Constants::Panel::loginWidth - audioWidth) / 2.f;
+
+    float musicTitleY = 110;
+    float clickSoundTitleY = 170;
+    float ambienceSoundTitleY = 230;
+
+    musicPanel->setPosition(gap - 10, musicTitleY - 10);
+    musicPanel->getRenderer()->setRoundedBorderRadius(0);
+
+    clickPanel->setPosition(0, 160);
+    clickPanel->getRenderer()->setRoundedBorderRadius(0);
+
+
+    ambienceSoundPanel->setPosition(gap - 10, 160 + 60);
+    ambienceSoundPanel->getRenderer()->setRoundedBorderRadius(0);
+
+
+    std::cout << musicTitleY << std::endl;
+    std::cout << clickSoundTitleY << std::endl;
+    std::cout << ambienceSoundTitleY << std::endl;
+
+    float sliderX = musicHeight + 3 * gap;
+
+    float musicSliderY = musicTitleY + 8;
+    float clickSliderY = clickSoundTitleY + 8;
+    float ambienceSoundSliderY = ambienceSoundTitleY + 8;
+
+    audioTitle->setPosition(audioTitleX, 20.f);
+    musicTitle->setPosition(25.f, musicTitleY);
+    clickSoundTitle->setPosition(25.f, clickSoundTitleY);
+    ambienceSoundTitle->setPosition(25.f, ambienceSoundTitleY);
+
+    settingsMusicSlider = makeSlider({sliderX, musicSliderY}, {Constants::Panel::loginWidth - 190, 10}, mainMenuMusic.getVolume(), audioSettingsPanel);
+    auto clickSoundSlider = makeSlider({sliderX, clickSliderY}, {Constants::Panel::loginWidth - 190, 10}, clickSound.getVolume(), audioSettingsPanel);
+    auto ambienceSoundSlider = makeSlider({sliderX, ambienceSoundSliderY}, {Constants::Panel::loginWidth - 190, 10}, clickSound.getVolume(), audioSettingsPanel);
+
+    musicValue->setPosition(valuePos, musicTitleY);
+    clickSoundValue->setPosition(valuePos, clickSoundTitleY);
+    ambienceSoundValue->setPosition(valuePos, ambienceSoundTitleY);
+
 
     settingsMusicSlider->onValueChange([this, musicValue](float value){
         musicValue->setText(std::to_string((int)value));
-        music.setVolume(value);
+        mainMenuMusic.setVolume(value);
         if (volumeSlider) volumeSlider->setValue(value);
     });
 
-    auto effectsTitle = tgui::Label::create("Effects");
-    effectsTitle->setTextSize(22);
-    effectsTitle->setPosition(25.f, audioTitle->getSize().y + musicTitle->getSize().y * 2);
-    effectsTitle->getRenderer()->setTextColor(color.text);
-    audioSettingsPanel->add(effectsTitle);
-
-    auto effectsSlider = makeSlider({musicTitle->getSize().y + 6 * gap, audioTitle->getSize().y + musicTitle->getSize().y * 2 + 10}, {Constants::loginPanelWidth - 190, 10}, clickSound.getVolume(), audioSettingsPanel);
-
-    auto effectsValue = tgui::Label::create("100");
-    effectsValue->setTextSize(24);
-    effectsValue->setPosition(gameSettingsPanel->getSize().x - 50.f, audioTitle->getSize().y + musicTitle->getSize().y * 2);
-    effectsValue->getRenderer()->setTextColor(color.text);
-    audioSettingsPanel->add(effectsValue);
 
 
-    effectsSlider->onValueChange([this, effectsValue](float value){
-        effectsValue->setText(std::to_string((int)value));
+
+    clickSoundSlider->onValueChange([this, clickSoundValue](float value){
+        clickSoundValue->setText(std::to_string((int)value));
         clickSound.setVolume(value);
         clickSound.play();
     });
-    
-    auto backToSettingsButton = makeBackToMenu({gap, Constants::loginPanelHeight * 2 - gap - 70}, {Constants::loginPanelWidth - 2 * gap, 70}, audioSettingsPanel);
-    backToSettingsButton->setText("Back to Settings");
 
+
+
+    ambienceSoundSlider->onValueChange([ambienceSoundValue, this](float value){
+        ambienceSoundValue->setText(std::to_string((int)value));
+        ambienceSound.setVolume(value);
+        clickSound.play();
+    });
+
+    auto backToSettingsButton = makeButton("Back to Settings", {gap, Constants::Panel::loginHeight * 2 - gap - 70}, {Constants::Panel::loginWidth - 2 * gap, 70}, 24, audioSettingsPanel);
+
+    
     bindSoundOnClick(backToSettingsButton, [this]{
         root->remove(audioSettingsPanel);
         gameSettingsPanel->setVisible(true);
@@ -318,53 +360,34 @@ void Gui_base::game_settings(){
     openedSettingsPanel = true;
     float gap = 12.f;
     
-    if(escapeMenu){
-        escapeMenu->setVisible(false);
+    if(escapeMenuPanel){
+        escapeMenuPanel->setVisible(false);
     }
     else {
 
         showOverlay();
     }
 
-    gameSettingsPanel = tgui::Panel::create({Constants::loginPanelWidth, Constants::loginPanelHeight * 2});
-    gameSettingsPanel->setPosition((getGuiWidth() - Constants::loginPanelWidth) / 2.f, (getGuiHeight() - Constants::loginPanelHeight * 2) / 2.f);
-    gameSettingsPanel->getRenderer()->setBackgroundColor(color.centerpanel);
-    gameSettingsPanel->getRenderer()->setRoundedBorderRadius(10.f);
+    gameSettingsPanel = makePanel({Constants::Panel::loginWidth, Constants::Panel::loginHeight * 2}, color.centerpanel, root);
 
-    root->add(gameSettingsPanel);
-
-
-    auto settingsTitle = tgui::Label::create("Settings");
-    settingsTitle->setTextSize(45);
-    settingsTitle->setPosition((Constants::loginPanelWidth - settingsTitle->getSize().x) / 2.f, 20.f);
-    settingsTitle->getRenderer()->setTextColor(color.text);
-    gameSettingsPanel->add(settingsTitle);
+    auto settingsTitle = makeLabel("Settings", 45, color.text, gameSettingsPanel);
+    settingsTitle->setPosition((Constants::Panel::loginWidth - settingsTitle->getSize().x) / 2.f, 20.f);
 
     float titleH = settingsTitle->getSize().y;
     float titleW = settingsTitle->getSize().x;
 
-    std::vector<tgui::Button::Ptr> buttons;
-
-    tgui::Button::Ptr videoButton = makeButton("Video", {480, 62}, {300,66} ,28 , gameSettingsPanel);
-    videoButton->setPosition((gameSettingsPanel->getSize().x - videoButton->getSize().x) / 2.f, 150);
-
-    tgui::Button::Ptr gameplayButton = makeButton("Gameplay", {480, 62}, {300,66}, 28 , gameSettingsPanel);
-    gameplayButton->setPosition((gameSettingsPanel->getSize().x - videoButton->getSize().x) / 2.f, 250);
-
-    tgui::Button::Ptr audioButton = makeButton("Audio", {480, 62},{300,66}, 28, gameSettingsPanel);
-    audioButton->setPosition((gameSettingsPanel->getSize().x - videoButton->getSize().x) / 2.f, 350);
-
-    buttons.push_back(videoButton);
-    buttons.push_back(gameplayButton);
-    buttons.push_back(audioButton);
+    const float startX = (gameSettingsPanel->getSize().x - 300) / 2.f;
 
 
-    auto backToMenu = makeBackToMenu({gap, Constants::loginPanelHeight * 2 - gap - 70}, {Constants::loginPanelWidth - 2 * gap, 70}, gameSettingsPanel); 
+    tgui::Button::Ptr videoButton = makeButton("Video", {startX, 150}, {300,66}, 28, gameSettingsPanel);
+    tgui::Button::Ptr gameplayButton = makeButton("Gameplay", {startX, 250}, {300,66}, 28, gameSettingsPanel);
+    tgui::Button::Ptr audioButton = makeButton("Audio", {startX, 350},{300,66}, 28, gameSettingsPanel);
+    auto backToMenu = makeButton("Back to Main Menu", {gap, Constants::Panel::loginHeight * 2 - gap - 70}, {Constants::Panel::loginWidth - 2 * gap, 70}, 24, gameSettingsPanel); 
 
 
     bindSoundOnClick(audioButton, [this]{
         gameSettingsPanel->setVisible(false);
-        std::cout << std::endl;
+        
         audio_settings();
     });
 
@@ -373,8 +396,8 @@ void Gui_base::game_settings(){
 
 
     bindSoundOnClick(backToMenu, [this]{
-    if(escapeMenu){
-        escapeMenu->setVisible(true);
+    if(escapeMenuPanel){
+        escapeMenuPanel->setVisible(true);
     }
     else{
         hideOverlay();
@@ -389,12 +412,6 @@ void Gui_base::game_settings(){
 }
 
 
-tgui::Panel::Ptr Gui_base::overlay() {
-        auto overlay = tgui::Panel::create({getGuiWidth(), getGuiHeight()});
-        overlay->setPosition({0, 0});
-        overlay->getRenderer()->setBackgroundColor(tgui::Color(0, 0, 0, 220));
-        return overlay;
-}
 
 void Gui_base::hideOverlay() {
         if (!root || !modalOverlay) {
@@ -409,11 +426,8 @@ void Gui_base::showOverlay() {
             return;
         }
         hideOverlay();
-        modalOverlay = overlay();
-
-        root->add(modalOverlay);
-
-
+        modalOverlay = makePanel({getGuiWidth(), getGuiHeight()},tgui::Color(0, 0, 0, 220), root);
+        modalOverlay->setPosition({0, 0});
 }
 
 std::string Gui_base::getCurrentTimeString() {
@@ -431,40 +445,19 @@ void Gui_base::update_time(){
 
         std::string currentTimeText = getCurrentTimeString();
 
-        if (currentTimeText != last_time_text && time_label) {
-            time_label->setText(currentTimeText);
+        if (currentTimeText != last_time_text && timeLabel) {
+            timeLabel->setText(currentTimeText);
             last_time_text = currentTimeText;
         }
 }
 
-
-//lol 
-
-tgui::Button::Ptr Gui_base::makeBackToMenu(const tgui::Vector2f pos, const tgui::Vector2f size, tgui::Panel::Ptr panel){
-
-    auto backToMenu = tgui::Button::create("Back to Main Menu");
-    backToMenu->setTextSize(25);
-    backToMenu->getRenderer()->setTextColor(color.text);
-    backToMenu->setPosition(pos);
-    backToMenu->setSize(size);
-
-    backToMenu->getRenderer()->setBackgroundColor(color.panel2);
-    backToMenu->getRenderer()->setBackgroundColorDownHover(color.down);
-    backToMenu->getRenderer()->setBackgroundColorDown(color.down);
-    backToMenu->getRenderer()->setBackgroundColorHover(color.down);
-    backToMenu->getRenderer()->setTextColor(color.text);
-    backToMenu->getRenderer()->setTextColorDisabled(color.text);
-    backToMenu->getRenderer()->setTextColorHover(color.text);
-    backToMenu->getRenderer()->setTextColorDown(sf::Color(0,0,0));
-    backToMenu->getRenderer()->setBorders(0);
-
-    panel->add(backToMenu);
-    
-    
-    return backToMenu;
-
+tgui::Picture::Ptr Gui_base::makeImage(const tgui::Texture& texture, tgui::Vector2f pos, tgui::Vector2f size, tgui::Panel::Ptr panel){
+    auto image = tgui::Picture::create(texture);
+    image->setPosition({500, 225});
+    image->setSize({32, 28});
+    panel->add(image);
+    return image;
 }
-
 
 
 tgui::Slider::Ptr Gui_base::makeSlider(tgui::Vector2f pos, tgui::Vector2f size, float startValue, tgui::Panel::Ptr panel) {
@@ -490,24 +483,18 @@ tgui::Slider::Ptr Gui_base::makeSlider(tgui::Vector2f pos, tgui::Vector2f size, 
 
 
 void Gui_base::volume(tgui::Panel::Ptr topBar, tgui::Panel::Ptr root, sf::Music &music){
-    auto volumeIcon = tgui::Picture::create(tgui::Texture("assets/images/volume/volume_muted.png", {}, {}, true));
+
+        auto volumeIcon = tgui::Picture::create(tgui::Texture("assets/images/volume/volume_muted.png", {}, {}, true));
         volumeIcon->setPosition({getGuiWidth() - 200.f, 12});
         volumeIcon->setSize({40, 31});
         topBar->add(volumeIcon);
         
-        auto volumePanel = tgui::Panel::create({300, 90});
-        volumePanel->setPosition({getGuiWidth() - 330.f, Constants::topBarHeight + 10.f});
-        volumePanel->getRenderer()->setBackgroundColor(color.down);
-        volumePanel->getRenderer()->setRoundedBorderRadius(20.0);
-        root->add(volumePanel);
+        auto volumePanel = makePanel({300,90}, color.down, root);
+        volumePanel->setPosition({getGuiWidth() - volumePanel->getSize().x - 30, topBar->getSize().y + 10});
         volumePanel->setVisible(false);
 
-
-        auto volumeLabel = tgui::Label::create("Sound");
+        auto volumeLabel = makeLabel("Sound", 20, color.text, volumePanel);
         volumeLabel->setPosition({18, 12});
-        volumeLabel->getRenderer()->setTextColor(color.text);
-        volumeLabel->setTextSize(20);
-        volumePanel->add(volumeLabel);
 
         volumeSlider = makeSlider({18, 52}, {264, 12}, music.getVolume(), volumePanel);
 
@@ -552,75 +539,77 @@ void Gui_base::volume(tgui::Panel::Ptr topBar, tgui::Panel::Ptr root, sf::Music 
 
 std::vector<Card> gui_utils::game_cards (){
     std::vector<Card> cards;
-    std::vector<tgui::Picture::Ptr> cards_images;
+    std::vector<std::string> cardImagePaths;
     std::vector<std::string> suits = {"♥️", "♦️", "♣️", "♠️"};
 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/heart/hearts_2.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/heart/hearts_3.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/heart/hearts_4.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/heart/hearts_5.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/heart/hearts_6.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/heart/hearts_7.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/heart/hearts_8.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/heart/hearts_9.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/heart/hearts_10.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/heart/hearts_A.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/heart/hearts_J.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/heart/hearts_K.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/heart/hearts_Q.png")); 
+    cards.reserve(52);
+    cardImagePaths.reserve(52);
 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/diamond/diamonds_2.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/diamond/diamonds_3.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/diamond/diamonds_4.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/diamond/diamonds_5.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/diamond/diamonds_6.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/diamond/diamonds_7.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/diamond/diamonds_8.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/diamond/diamonds_9.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/diamond/diamonds_10.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/diamond/diamonds_A.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/diamond/diamonds_J.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/diamond/diamonds_K.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/diamond/diamonds_Q.png")); 
+    cardImagePaths.emplace_back("assets/cards/heart/hearts_2.png");
+    cardImagePaths.emplace_back("assets/cards/heart/hearts_3.png");
+    cardImagePaths.emplace_back("assets/cards/heart/hearts_4.png");
+    cardImagePaths.emplace_back("assets/cards/heart/hearts_5.png");
+    cardImagePaths.emplace_back("assets/cards/heart/hearts_6.png");
+    cardImagePaths.emplace_back("assets/cards/heart/hearts_7.png");
+    cardImagePaths.emplace_back("assets/cards/heart/hearts_8.png");
+    cardImagePaths.emplace_back("assets/cards/heart/hearts_9.png");
+    cardImagePaths.emplace_back("assets/cards/heart/hearts_10.png");
+    cardImagePaths.emplace_back("assets/cards/heart/hearts_A.png");
+    cardImagePaths.emplace_back("assets/cards/heart/hearts_J.png");
+    cardImagePaths.emplace_back("assets/cards/heart/hearts_K.png");
+    cardImagePaths.emplace_back("assets/cards/heart/hearts_Q.png");
 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/club/clubs_2.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/club/clubs_3.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/club/clubs_4.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/club/clubs_5.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/club/clubs_6.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/club/clubs_7.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/club/clubs_8.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/club/clubs_9.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/club/clubs_10.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/club/clubs_A.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/club/clubs_J.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/club/clubs_K.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/club/clubs_Q.png")); 
+    cardImagePaths.emplace_back("assets/cards/diamond/diamonds_2.png");
+    cardImagePaths.emplace_back("assets/cards/diamond/diamonds_3.png");
+    cardImagePaths.emplace_back("assets/cards/diamond/diamonds_4.png");
+    cardImagePaths.emplace_back("assets/cards/diamond/diamonds_5.png");
+    cardImagePaths.emplace_back("assets/cards/diamond/diamonds_6.png");
+    cardImagePaths.emplace_back("assets/cards/diamond/diamonds_7.png");
+    cardImagePaths.emplace_back("assets/cards/diamond/diamonds_8.png");
+    cardImagePaths.emplace_back("assets/cards/diamond/diamonds_9.png");
+    cardImagePaths.emplace_back("assets/cards/diamond/diamonds_10.png");
+    cardImagePaths.emplace_back("assets/cards/diamond/diamonds_A.png");
+    cardImagePaths.emplace_back("assets/cards/diamond/diamonds_J.png");
+    cardImagePaths.emplace_back("assets/cards/diamond/diamonds_K.png");
+    cardImagePaths.emplace_back("assets/cards/diamond/diamonds_Q.png");
 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/spade/spades_2.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/spade/spades_3.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/spade/spades_4.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/spade/spades_5.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/spade/spades_6.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/spade/spades_7.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/spade/spades_8.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/spade/spades_9.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/spade/spades_10.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/spade/spades_A.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/spade/spades_J.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/spade/spades_K.png")); 
-    cards_images.emplace_back(tgui::Picture::create("assets/cards/spade/spades_Q.png")); 
+    cardImagePaths.emplace_back("assets/cards/club/clubs_2.png");
+    cardImagePaths.emplace_back("assets/cards/club/clubs_3.png");
+    cardImagePaths.emplace_back("assets/cards/club/clubs_4.png");
+    cardImagePaths.emplace_back("assets/cards/club/clubs_5.png");
+    cardImagePaths.emplace_back("assets/cards/club/clubs_6.png");
+    cardImagePaths.emplace_back("assets/cards/club/clubs_7.png");
+    cardImagePaths.emplace_back("assets/cards/club/clubs_8.png");
+    cardImagePaths.emplace_back("assets/cards/club/clubs_9.png");
+    cardImagePaths.emplace_back("assets/cards/club/clubs_10.png");
+    cardImagePaths.emplace_back("assets/cards/club/clubs_A.png");
+    cardImagePaths.emplace_back("assets/cards/club/clubs_J.png");
+    cardImagePaths.emplace_back("assets/cards/club/clubs_K.png");
+    cardImagePaths.emplace_back("assets/cards/club/clubs_Q.png");
+
+    cardImagePaths.emplace_back("assets/cards/spade/spades_2.png");
+    cardImagePaths.emplace_back("assets/cards/spade/spades_3.png");
+    cardImagePaths.emplace_back("assets/cards/spade/spades_4.png");
+    cardImagePaths.emplace_back("assets/cards/spade/spades_5.png");
+    cardImagePaths.emplace_back("assets/cards/spade/spades_6.png");
+    cardImagePaths.emplace_back("assets/cards/spade/spades_7.png");
+    cardImagePaths.emplace_back("assets/cards/spade/spades_8.png");
+    cardImagePaths.emplace_back("assets/cards/spade/spades_9.png");
+    cardImagePaths.emplace_back("assets/cards/spade/spades_10.png");
+    cardImagePaths.emplace_back("assets/cards/spade/spades_A.png");
+    cardImagePaths.emplace_back("assets/cards/spade/spades_J.png");
+    cardImagePaths.emplace_back("assets/cards/spade/spades_K.png");
+    cardImagePaths.emplace_back("assets/cards/spade/spades_Q.png");
 
     size_t image_iterator = 0;
 
     
     for (auto s : suits) {
         for (int r = 2; r <= 14; r++) {
-            cards.push_back({r, s, cards_images.at(image_iterator)});
+            cards.push_back({r, s, cardImagePaths.at(image_iterator)});
             ++image_iterator;
         }
     }
     return cards;
 
 }
-

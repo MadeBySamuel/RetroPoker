@@ -32,6 +32,7 @@ int main(){
 
     sf::Music music("assets/sound/song2.ogg");
 
+    
     music.play();
     music.setLooping(true);
     music.setVolume(0);
@@ -43,10 +44,13 @@ int main(){
     MainMenu mainmenu(gui, music, window);
     Game_GUI game(gui, music, window);
     
-    login.login_screen();
+    // menič aktualneho módu
 
-    Gui_base* currentPointer = &login;
+    //login.login_screen();
+    game.game();
+    //mainmenu.showMainMenu();
 
+    Gui_base* currentPointer = &game;
     std::string loggedUsername = "";
 
     login.onLogin = [&](std::string username){
