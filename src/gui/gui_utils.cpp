@@ -15,14 +15,15 @@ Gui_base::Gui_base(tgui::Gui& gui, sf::Music& music) : gui(gui), mainMenuMusic(m
 
 tgui::Panel::Ptr Gui_base::makeBar(tgui::Vector2f pos){
 
-    auto bar = tgui::Panel::create({getGuiWidth(), Constants::Bar::topHeight});
+    const float barHeight = Constants::Bar::topHeightRatio * getGuiHeight();
+    auto bar = tgui::Panel::create({getGuiWidth(), barHeight});
     bar->setPosition(pos);
     bar->getRenderer()->setBackgroundColor(color.bar_color);
     root->add(bar);
 
     if (pos == tgui::Vector2f{0,0}){
         timeLabel = makeLabel("", 30, color.text, bar);
-        timeLabel->setPosition({"94%", "17%"});
+        timeLabel->setPosition({bar->getSize().x * 0.94f, bar->getSize().y * 0.17f});
     }
    
     return bar;
@@ -43,7 +44,8 @@ tgui::Label::Ptr Gui_base::makeLabel(const std::string& title, const int16_t tit
 tgui::Panel::Ptr Gui_base::makePanel(tgui::Vector2f size, tgui::Color backgroundColor, tgui::Panel::Ptr container){
    
     auto panel = tgui::Panel::create(size);
-    panel->setPosition({(getGuiWidth() - size.x) / 2.f, (getGuiHeight() - size.y) / 2.f});
+    const auto containerSize = container->getSize();
+    panel->setPosition({(containerSize.x - size.x) / 2.f, (containerSize.y - size.y) / 2.f});
     panel->getRenderer()->setBackgroundColor(backgroundColor);
     panel->getRenderer()->setRoundedBorderRadius(borderRadius);
     container->add(panel);
@@ -84,7 +86,7 @@ tgui::EditBox::Ptr Gui_base::makeEditBox(const std::string& title, tgui::Vector2
     
     auto editBox = tgui::EditBox::create();
     editBox->setTextSize(20);
-    editBox->setSize({450, 42});
+    editBox->setSize({panel->getSize().x * 0.725806f, panel->getSize().y * 0.08f});
     editBox->getRenderer()->setBackgroundColor(tgui::Color::Transparent);
     editBox->getRenderer()->setBorders(0);
     editBox->getRenderer()->setBackgroundColorHover(tgui::Color::Transparent);
@@ -123,7 +125,47 @@ tgui::ChildWindow::Ptr Gui_base::makePopUpPanel(const std::string& title, tgui::
 
 }      
 
+void Gui_base::gameplay_settings(){
+    const float panelW = Constants::Panel::loginWidthRatio * getGuiWidth();
+    const float panelH = Constants::Panel::loginHeightRatio * 2.f * getGuiHeight();
+    gameplaySettingsPanel = makePanel({panelW, panelH}, color.centerpanel, root);
 
+    const float padding = panelW * 0.04f;
+    const float rowOneY = panelH * 0.25f;
+    const float rowTwoY = panelH * 0.42f;
+    const float sliderX = panelW * 0.42f;
+    const float sliderW = panelW * 0.43f;
+
+    auto gameplayTitle = makeLabel("Gameplay Settings", 45, color.text, gameplaySettingsPanel);
+    gameplayTitle->setPosition({(panelW - gameplayTitle->getSize().x) / 2.f, panelH * 0.05f});
+
+    auto numOfPlayersTitle = makeLabel("Number of players", 20, color.text, gameplaySettingsPanel);
+    numOfPlayersTitle->setPosition({padding, rowOneY});
+    auto smallBlindTitle = makeLabel("Small Blind amount", 20, color.text, gameplaySettingsPanel);
+    smallBlindTitle->setPosition({padding, rowTwoY});
+
+    auto numOfPlayersValue = makeLabel("6", 20, color.text, gameplaySettingsPanel);
+    numOfPlayersValue->setPosition({panelW * 0.90f, rowOneY});
+
+    auto numOfPlayersSlider = makeSlider({sliderX, rowOneY + panelH * 0.02f}, {sliderW, panelH * 0.012f}, 6, gameplaySettingsPanel);
+    auto smallBlindSlider = makeSlider({sliderX, rowTwoY + panelH * 0.02f}, {sliderW, panelH * 0.012f}, 10, gameplaySettingsPanel);
+    numOfPlayersSlider->setMinimum(1);
+    numOfPlayersSlider->setMaximum(8);
+    smallBlindSlider->setMinimum(2);
+    smallBlindSlider->setMaximum(50);
+
+    auto backToSettingsButton = makeButton("Back to Settings", {padding, panelH * 0.88f}, {panelW - 2.f * padding, panelH * 0.08f}, 24, gameplaySettingsPanel);
+    bindSoundOnClick(backToSettingsButton, [this]{
+        root->remove(gameplaySettingsPanel);
+        gameplaySettingsPanel = nullptr;
+        gameSettingsPanel->setVisible(true);
+    });
+
+    numOfPlayersSlider->onValueChange([this, numOfPlayersValue](int value){
+        numOfPlayersValue->setText(std::to_string(value));
+        clickSound.play();
+    });
+}
 
 tgui::Button::Ptr Gui_base::makePopUpButton(const std::string& title, tgui::Vector2f pos, const tgui::Vector2f size, const int8_t sizeTitle, tgui::ChildWindow::Ptr quitPanel){
 
@@ -189,7 +231,7 @@ tgui::Button::Ptr Gui_base::makeButton(const std::string& title, tgui::Vector2f 
         button->getRenderer()->setBorders(0);
     }
 
-    if(panel == gameSettingsPanel || panel == gameMenuPanel || title == "Logout" || panel == audioSettingsPanel || panel == root || panel == escapeMenuPanel){
+    if(panel == gameSettingsPanel || panel == gameMenuPanel || title == "Logout" || panel == audioSettingsPanel || panel == root || panel == escapeMenuPanel || panel == gameplaySettingsPanel){
         button->getRenderer()->setBackgroundColorFocused(color.panel2);
         button->getRenderer()->setTextColorDownFocused(sf::Color(0,0,0));
         button->getRenderer()->setBackgroundColor(color.panel2);
@@ -230,15 +272,18 @@ tgui::Button::Ptr Gui_base::makeButton(const std::string& title, tgui::Vector2f 
 }
 
 
- void Gui_base::audio_settings(){
 
-    float gap = 24.f;
-    float valuePos = gameSettingsPanel->getSize().x - 50.f;
+void Gui_base::audio_settings(){
+    
+    const float panelW = Constants::Panel::loginWidthRatio * getGuiWidth();
+    const float panelH = Constants::Panel::loginHeightRatio * 2.f * getGuiHeight();
+    const float rowH = panelH * 0.055f;
+    const float valuePos = panelW * 0.92f;
 
-    audioSettingsPanel = makePanel({Constants::Panel::loginWidth, Constants::Panel::loginHeight * 2}, color.centerpanel, root);
-    auto musicPanel = makePanel({Constants::Panel::loginWidth, 2*gap}, color.panel2, audioSettingsPanel);
-    auto clickPanel = makePanel({Constants::Panel::loginWidth - 10, 2*gap}, color.panel2, audioSettingsPanel);
-    auto ambienceSoundPanel = makePanel({Constants::Panel::loginWidth * 2 - gap - 70, 2*gap}, color.panel2, audioSettingsPanel);
+    audioSettingsPanel = makePanel({panelW, panelH}, color.centerpanel, root);
+    auto musicPanel = makePanel({panelW * 0.92f, rowH}, color.panel2, audioSettingsPanel);
+    auto clickPanel = makePanel({panelW * 0.92f, rowH}, color.panel2, audioSettingsPanel);
+    auto ambienceSoundPanel = makePanel({panelW * 0.92f, rowH}, color.panel2, audioSettingsPanel);
 
 
     auto audioTitle = makeLabel("Audio Settings", 45, color.text, audioSettingsPanel);
@@ -260,20 +305,20 @@ tgui::Button::Ptr Gui_base::makeButton(const std::string& title, tgui::Vector2f 
     float clickWidth = clickSoundTitle->getSize().x;
     float clickHeight = clickSoundTitle->getSize().y;
 
-    float audioTitleX = (Constants::Panel::loginWidth - audioWidth) / 2.f;
+    float audioTitleX = (panelW - audioWidth) / 2.f;
 
-    float musicTitleY = 110;
-    float clickSoundTitleY = 170;
-    float ambienceSoundTitleY = 230;
+    float musicTitleY = panelH * 0.125f;
+    float clickSoundTitleY = panelH * 0.193f;
+    float ambienceSoundTitleY = panelH * 0.261f;
 
-    musicPanel->setPosition(gap - 10, musicTitleY - 10);
+    musicPanel->setPosition(panelW * 0.025f, musicTitleY - panelH * 0.011f);
     musicPanel->getRenderer()->setRoundedBorderRadius(0);
 
-    clickPanel->setPosition(0, 160);
+    clickPanel->setPosition(panelW * 0.025f, clickSoundTitleY - panelH * 0.011f);
     clickPanel->getRenderer()->setRoundedBorderRadius(0);
 
 
-    ambienceSoundPanel->setPosition(gap - 10, 160 + 60);
+    ambienceSoundPanel->setPosition(panelW * 0.025f, ambienceSoundTitleY - panelH * 0.011f);
     ambienceSoundPanel->getRenderer()->setRoundedBorderRadius(0);
 
 
@@ -281,28 +326,28 @@ tgui::Button::Ptr Gui_base::makeButton(const std::string& title, tgui::Vector2f 
     std::cout << clickSoundTitleY << std::endl;
     std::cout << ambienceSoundTitleY << std::endl;
 
-    float sliderX = musicHeight + 3 * gap;
+    float sliderX = panelW * 0.20f;
 
-    float musicSliderY = musicTitleY + 8;
-    float clickSliderY = clickSoundTitleY + 8;
-    float ambienceSoundSliderY = ambienceSoundTitleY + 8;
+    float musicSliderY = musicTitleY + panelH * 0.009f;
+    float clickSliderY = clickSoundTitleY + panelH * 0.009f;
+    float ambienceSoundSliderY = ambienceSoundTitleY + panelH * 0.009f;
 
-    audioTitle->setPosition(audioTitleX, 20.f);
-    musicTitle->setPosition(25.f, musicTitleY);
-    clickSoundTitle->setPosition(25.f, clickSoundTitleY);
-    ambienceSoundTitle->setPosition(25.f, ambienceSoundTitleY);
+    audioTitle->setPosition(audioTitleX, panelH * 0.023f);
+    musicTitle->setPosition(panelW * 0.04f, musicTitleY);
+    clickSoundTitle->setPosition(panelW * 0.04f, clickSoundTitleY);
+    ambienceSoundTitle->setPosition(panelW * 0.04f, ambienceSoundTitleY);
 
-    settingsMusicSlider = makeSlider({sliderX, musicSliderY}, {Constants::Panel::loginWidth - 190, 10}, mainMenuMusic.getVolume(), audioSettingsPanel);
-    auto clickSoundSlider = makeSlider({sliderX, clickSliderY}, {Constants::Panel::loginWidth - 190, 10}, clickSound.getVolume(), audioSettingsPanel);
-    auto ambienceSoundSlider = makeSlider({sliderX, ambienceSoundSliderY}, {Constants::Panel::loginWidth - 190, 10}, clickSound.getVolume(), audioSettingsPanel);
+    settingsMusicSlider = makeSlider({sliderX, musicSliderY}, {panelW * 0.68f, panelH * 0.012f}, mainMenuMusic.getVolume(), audioSettingsPanel);
+    auto clickSoundSlider = makeSlider({sliderX, clickSliderY}, {panelW * 0.68f, panelH * 0.012f}, clickSound.getVolume(), audioSettingsPanel);
+    auto ambienceSoundSlider = makeSlider({sliderX, ambienceSoundSliderY}, {panelW * 0.68f, panelH * 0.012f}, clickSound.getVolume(), audioSettingsPanel);
 
     musicValue->setPosition(valuePos, musicTitleY);
     clickSoundValue->setPosition(valuePos, clickSoundTitleY);
     ambienceSoundValue->setPosition(valuePos, ambienceSoundTitleY);
 
 
-    settingsMusicSlider->onValueChange([this, musicValue](float value){
-        musicValue->setText(std::to_string((int)value));
+    settingsMusicSlider->onValueChange([this, musicValue](int value){
+        musicValue->setText(std::to_string(value));
         mainMenuMusic.setVolume(value);
         if (volumeSlider) volumeSlider->setValue(value);
     });
@@ -310,38 +355,77 @@ tgui::Button::Ptr Gui_base::makeButton(const std::string& title, tgui::Vector2f 
 
 
 
-    clickSoundSlider->onValueChange([this, clickSoundValue](float value){
-        clickSoundValue->setText(std::to_string((int)value));
+    clickSoundSlider->onValueChange([this, clickSoundValue](int value){
+        clickSoundValue->setText(std::to_string(value));
         clickSound.setVolume(value);
         clickSound.play();
     });
 
 
 
-    ambienceSoundSlider->onValueChange([ambienceSoundValue, this](float value){
-        ambienceSoundValue->setText(std::to_string((int)value));
+    ambienceSoundSlider->onValueChange([ambienceSoundValue, this](int value){
+        ambienceSoundValue->setText(std::to_string(value));
         ambienceSound.setVolume(value);
         clickSound.play();
     });
 
-    auto backToSettingsButton = makeButton("Back to Settings", {gap, Constants::Panel::loginHeight * 2 - gap - 70}, {Constants::Panel::loginWidth - 2 * gap, 70}, 24, audioSettingsPanel);
+    auto backToSettingsButton = makeButton("Back to Settings", {panelW * 0.04f, panelH * 0.88f}, {panelW * 0.92f, panelH * 0.08f}, 24, audioSettingsPanel);
 
     
     bindSoundOnClick(backToSettingsButton, [this]{
         root->remove(audioSettingsPanel);
+        audioSettingsPanel = nullptr;
         gameSettingsPanel->setVisible(true);
     });
  }
 
-void Gui_base::hide_game_settings(){
+void Gui_base::handleEscape(){
+
+    if(audioSettingsPanel && audioSettingsPanel->isVisible()){
+    root->remove(audioSettingsPanel);
+    audioSettingsPanel = nullptr;
+    gameSettingsPanel->setVisible(true);
+    return;
+    }
+    else if(gameSettingsPanel && gameSettingsPanel->isVisible()){
+    root->remove(gameSettingsPanel);
+    gameSettingsPanel = nullptr;
+    escapeMenuPanel->setVisible(true);
+    return;
+    }
+    else if (escapeMenuPanel && escapeMenuPanel->isVisible()){
+    root->remove(escapeMenuPanel);
+    escapeMenuPanel = nullptr;
     hideOverlay();
-    
+    openedSettingsPanel = false;
+    return;
+    }
+    else {
+        openedSettingsPanel = true;
+    }
+
+}
+
+void Gui_base::hide_game_settings(){
+
     for(auto x : buttonsMainMenu){
         x->setVisible(true);
+    }   
+
+    if(audioSettingsPanel && audioSettingsPanel->isVisible()){
+        root->remove(audioSettingsPanel);
+        audioSettingsPanel = nullptr;
+        gameSettingsPanel->setVisible(true);
+        return;
     }
-    root->remove(gameSettingsPanel);
-    settingsMusicSlider = nullptr;
-    openedSettingsPanel = false;
+
+    else if (gameSettingsPanel && gameSettingsPanel->isVisible()){
+        root->remove(gameSettingsPanel);
+        gameSettingsPanel = nullptr;
+        settingsMusicSlider = nullptr;
+        openedSettingsPanel = false;
+        hideOverlay();
+    }    
 }
 
 void Gui_base::hide_game_menu(){
@@ -358,39 +442,46 @@ void Gui_base::hide_game_menu(){
 
 void Gui_base::game_settings(){
     openedSettingsPanel = true;
-    float gap = 12.f;
+
+    if (gameSettingsPanel) {
+        gameSettingsPanel->setVisible(true);
+        return;
+    }
     
     if(escapeMenuPanel){
         escapeMenuPanel->setVisible(false);
     }
     else {
-
         showOverlay();
     }
 
-    gameSettingsPanel = makePanel({Constants::Panel::loginWidth, Constants::Panel::loginHeight * 2}, color.centerpanel, root);
+    const float panelW = Constants::Panel::loginWidthRatio * getGuiWidth();
+    const float panelH = Constants::Panel::loginHeightRatio * 2.f * getGuiHeight();
+    const float padding = panelW * 0.04f;
+    gameSettingsPanel = makePanel({panelW, panelH}, color.centerpanel, root);
 
     auto settingsTitle = makeLabel("Settings", 45, color.text, gameSettingsPanel);
-    settingsTitle->setPosition((Constants::Panel::loginWidth - settingsTitle->getSize().x) / 2.f, 20.f);
+    settingsTitle->setPosition({(panelW - settingsTitle->getSize().x) / 2.f, panelH * 0.05f});
 
-    float titleH = settingsTitle->getSize().y;
-    float titleW = settingsTitle->getSize().x;
+    const float buttonW = panelW * 0.48f;
+    const float buttonH = panelH * 0.075f;
+    const float startX = (panelW - buttonW) / 2.f;
 
-    const float startX = (gameSettingsPanel->getSize().x - 300) / 2.f;
-
-
-    tgui::Button::Ptr videoButton = makeButton("Video", {startX, 150}, {300,66}, 28, gameSettingsPanel);
-    tgui::Button::Ptr gameplayButton = makeButton("Gameplay", {startX, 250}, {300,66}, 28, gameSettingsPanel);
-    tgui::Button::Ptr audioButton = makeButton("Audio", {startX, 350},{300,66}, 28, gameSettingsPanel);
-    auto backToMenu = makeButton("Back to Main Menu", {gap, Constants::Panel::loginHeight * 2 - gap - 70}, {Constants::Panel::loginWidth - 2 * gap, 70}, 24, gameSettingsPanel); 
+    tgui::Button::Ptr videoButton = makeButton("Video", {startX, panelH * 0.20f}, {buttonW, buttonH}, 28, gameSettingsPanel);
+    tgui::Button::Ptr gameplayButton = makeButton("Gameplay", {startX, panelH * 0.32f}, {buttonW, buttonH}, 28, gameSettingsPanel);
+    tgui::Button::Ptr audioButton = makeButton("Audio", {startX, panelH * 0.44f}, {buttonW, buttonH}, 28, gameSettingsPanel);
+    auto backToMenu = makeButton("Back to Main Menu", {padding, panelH * 0.88f}, {panelW - 2.f * padding, panelH * 0.08f}, 24, gameSettingsPanel);
 
 
     bindSoundOnClick(audioButton, [this]{
         gameSettingsPanel->setVisible(false);
-        
         audio_settings();
     });
 
+    bindSoundOnClick(gameplayButton, [this]{
+        gameSettingsPanel->setVisible(false);
+        gameplay_settings();
+    });
 
 
 
@@ -406,6 +497,7 @@ void Gui_base::game_settings(){
         x->setVisible(true);
     }
     root->remove(gameSettingsPanel);
+    gameSettingsPanel = nullptr;
     settingsMusicSlider = nullptr;
     });
 
@@ -453,8 +545,8 @@ void Gui_base::update_time(){
 
 tgui::Picture::Ptr Gui_base::makeImage(const tgui::Texture& texture, tgui::Vector2f pos, tgui::Vector2f size, tgui::Panel::Ptr panel){
     auto image = tgui::Picture::create(texture);
-    image->setPosition({500, 225});
-    image->setSize({32, 28});
+    image->setPosition(pos);
+    image->setSize(size);
     panel->add(image);
     return image;
 }
@@ -485,18 +577,20 @@ tgui::Slider::Ptr Gui_base::makeSlider(tgui::Vector2f pos, tgui::Vector2f size, 
 void Gui_base::volume(tgui::Panel::Ptr topBar, tgui::Panel::Ptr root, sf::Music &music){
 
         auto volumeIcon = tgui::Picture::create(tgui::Texture("assets/images/volume/volume_muted.png", {}, {}, true));
-        volumeIcon->setPosition({getGuiWidth() - 200.f, 12});
-        volumeIcon->setSize({40, 31});
+        const float guiW = getGuiWidth();
+        const float guiH = getGuiHeight();
+        volumeIcon->setPosition({guiW * 0.895833f, guiH * 0.011111f});
+        volumeIcon->setSize({guiW * 0.020833f, guiH * 0.028704f});
         topBar->add(volumeIcon);
         
-        auto volumePanel = makePanel({300,90}, color.down, root);
-        volumePanel->setPosition({getGuiWidth() - volumePanel->getSize().x - 30, topBar->getSize().y + 10});
+        auto volumePanel = makePanel({guiW * 0.156250f, guiH * 0.083333f}, color.down, root);
+        volumePanel->setPosition({guiW - volumePanel->getSize().x - guiW * 0.015625f, topBar->getSize().y + guiH * 0.009259f});
         volumePanel->setVisible(false);
 
         auto volumeLabel = makeLabel("Sound", 20, color.text, volumePanel);
-        volumeLabel->setPosition({18, 12});
+        volumeLabel->setPosition({volumePanel->getSize().x * 0.06f, volumePanel->getSize().y * 0.13f});
 
-        volumeSlider = makeSlider({18, 52}, {264, 12}, music.getVolume(), volumePanel);
+        volumeSlider = makeSlider({volumePanel->getSize().x * 0.06f, volumePanel->getSize().y * 0.58f}, {volumePanel->getSize().x * 0.88f, volumePanel->getSize().y * 0.13f}, music.getVolume(), volumePanel);
 
         volumeSlider->onValueChange([this, volumeIcon, volumePanel, &music](float value){
             if (volumePanel->isVisible()){

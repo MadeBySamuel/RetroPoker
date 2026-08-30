@@ -1,9 +1,7 @@
 #include "player.hpp"
 
  
-Player::Player(){
-    money = Constants::START_PLAYER_MONEY;
-}
+Player::Player(const std::string& name, int money, const bool isHuman) : name(name), money(money), isHuman(isHuman) {}
 
 std::string Player::getName(){
     return name;
@@ -17,7 +15,16 @@ void Player::setName(std::string name){
     this->name = name;
 }
 
-int& Player::getMoney(){
+const bool Player::isRealPlayer(){
+    return isHuman;
+}
+
+const bool Player::isBot(){
+    return !isHuman;
+}
+
+
+int& Player::getMoney() {
     return money;
 }
 
@@ -42,9 +49,19 @@ void Player::ToggleSmallBlind(){
     isSmallBlind = !isSmallBlind;
 }
 
-int Player::getInGame(){
+bool Player::isInGame(){
     return inGame;
 }
+
+bool Player::isEliminated() const{
+    return eliminated;
+}
+
+void Player::setEliminated(){
+    eliminated = false;
+}
+
+
 
 void Player::setInGame(bool inGame){
     this->inGame = inGame;
@@ -52,7 +69,7 @@ void Player::setInGame(bool inGame){
 
 
 Player::~Player(){
-        std::cout << "Player was deleted. " << std::endl;
+        std::cout << name << " was deleted. " << std::endl;
 }
 
 

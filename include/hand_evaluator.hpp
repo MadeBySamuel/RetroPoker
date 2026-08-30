@@ -3,7 +3,7 @@
 #include "player.hpp"
 #include "utils.hpp"
 
-class HandEvaluator : public Player {
+class HandEvaluator {
 
     public:
     int RoyalFlush(std::vector<Card>& cards, int& sum);

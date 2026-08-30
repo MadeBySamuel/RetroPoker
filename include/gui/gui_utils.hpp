@@ -38,6 +38,7 @@ class Gui_base{
         std::vector<tgui::Button::Ptr> buttonsMainMenu;
         tgui::Panel::Ptr audioSettingsPanel;
         tgui::Panel::Ptr forgotPasswordPanel;
+        tgui::Panel::Ptr gameplaySettingsPanel;
         tgui::Panel::Ptr signUpPanel;
         tgui::Panel::Ptr centerPanel;
         tgui::Panel::Ptr sideBar;
@@ -58,12 +59,17 @@ class Gui_base{
             tgui::Color yes_quit{133, 22, 22};
             tgui::Color bar_color{28, 22, 18, 200};
             tgui::Color centerpanel{45, 35, 28, 230};
-            tgui::Color gamePanel{84, 47, 19, 200};  
+            tgui::Color gamePanel{84, 47, 19, 150};  
             tgui::Color title{0,0,0}; 
         };
 
         float musicVolume = 0.f;
         int8_t borderRadius = 20.f;
+        int blind = 0;
+        float gap = 24.f;
+
+
+
         
 
 
@@ -92,6 +98,9 @@ class Gui_base{
     void hide_game_menu();
     void showOverlay();
     void hideOverlay();
+    void gameplay_settings();
+    void hideEscapeMenu();
+    void handleEscape();
     tgui::Button::Ptr makePopUpButton(const std::string& title, tgui::Vector2f pos, const tgui::Vector2f size, const int8_t titleSize, tgui::ChildWindow::Ptr quitPanel);
     tgui::ChildWindow::Ptr makePopUpPanel(const std::string& title, tgui::Vector2f size, const int8_t titleSize, tgui::Color titleBarColor, tgui::Color titleTextColor, bool showOverlay);
     tgui::Label::Ptr makeLabel(const std::string& title, const int16_t titleSize, tgui::Color titleColor, tgui::Panel::Ptr panel);

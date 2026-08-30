@@ -16,10 +16,14 @@ MainMenu::MainMenu(tgui::Gui& gui, sf::Music& music, sf::RenderWindow& window)
 
 void MainMenu::showMainMenu(){
 
+    const float guiW = getGuiWidth();
+    const float guiH = getGuiHeight();
+    const float topBarH = Constants::Bar::topHeightRatio * guiH;
+
     gui.removeAllWidgets();
     tgui::Font::setGlobalFont("assets/fonts/Shelten.ttf");
 
-    root = tgui::Panel::create({getGuiWidth(), getGuiHeight()});
+    root = tgui::Panel::create({guiW, guiH});
     root->getRenderer()->setBackgroundColor(color.panel);
     root->getRenderer()->setTextureBackground("assets/images/backgrounds/main_menu.jpg");
     gui.add(root);
@@ -27,13 +31,15 @@ void MainMenu::showMainMenu(){
     auto topBar = makeBar({0,0});
     volume(topBar, root, mainMenuMusic);
 
-    sideBar = makePanel({Constants::Bar::sideWidth, Constants::Bar::sideHeight}, tgui::Color::Transparent, root);
-    sideBar->setPosition({30, getGuiHeight() - Constants::Bar::sideHeight - 40});
+    const float sideBarW = Constants::Bar::sideWidthRatio * guiW;
+    const float sideBarH = Constants::Bar::sideHeightRatio * guiH;
+    sideBar = makePanel({sideBarW, sideBarH}, tgui::Color::Transparent, root);
+    sideBar->setPosition({guiW * 0.015625f, guiH - sideBarH - guiH * 0.037037f});
     sideBar->getRenderer()->setRoundedBorderRadius(10.f);
 
     auto title = makeLabel("RetroPoker", 225, {0,0,0}, root);
     title->getRenderer()->setFont("assets/fonts/AncientMedium.ttf");
-    title->setPosition({(getGuiWidth() - title->getSize().x ) / 2.f , 320});
+    title->setPosition({(guiW - title->getSize().x ) / 2.f, guiH * 0.296296f});
     title->getRenderer()->setTextColor(color.title);
     title->getRenderer()->setTextOutlineColor(tgui::Color(42, 26, 18));
     title->getRenderer()->setTextOutlineThickness(2.f);                
@@ -45,27 +51,27 @@ void MainMenu::showMainMenu(){
         std::cerr<< "ERROR";
     }
     else if (loggedUsername.length() > 0 && loggedUsername.length() < 6){
-        usernamePanelLenght = 150;
+        usernamePanelLenght = guiW * 0.078125f;
     }
     else if(loggedUsername.length() >= 6 && loggedUsername.length() < 10){
-        usernamePanelLenght = 180;
+        usernamePanelLenght = guiW * 0.093750f;
     }
     else {
-        usernamePanelLenght = 180;
+        usernamePanelLenght = guiW * 0.093750f;
     }
     
     
 
-    auto usernamePanel = makePanel({usernamePanelLenght, Constants::Bar::topHeight}, color.border, topBar);
+    auto usernamePanel = makePanel({usernamePanelLenght, topBarH}, color.border, topBar);
     usernamePanel->setPosition({0, 0});
 
     auto usernameShow = makeLabel(loggedUsername, 30, color.text, usernamePanel);
-    usernameShow->setPosition({60,10});
+    usernameShow->setPosition({usernamePanelLenght * 0.40f, topBarH * 0.18f});
 
-    auto usernmaeIcon = makeImage("assets/images/login_icon.png", {12,14}, {30,30}, usernamePanel);
+    auto usernmaeIcon = makeImage("assets/images/login_icon.png", {usernamePanelLenght * 0.08f, topBarH * 0.25f}, {usernamePanelLenght * 0.20f, topBarH * 0.54f}, usernamePanel);
 
 
-    auto logoutButton = makeButton("Logout", {5, Constants::Bar::topHeight + 10}, {264, 36}, 20, root);
+    auto logoutButton = makeButton("Logout", {guiW * 0.002604f, topBarH + guiH * 0.009259f}, {sideBarW * 0.942857f, guiH * 0.033333f}, 20, root);
     logoutButton->setVisible(false);
 
 
@@ -91,13 +97,15 @@ void MainMenu::showMainMenu(){
 
     auto moneyShowLabel = makeLabel("Balance: " + std::to_string(money) + "$" , 20, color.text, topBar);
     moneyShowLabel->getRenderer()->setFont("assets/fonts/Shelten.ttf");
-    moneyShowLabel->setPosition({220, 16});
+    moneyShowLabel->setPosition({guiW * 0.114583f, topBarH * 0.29f});
 
 
-    auto buttonCampaign = makeButton("Campaign", {25, 45}, {240, 62}, 33, sideBar);
-    auto buttonGameModes = makeButton("Game Modes", {25, 120}, {240, 48}, 30, sideBar);
-    auto buttonSettings = makeButton("Settings", {25, 195}, {240, 48}, 30, sideBar);
-    auto quitButton = makeButton("Quit", {25, 270}, {240, 48}, 30, sideBar);
+    const float sideButtonX = sideBarW * 0.089286f;
+    const float sideButtonW = sideBarW * 0.857143f;
+    auto buttonCampaign = makeButton("Campaign", {sideButtonX, sideBarH * 0.125f}, {sideButtonW, sideBarH * 0.172222f}, 33, sideBar);
+    auto buttonGameModes = makeButton("Game Modes", {sideButtonX, sideBarH * 0.333333f}, {sideButtonW, sideBarH * 0.133333f}, 30, sideBar);
+    auto buttonSettings = makeButton("Settings", {sideButtonX, sideBarH * 0.541667f}, {sideButtonW, sideBarH * 0.133333f}, 30, sideBar);
+    auto quitButton = makeButton("Quit", {sideButtonX, sideBarH * 0.750000f}, {sideButtonW, sideBarH * 0.133333f}, 30, sideBar);
 
 
         bindSoundOnClick(buttonCampaign, [this]{
@@ -147,28 +155,37 @@ void MainMenu::showMainMenu(){
 
         });
         
-        timeLabel = makeLabel("", 30, color.text, topBar);       
-        timeLabel->setPosition({getGuiWidth() - 125.f, 10});
-        topBar->add(timeLabel);
-
 }
 
-
+void MainMenu::handleGameMenuEscape(){
+    if(gameMenuPanel && gameMenuPanel->isVisible()) {
+        root->remove(gameMenuPanel);
+        gameMenuPanel = nullptr;
+        hideOverlay();
+        return;
+    }
+}
+void MainMenu::handleGameSettingsEscape(){
+    handleEscape();
+}
 
 void MainMenu::game_menu(std::vector<tgui::Button::Ptr> buttons){
 
+    openedGameMenuPanel = true;
     showOverlay();
     
-    const float gameMenuHeight = Constants::Panel::loginHeight * 1.5f;
-    const float totalWidth = Constants::GMButton::width * 2 + 3 * Constants::gap;
+    const float totalWidth = getGuiWidth() * 0.479167f;
+    const float gameMenuHeight = getGuiHeight() * 0.611111f;
+    const float buttonW = totalWidth * Constants::GMButton::widthRatio;
+    const float buttonH = gameMenuHeight * Constants::GMButton::heightRatio;
 
     gameMenuPanel = makePanel({totalWidth, gameMenuHeight}, color.centerpanel, root);
     auto gameMenuTitle = makeLabel("Game Modes", 45, color.text, gameMenuPanel);
-    gameMenuTitle->setPosition((gameMenuPanel->getSize().x - gameMenuTitle->getSize().x) / 2.f, 20);
-    auto backIcon = makeImage("assets/images/arrow__left.png", {Constants::gap, 555.f}, {70,55}, gameMenuPanel);
-    auto texasHoldemButton = makeButton("Texas Hold'em",{Constants::gap,100.f}, {Constants::GMButton::width,Constants::GMButton::height}, 33, gameMenuPanel);
-    auto fiveCardDrawButton = makeButton("5-Card draw", {Constants::GMButton::cardDrawPosX, Constants::GMButton::posY}, {Constants::GMButton::width,Constants::GMButton::height}, 33, gameMenuPanel);
-    auto backToMenu = makeButton("Back to login", {Constants::gap, 550.f}, {totalWidth - 2 * Constants::gap , 70}, 20, gameMenuPanel);
+    gameMenuTitle->setPosition({(totalWidth - gameMenuTitle->getSize().x) / 2.f, gameMenuHeight * 0.030303f});
+    auto backIcon = makeImage("assets/images/arrow__left.png", {totalWidth * 0.043478f, gameMenuHeight * 0.840909f}, {totalWidth * 0.076087f, gameMenuHeight * 0.083333f}, gameMenuPanel);
+    auto texasHoldemButton = makeButton("Texas Hold'em", {totalWidth * Constants::GMButton::leftXRatio, gameMenuHeight * Constants::GMButton::topYRatio}, {buttonW, buttonH}, 33, gameMenuPanel);
+    auto fiveCardDrawButton = makeButton("5-Card draw", {totalWidth * Constants::GMButton::rightXRatio, gameMenuHeight * Constants::GMButton::topYRatio}, {buttonW, buttonH}, 33, gameMenuPanel);
+    auto backToMenu = makeButton("Back to login", {totalWidth * 0.043478f, gameMenuHeight * 0.833333f}, {totalWidth * 0.913043f, gameMenuHeight * 0.106061f}, 20, gameMenuPanel);
 
     bindSoundOnClick(backToMenu, [this, buttons]{
 
@@ -185,7 +202,7 @@ void MainMenu::game_menu(std::vector<tgui::Button::Ptr> buttons){
     });
 
     auto texasHoldemText = makeLabel("Two cards\nCommunity board\nBest five-card hand.", 20, color.text, gameMenuPanel);
-    texasHoldemText->setPosition(Constants::gap + 10, 200);
+    texasHoldemText->setPosition({totalWidth * 0.054348f, gameMenuHeight * 0.303030f});
     texasHoldemText->setVisible(false);
 
     texasHoldemButton->onMouseEnter([this, texasHoldemButton,texasHoldemText]{
@@ -222,4 +239,3 @@ void MainMenu::game_menu(std::vector<tgui::Button::Ptr> buttons){
 
 
     }
-

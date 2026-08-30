@@ -52,21 +52,43 @@ void Game_GUI::placeFaceDownPair(tgui::Panel::Ptr parent, float leftX, float top
     createCardBack(leftX + cardW + gap, topY);
 }
 
-void Game_GUI::placeCenteredLabel(tgui::Panel::Ptr parent, const tgui::Label::Ptr& label, float centerX, float topY, float minX, float maxX) {
+void Game_GUI::placeCenteredLabel(const tgui::Label::Ptr& label, float centerX, float topY, float minX, float maxX) {
     const float labelX = std::clamp(centerX - label->getSize().x * 0.5f, minX, maxX - label->getSize().x);
     label->setPosition({labelX, topY});
-    parent->add(label);
 }
 
+ 
+
+void Game_GUI::createMoneyLabelsPlayers(){
+    
+    float guiW = getGuiWidth();
+    float guiH = getGuiHeight();
+
+    auto& players = engine->getPlayers();
+
+    size_t i = 0;
+    for (auto& player : players){
+        const bool isHuman = player->getName() == "Player";
+        if (isHuman){
+            continue;
+        }
+        auto position = TableLayout::OPPONENT_SEATS[i++];
+        auto x = position.leftX * guiW + 65;
+        auto y = position.topY * guiH - 40;
+        auto moneyLabel = makeLabel(std::to_string(player->getMoney()) + "$",20, color.text, root);
+        moneyLabel->setPosition(x,y);
+    }
+    
+}
 tgui::Panel::Ptr Game_GUI::makeCirclePanel(std::string& name, tgui::Vector2f pos){
     const bool isPlayer = (name == "Player");
 
-    const float radius = isPlayer ? blindChipRadiusPlayer : blindChipRadiusClanker;
-    const float gap = isPlayer ? gapPlayer : gapClanker;
+    const float radius = isPlayer ? getGuiWidth() * 0.036458f : getGuiWidth() * 0.026042f;
+    const float gap = isPlayer ? getGuiWidth() * 0.046875f : getGuiWidth() * 0.036458f;
 
     auto circle = makePanel({radius, radius}, color.centerpanel, root);
     circle->getRenderer()->setRoundedBorderRadius(radius/2);
-    circle->setPosition(pos.x - gap, pos.y + gap - 30);
+    circle->setPosition(pos.x - gap, pos.y + gap - getGuiHeight() * 0.027778f);
     return circle;
 }
 
@@ -76,7 +98,8 @@ void Game_GUI::placePlayerName(tgui::Panel::Ptr parent, const std::string& name,
     label->getRenderer()->setTextColor(color.text);
     const float centerX = seatPairCenterX(seat, guiW);
     const float topY = seat.topY * guiH + seat.cardH * guiH + 10.f;
-    placeCenteredLabel(parent, label, centerX, topY, 20.f, guiW - 20.f);
+    placeCenteredLabel(label, centerX, topY, 20.f, guiW - 20.f);
+    parent->add(label);
 }
 
 void Game_GUI::placeBlind(std::string& name, const std::string& title, tgui::Vector2f pos){
@@ -97,6 +120,7 @@ void Game_GUI::refreshCommunity() {
         cx += communityCardW + communityGap;
     }
 }
+
 
 void Game_GUI::disableActions() {
     for (const auto& button : actionButtons) {
@@ -120,7 +144,7 @@ void Game_GUI::refreshHud() {
     potLabel->setText("Pot: " + std::to_string(engine->getPot()) + "$");
     centerLabel(potLabel, getGuiWidth() / 2.f, communityY - potLabel->getSize().y - 18.f);
 
-    placeCenteredLabel(root, actionStatus, guiW/2.f, 80, 20.f, guiW - 20.f);
+    placeCenteredLabel(actionStatus, guiW/2.f, 80, 20.f, guiW - 20.f);
 
     winnerLabel->setText(engine->getWinnerMessage());
     centerLabel(winnerLabel, getGuiWidth() / 2.f, communityY + communityCardH + 22.f);
@@ -158,31 +182,47 @@ void Game_GUI::restartGame(){
 }
 
 void Game_GUI::hideEscapeMenu(){
+    if(escapeMenuPanel && escapeMenuPanel->isVisible()){
+        root->remove(escapeMenuPanel);
+        escapeMenuPanel = nullptr;
+    }
+    else if(gameSettingsPanel && gameSettingsPanel->isVisible()){
+        root->remove(gameSettingsPanel);
+        gameSettingsPanel = nullptr;
+    }
+    else if (audioSettingsPanel && audioSettingsPanel->isVisible()){
+        root->remove(audioSettingsPanel);
+        audioSettingsPanel = nullptr;
+    }
     hideOverlay();
-    root->remove(escapeMenuPanel);
-    escapeMenuPanel = nullptr;
 }
+
+void Game_GUI::escape(){
+    handleEscape();
+    if(escapeMenuPanel == nullptr && openedSettingsPanel == true)  showEscapeMenu();
+}
+
 
 void Game_GUI::showEscapeMenu(){
 
-    if (escapeMenuPanel){
-        return;
-    }
-    
     showOverlay();
-    
-    escapeMenuPanel = makePanel({Constants::Panel::signUpWidth, Constants::Panel::loginHeight * 1.5}, color.centerpanel, root);
+
+    const float panelW = Constants::Panel::signUpWidthRatio * getGuiWidth();
+    const float panelH = Constants::Panel::loginHeightRatio * 1.5f * getGuiHeight();
+    escapeMenuPanel = makePanel({panelW, panelH}, color.centerpanel, root);
 
     auto escapeMenuTitle = makeLabel("Paused", 36, color.text, escapeMenuPanel);
-    escapeMenuTitle->setPosition({(Constants::Panel::signUpWidth - escapeMenuTitle->getSize().x) / 2.f, 20});
-    const float startX = (escapeMenuPanel->getSize().x - 500) / 2.f;
+    escapeMenuTitle->setPosition({(panelW - escapeMenuTitle->getSize().x) / 2.f, panelH * 0.030303f});
+    const float buttonW = panelW * 0.806452f;
+    const float buttonH = panelH * 0.10f;
+    const float startX = (panelW - buttonW) / 2.f;
 
 
-    auto backToGameButton = makeButton("Back to Game", {startX, 120}, {500, 66}, 28, escapeMenuPanel);
-    auto restartGameButton = makeButton("Restart game", {startX, 220},{500, 66}, 24, escapeMenuPanel);
-    auto settingsButton = makeButton("Settings",{startX, 320}, {500, 66}, 24, escapeMenuPanel);
-    auto backToMenuButton = makeButton("Back to Menu", {startX, 420},{500, 66}, 24, escapeMenuPanel);
-    auto quitGameButton = makeButton("Exit Game", {startX, 520}, {500, 66}, 24, escapeMenuPanel);
+    auto backToGameButton = makeButton("Back to Game", {startX, panelH * 0.181818f}, {buttonW, buttonH}, 28, escapeMenuPanel);
+    auto restartGameButton = makeButton("Restart game", {startX, panelH * 0.333333f}, {buttonW, buttonH}, 24, escapeMenuPanel);
+    auto settingsButton = makeButton("Settings", {startX, panelH * 0.484848f}, {buttonW, buttonH}, 24, escapeMenuPanel);
+    auto backToMenuButton = makeButton("Back to Menu", {startX, panelH * 0.636364f}, {buttonW, buttonH}, 24, escapeMenuPanel);
+    auto quitGameButton = makeButton("Exit Game", {startX, panelH * 0.787879f}, {buttonW, buttonH}, 24, escapeMenuPanel);
     
     bindSoundOnClick(backToGameButton, [this]{
         hideEscapeMenu();
@@ -242,8 +282,8 @@ void Game_GUI::game() {
 
     engine = std::make_unique<Game>();
     engine->game();
-
     buildTable();
+
 }
 
 void Game_GUI::nextHand(){
@@ -256,14 +296,19 @@ void Game_GUI::nextHand(){
 
 
 
+
 void Game_GUI::buildTable(){
     
     root = tgui::Panel::create({getGuiWidth(), getGuiHeight()});
     root->getRenderer()->setTextureBackground("assets/images/backgrounds/game_background.png");
     gui.add(root);
     auto topBar = makeBar({0,0});
-    auto bottomBar = makeBar({0,getGuiHeight() - Constants::Bar::bottomHeight});
-    bottomBar->setSize({getGuiWidth(), Constants::Bar::bottomHeight});
+    const float bottomBarH = Constants::Bar::bottomHeightRatio * getGuiHeight();
+    auto bottomBar = makeBar({0, getGuiHeight() - bottomBarH});
+    bottomBar->setSize({getGuiWidth(), bottomBarH});
+
+
+
 
     volume(topBar, root, mainMenuMusic);
 
@@ -290,15 +335,33 @@ void Game_GUI::buildTable(){
     size_t aiSeat = 0;
     humanPlayerIndex = players.size();
 
+    
+
+    float size_x = guiW * 0.102;
+    float size_y = guiH * 0.2;
+
+    for(size_t i = 0; i < players.size(); i++){
+        auto& player = players[i];
+        if(player->isInGame() && !player->isEliminated()){
+            auto seat = TableLayout::OPPONENT_TURNS[i];
+            auto x = seat.x * guiW;
+            auto y = seat.y * guiH;
+
+            auto panel = makePanel({size_x, size_y}, color.gamePanel, root);
+            panel->setPosition({x,y});
+        }
+    }
+
+    createMoneyLabelsPlayers();
+
 
 
     for (size_t i = 0; i < players.size(); ++i) {
         auto& player = players[i];
         std::string name = player->getName();
-        const bool isHuman = player->getName() == "Player";
-        if (!isHuman && aiSeat >= TableLayout::OPPONENT_SEATS.size()) continue;
+        if (!player->isRealPlayer() && aiSeat >= TableLayout::OPPONENT_SEATS.size()) continue;
 
-        const auto& seat = isHuman ? TableLayout::HUMAN : TableLayout::OPPONENT_SEATS[aiSeat++];
+        const auto& seat = player->isRealPlayer() ? TableLayout::HUMAN : TableLayout::OPPONENT_SEATS[aiSeat++];
         const float seatX = seat.leftX * guiW;
         const float seatY = seat.topY * guiH;
         const float cardW = seat.cardW * guiW;
@@ -311,7 +374,7 @@ void Game_GUI::buildTable(){
         if (player->getIsBigBlind()){
             placeBlind(name, "BIG\nBLIND", {seatX,seatY});
         }
-        if (isHuman) {
+        if (player->isRealPlayer()) {
             humanPlayerIndex = i;
             const auto& hole = player->getcard2();
             float holeX = seatX;
@@ -323,8 +386,9 @@ void Game_GUI::buildTable(){
             balanceLabel = makeLabel("Balance: " + std::to_string(player->getMoney()) + "$", scaledTextSize(guiH, 0.021f, 20, 30), color.text, root);
 
             balanceCenterX = seatPairCenterX(seat, guiW);
-            balanceY = std::max(Constants::Bar::topHeight + 10.f, seatY - balanceLabel->getSize().y - 50.f);
-            placeCenteredLabel(root, balanceLabel, balanceCenterX, balanceY, 20.f, guiW - 20.f);
+            const float topBarH = Constants::Bar::topHeightRatio * guiH;
+            balanceY = std::max(topBarH + guiH * 0.009259f, seatY - balanceLabel->getSize().y - guiH * 0.046296f);
+            placeCenteredLabel(balanceLabel, balanceCenterX, balanceY, 20.f, guiW - 20.f);
 
         } else {
             placeFaceDownPair(root, seatX, seatY, cardW, cardH, gap);
@@ -336,7 +400,7 @@ void Game_GUI::buildTable(){
             if(players[i]->getName() == "Player"){
                 if(players[i]->getMoney() <= 0 ){  
 
-                tgui::ChildWindow::Ptr gameOverPanel = makePopUpPanel("Game Over", {Constants::Panel::loginWidth, 300.f}, 32, sf::Color(128, 30, 30), sf::Color(253, 253, 253), true);
+                tgui::ChildWindow::Ptr gameOverPanel = makePopUpPanel("Game Over", {Constants::Panel::loginWidthRatio * guiW, guiH * 0.277778f}, 32, sf::Color(128, 30, 30), sf::Color(253, 253, 253), true);
                 tgui::Button::Ptr backToGameButton = makePopUpButton("Restart game", {(gameOverPanel->getSize().x - 500.f) / 2.f, 40.f}, {500,66}, 24, gameOverPanel);
                 tgui::Button::Ptr exitGameButton = makePopUpButton("Exit game", {(gameOverPanel->getSize().x - 500.f) / 2.f, 140.f}, {500,66}, 24, gameOverPanel);
 
@@ -353,23 +417,24 @@ void Game_GUI::buildTable(){
         }
     }
 
+
     potLabel = makeLabel("Pot: " + std::to_string(engine->getPot()) + "$", scaledTextSize(guiH, 0.026f, 24, 40), color.accent, root);
-    placeCenteredLabel(root, potLabel, guiW / 2.f, communityY - potLabel->getSize().y - 18.f, 20.f, guiW - 20.f);
+    placeCenteredLabel(potLabel, guiW / 2.f, communityY - potLabel->getSize().y - 18.f, 20.f, guiW - 20.f);
 
     winnerLabel = makeLabel("", scaledTextSize(guiH, 0.022f, 22, 34), color.text, root);
-    placeCenteredLabel(root, winnerLabel, guiW / 2.f, communityY + communityCardH + 22.f, 20.f, guiW - 20.f);
+    placeCenteredLabel(winnerLabel, guiW / 2.f, communityY + communityCardH + 22.f, 20.f, guiW - 20.f);
     
 
     if (humanPlayerIndex < players.size()) {
-        const float controlsY = getGuiHeight() - 60.f; 
-        constexpr float btnW = 124.f;
-        constexpr float btnH = 48.f;
-        constexpr float btnGap = 20.f;
-        constexpr float startX = 400.f;
-        const float y = controlsY - (btnH + btnGap);
+        const float controlsY = guiH * 0.944444f;
+        const float btnW = guiW * 0.064583f;
+        const float btnH = guiH * 0.044444f;
+        const float btnGap = guiW * 0.010417f;
+        const float actionRowW = 5.f * btnW + 4.f * btnGap;
+        const float startX = (guiW - actionRowW) / 2.f;
 
         actionStatus = makeLabel("Choose action", 24, color.text, root);
-        placeCenteredLabel(root, actionStatus, guiW/2.f, 80, 20.f, guiW - 20.f);
+        placeCenteredLabel(actionStatus, guiW / 2.f, guiH * 0.074074f, guiW * 0.010417f, guiW * 0.989583f);
 
         root->remove(raiseSlider);
         root->remove(confirmButton);
@@ -399,24 +464,21 @@ void Game_GUI::buildTable(){
             refreshHud();
         });
 
-        auto placeActionButton = [&](const std::string& text, float x, ActionType action, std::string statusMsg) {
+        auto placeActionButton = [this, controlsY, startX, btnW, btnH, btnGap](tgui::Button::Ptr button, ActionType action, std::string statusMsg) {
             
-            auto button = makeButton(text,{x, controlsY}, {btnW, btnH}, 20, root);
-            actionButtons.push_back(button);
-
-            bindSoundOnClick(button, [this, action, msg = std::move(statusMsg), controlsY] {
+            bindSoundOnClick(button, [this, action, msg = std::move(statusMsg), controlsY, startX, btnW, btnH, btnGap] {
 
                 if (action == ActionType::RAISE){
                     if (!raiseSlider){
                         auto& players = engine->getPlayers();
 
-                        raiseSlider = makeSlider({startX + (btnW + btnGap) * 5.f, controlsY + 20.f}, {btnW * 2 + btnGap, 10}, 0, root);
+                        raiseSlider = makeSlider({startX + (btnW + btnGap) * 3.f, controlsY - btnH * 0.35f}, {btnW * 2.f + btnGap, btnH * 0.20f}, 0, root);
 
                         float thumbX = raiseSlider->getPosition().x + 0.0 * raiseSlider->getSize().x;
 
                         raiseSlider->setMaximum(players[humanPlayerIndex]->getMoney());
                         
-                        raiseMoneyLabel->setPosition({thumbX - 12, raiseSlider->getPosition().y - 25.f});
+                        raiseMoneyLabel->setPosition({thumbX - getGuiWidth() * 0.006250f, raiseSlider->getPosition().y - getGuiHeight() * 0.023148f});
                         raiseMoneyLabel->setVisible(true);
                         raiseMoneyLabel->setText("0$");
                         
@@ -432,7 +494,7 @@ void Game_GUI::buildTable(){
                             float ratio = (value - raiseSlider->getMinimum()) / (raiseSlider->getMaximum() - raiseSlider->getMinimum());
                             float thumbX = raiseSlider->getPosition().x + ratio * raiseSlider->getSize().x;
 
-                            raiseMoneyLabel->setPosition({thumbX - 12, raiseSlider->getPosition().y - 25.f});
+                            raiseMoneyLabel->setPosition({thumbX - getGuiWidth() * 0.006250f, raiseSlider->getPosition().y - getGuiHeight() * 0.023148f});
                             raiseMoneyLabel->setText(std::to_string((int)value) + "$");
                         });
                     } else {
@@ -461,15 +523,31 @@ void Game_GUI::buildTable(){
             });
 
         
-        };        
+        };
 
-        placeActionButton("Fold", startX + (btnW + btnGap) * 3.f, ActionType::FOLD,  "Action: Fold");
-        placeActionButton("Raise", startX + (btnW + btnGap) * 4.f,  ActionType::RAISE, "Action: Raise");
-        placeActionButton("All in", startX + (btnW + btnGap) * 2.f,  ActionType::ALLIN, "Action: All In");
-        placeActionButton("Check",startX,  ActionType::CHECK, "Action: Check");
-        placeActionButton("Call",startX + (btnW + btnGap) * 1.f,  ActionType::CALL,  "Action: Call");
+        auto foldButton = makeButton("Fold",{startX + (btnW + btnGap) * 3.f, controlsY}, {btnW, btnH}, 20, root);
+        auto raiseButton = makeButton("Raise", {startX + (btnW + btnGap) * 4.f, controlsY}, {btnW, btnH}, 20, root);
+        auto allInButton = makeButton("All in", {startX + (btnW + btnGap) * 2.f, controlsY}, {btnW, btnH}, 20, root);
+        auto checkButton = makeButton("Check", {startX, controlsY}, {btnW, btnH}, 20, root);
+        auto callButton = makeButton("Call", {startX + (btnW + btnGap) * 1.f, controlsY}, {btnW, btnH}, 20, root);
 
 
+        actionButtons.push_back(foldButton);
+        actionButtons.push_back(raiseButton);
+        actionButtons.push_back(allInButton);
+        actionButtons.push_back(checkButton);
+        actionButtons.push_back(callButton);
+
+
+        placeActionButton(foldButton, ActionType::FOLD,  "Action: Fold");
+        placeActionButton(raiseButton,  ActionType::RAISE, "Action: Raise");
+        placeActionButton(allInButton,  ActionType::ALLIN, "Action: All In");
+        placeActionButton(checkButton,  ActionType::CHECK, "Action: Check");
+        placeActionButton(callButton,  ActionType::CALL,  "Action: Call");
+
+
+       
+      
     }
 }
 
@@ -485,7 +563,8 @@ void Game_GUI::resolveShowdown() {
     auto communityCards = engine->getCommunityCards();
 
     for (size_t i = 0; i < players.size(); i++) {
-        if (!players[i]->getInGame()) continue;
+        auto& player = players[i];
+        if (!player->isInGame()) continue;
        
         cards = utils::cards7collection(players, i, communityCards);
         evoluation_cards.push_back(handEvaluator.evaluate(cards, players, communityCards, i));

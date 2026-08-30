@@ -79,7 +79,10 @@ void utils::shuffle_players(std::vector<std::string>& names){
     utils::shuffle_function(names);
 }
 
-int utils::set_player_position(std::vector<std::string>& game_names){
+int utils::set_player_position(){
+    
+    std::vector<std::string> game_names = Constants::NAMES;
+
     if (game_names.empty()) {
         return -1;
     }
@@ -91,26 +94,26 @@ int utils::set_player_position(std::vector<std::string>& game_names){
 }
 
 
-std::vector<std::unique_ptr<Player>>& utils::createPlayers(std::vector<std::string>& game_names, std::vector<std::unique_ptr<Player>>& players){
+std::vector<std::unique_ptr<Player>>& utils::createPlayers(std::vector<std::unique_ptr<Player>>& players){
     players.clear();
+    std::vector<std::string> game_names = Constants::NAMES;
+
     players.reserve(game_names.size());
 
-    for (size_t i = 0; i < game_names.size(); ++i) {
-        players.push_back(std::make_unique<Player>());
-    }
 
-    for(size_t i= 0; i < game_names.size(); i++){
-        players[i]->setName(game_names[i]);
-        if (game_names[i] == "Player") players[i]->setMoney(Constants::START_PLAYER_MONEY);
-        // tu sa hracom negenruju peniaze lebo uz boli pri tvorbe vygenerovane konstruktorom
+    for (size_t i = 0; i < game_names.size(); i++) {
+        if (i == 0){
+            players.push_back(std::make_unique<Player>("Player", 200, true));
+        }
+        else {
+            players.push_back(std::make_unique<Player>(game_names[i], 200, false));
+        }
 
     }
 
     return players;
 
 }
-
-
 
 
 void utils::show_my_cards(std::vector<std::unique_ptr<Player>>& players){
@@ -123,9 +126,17 @@ for(size_t i = 0; i < players.size(); i++){
     } 
 }
 
-void utils::settingInGameStatus(std::vector<std::unique_ptr<Player>>& players){
-    for(size_t i = 0; i < players.size(); i ++){
-        players[i]->setInGame(true);
+void utils::settingInGameStatus(std::vector<std::unique_ptr<Player>>& players, int bigBlind){
+    
+    for(size_t i = 0; i < players.size(); i++){
+        auto& player = players[i];
+        if (player->getMoney() <= 0 && player->isBot()){
+            player->setInGame(false);
+            player->setEliminated();
+        }
+        else {
+            players[i]->setInGame(true);
+        }
     }
 }
 

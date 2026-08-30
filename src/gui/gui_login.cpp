@@ -20,8 +20,15 @@
 
 Login::Login(tgui::Gui& gui, sf::Music& music, sf::RenderWindow& window) : Gui_base(gui, music), window(window) {}
 
-// ??? toto pojde preoč 
 void Login::login_screen(){
+
+
+        const float guiW = getGuiWidth();
+        const float guiH = getGuiHeight();
+
+        const float loginW = Constants::Panel::loginWidthRatio * guiW;
+        const float loginH = Constants::Panel::loginHeightRatio * guiH;
+
 
         if (sqlite3_open("users.db", &db) == SQLITE_OK){
             bool database_created = auth::createUsersTable(db);
@@ -34,7 +41,7 @@ void Login::login_screen(){
 
         tgui::Font::setGlobalFont("assets/fonts/Shelten.ttf");
 
-        root = tgui::Panel::create({getGuiWidth(), getGuiWidth()});
+        root = tgui::Panel::create({guiW, guiH});
         root->getRenderer()->setTextureBackground("assets/images/backgrounds/login_background.jpeg");
         gui.add(root);
         topBar = makeBar({0,0});
@@ -42,26 +49,26 @@ void Login::login_screen(){
         volume(topBar, root, mainMenuMusic);
     
 
-        centerPanel = makePanel({Constants::Panel::loginWidth, Constants::Panel::loginHeight}, color.centerpanel, root);
+        centerPanel = makePanel({loginW, loginH}, color.centerpanel, root);
 
         auto loginTitle = makeLabel("Welcome!", 45, color.text, centerPanel);
-        loginTitle->setPosition({55, 35});
+        loginTitle->setPosition({loginW * 0.088710f, loginH * 0.079545f});
 
-        auto loginIcon = makeImage("assets/images/login_icon.png",{55, 147}, {28, 28}, centerPanel);
-        auto lockIcon = makeImage("assets/images/lock_icon.png", {52, 222},{34, 34}, centerPanel );
+        auto loginIcon = makeImage("assets/images/login_icon.png", {loginW * 0.088710f, loginH * 0.334091f}, {loginW * 0.045161f, loginH * 0.063636f}, centerPanel);
+        auto lockIcon = makeImage("assets/images/lock_icon.png", {loginW * 0.083871f, loginH * 0.504545f}, {loginW * 0.054839f, loginH * 0.077273f}, centerPanel);
 
 
-        auto signUpButton = makeButton("Sign up", {400,40}, {170,28}, 20, centerPanel);
+        auto signUpButton = makeButton("Sign up", {loginW * 0.645161f, loginH * 0.090909f}, {loginW * 0.274194f, loginH * 0.063636f}, 20, centerPanel);
         signUpButton->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 0});
 
-        auto forgotPasswordButton = makeButton("Forgot password", {400, 390}, {170, 28}, 18, centerPanel);
+        auto forgotPasswordButton = makeButton("Forgot password", {loginW * 0.645161f, loginH * 0.886364f}, {loginW * 0.274194f, loginH * 0.063636f}, 18, centerPanel);
         forgotPasswordButton->getRenderer()->setBorders(tgui::Borders{0, 0, 0, 2});
 
 
-        auto rememberBox = makeCheckBox({50, 390}, centerPanel);
+        auto rememberBox = makeCheckBox({loginW * 0.080645f, loginH * 0.886364f}, centerPanel);
 
         auto rememberLabel = makeLabel("Remember me", 18, color.text, centerPanel);
-        rememberLabel->setPosition({80, 390});
+        rememberLabel->setPosition({loginW * 0.129032f, loginH * 0.886364f});
         rememberLabel->getRenderer()->setBorderColor(color.text);
 
         bindSoundOnClick(rememberLabel, [this, rememberBox]{
@@ -88,11 +95,11 @@ void Login::login_screen(){
         });
 
         
-        auto usernameBox = makeEditBox("Username", {100,145},  centerPanel);
-        auto passwordBox = makeEditBox("Password", {100, 225}, centerPanel);
+        auto usernameBox = makeEditBox("Username", {loginW * 0.161290f, loginH * 0.329545f}, centerPanel);
+        auto passwordBox = makeEditBox("Password", {loginW * 0.161290f, loginH * 0.511364f}, centerPanel);
         passwordBox->setPasswordCharacter('*');
 
-        auto eyeIcon = makeImage(tgui::Texture("assets/images/eye_off.png", {}, {}, true), {500, 225}, {32, 28}, centerPanel);
+        auto eyeIcon = makeImage(tgui::Texture("assets/images/eye_off.png", {}, {}, true), {loginW * 0.806452f, loginH * 0.511364f}, {loginW * 0.051613f, loginH * 0.063636f}, centerPanel);
 
         bindSoundOnClick(eyeIcon, [eyeIcon, passwordBox]{
             if (passwordBox->getPasswordCharacter() == '*'){
@@ -105,10 +112,10 @@ void Login::login_screen(){
             }
         });
 
-        auto loginButton = makeButton("LOGIN", {(Constants::Panel::loginWidth - 500) /2.f, 300}, {500, 60}, 28, centerPanel);
+        auto loginButton = makeButton("LOGIN", {loginW * 0.096774f, loginH * 0.681818f}, {loginW * 0.806452f, loginH * 0.136364f}, 28, centerPanel);
 
         wrongLabel = makeLabel("", 17, sf::Color(160, 42, 16), centerPanel);
-        wrongLabel->setPosition({70, 270});
+        wrongLabel->setPosition({loginW * 0.112903f, loginH * 0.613636f});
         
         auto tryLogin = [this, usernameBox, passwordBox]{
             if (usernameBox->getText().length() == 0 && passwordBox->getText().length() == 0){
@@ -166,7 +173,7 @@ void Login::login_screen(){
             tryLogin();
         });
 
-        auto quitButton = makeButton("Quit", {0,5}, {120, 62}, 28, topBar);
+        auto quitButton = makeButton("Quit", {0.f, topBar->getSize().y * 0.09f}, {guiW * 0.062500f, topBar->getSize().y * 0.90f}, 28, topBar);
 
         bindSoundOnClick(quitButton, [this] {
 
@@ -194,16 +201,18 @@ void Login::login_screen(){
 
         bindSoundOnClick(forgotPasswordButton, [this]{
             centerPanel->setVisible(false);
-            
-            forgotPasswordPanel = makePanel({Constants::Panel::forgotWidth, Constants::Panel::forgotHeight}, color.centerpanel, root);
+
+            const float forgotW = Constants::Panel::forgotWidthRatio * getGuiWidth();
+            const float forgotH = Constants::Panel::forgotHeightRatio * getGuiHeight();
+            forgotPasswordPanel = makePanel({forgotW, forgotH}, color.centerpanel, root);
 
             auto forgotPasswordLabel = makeLabel("Write email of your account", 30, color.text, forgotPasswordPanel);
-            forgotPasswordLabel->setPosition({40, 55});
+            forgotPasswordLabel->setPosition({forgotW * 0.064516f, forgotH * 0.157143f});
 
-            auto forgotPasswordBox = makeEditBox("email", {100, 145}, forgotPasswordPanel);
-            auto emailIcon = makeImage("assets/images/email_icon.png", {40, 150},{32, 25}, forgotPasswordPanel);
-            auto backToLoginButton = makeButton("Back to login", {50, 300}, {160, 30}, 18, forgotPasswordPanel);
-            auto nextButton = makeButton("Next", {400,300}, {160, 30}, 18, forgotPasswordPanel );
+            auto forgotPasswordBox = makeEditBox("email", {forgotW * 0.161290f, forgotH * 0.414286f}, forgotPasswordPanel);
+            auto emailIcon = makeImage("assets/images/email_icon.png", {forgotW * 0.064516f, forgotH * 0.428571f}, {forgotW * 0.051613f, forgotH * 0.071429f}, forgotPasswordPanel);
+            auto backToLoginButton = makeButton("Back to login", {forgotW * 0.080645f, forgotH * 0.857143f}, {forgotW * 0.258065f, forgotH * 0.085714f}, 18, forgotPasswordPanel);
+            auto nextButton = makeButton("Next", {forgotW * 0.645161f, forgotH * 0.857143f}, {forgotW * 0.258065f, forgotH * 0.085714f}, 18, forgotPasswordPanel);
 
 
         
@@ -220,8 +229,10 @@ void Login::login_screen(){
 
                 root->remove(forgotPasswordPanel);
 
-                auto code_email_panel = tgui::Panel::create({Constants::Panel::forgotWidth, Constants::Panel::forgotHeight});
-                code_email_panel->setPosition({(getGuiWidth() - Constants::Panel::forgotWidth) / 2.f, (getGuiHeight() - Constants::Panel::forgotHeight) / 2.f});
+                const float forgotW = Constants::Panel::forgotWidthRatio * getGuiWidth();
+                const float forgotH = Constants::Panel::forgotHeightRatio * getGuiHeight();
+                auto code_email_panel = tgui::Panel::create({forgotW, forgotH});
+                code_email_panel->setPosition({(getGuiWidth() - forgotW) / 2.f, (getGuiHeight() - forgotH) / 2.f});
                 code_email_panel->getRenderer()->setBackgroundColor(color.panel2);
                 code_email_panel->getRenderer()->setRoundedBorderRadius(20.0);
                 
@@ -235,27 +246,29 @@ void Login::login_screen(){
         bindSoundOnClick(signUpButton, [this]{
 
             centerPanel->setVisible(false);
-            
-            signUpPanel = makePanel({Constants::Panel::signUpWidth,Constants::Panel::signUpHeight}, color.centerpanel, root);
+
+            const float signUpW = Constants::Panel::signUpWidthRatio * getGuiWidth();
+            const float signUpH = Constants::Panel::signUpHeightRatio * getGuiHeight();
+            signUpPanel = makePanel({signUpW, signUpH}, color.centerpanel, root);
             
             auto loginTitle = makeLabel("Sign up", 45, color.text, signUpPanel);
             
-            loginTitle->setPosition({40, 30});
+            loginTitle->setPosition({signUpW * 0.064516f, signUpH * 0.054545f});
 
-            auto usernameBox = makeEditBox("username", {100,145}, signUpPanel);
-            auto emailBox = makeEditBox("email",{100, 225}, signUpPanel);
-            auto passwordBox = makeEditBox("password", {100,305}, signUpPanel);
+            auto usernameBox = makeEditBox("username", {signUpW * 0.161290f, signUpH * 0.263636f}, signUpPanel);
+            auto emailBox = makeEditBox("email", {signUpW * 0.161290f, signUpH * 0.409091f}, signUpPanel);
+            auto passwordBox = makeEditBox("password", {signUpW * 0.161290f, signUpH * 0.554545f}, signUpPanel);
 
-            auto usernameIcon = makeImage("assets/images/login_icon.png", {50, 150}, {32, 28}, signUpPanel);
+            auto usernameIcon = makeImage("assets/images/login_icon.png", {signUpW * 0.080645f, signUpH * 0.272727f}, {signUpW * 0.051613f, signUpH * 0.050909f}, signUpPanel);
 
-            auto emailIcon = makeImage("assets/images/email_icon.png", {50, 230}, {32, 24}, signUpPanel);
+            auto emailIcon = makeImage("assets/images/email_icon.png", {signUpW * 0.080645f, signUpH * 0.418182f}, {signUpW * 0.051613f, signUpH * 0.043636f}, signUpPanel);
 
-            auto passwordIcon = makeImage("assets/images/lock_icon.png", {50,310}, {32, 28}, signUpPanel);
+            auto passwordIcon = makeImage("assets/images/lock_icon.png", {signUpW * 0.080645f, signUpH * 0.563636f}, {signUpW * 0.051613f, signUpH * 0.050909f}, signUpPanel);
             
-            auto backToLoginButton = makeButton("Back to login", {400,40}, {170,28}, 20, signUpPanel);
+            auto backToLoginButton = makeButton("Back to login", {signUpW * 0.645161f, signUpH * 0.072727f}, {signUpW * 0.274194f, signUpH * 0.050909f}, 20, signUpPanel);
             backToLoginButton->getRenderer()->setBorders({0,0,0,0});
 
-            auto eyeIcon = makeImage(tgui::Texture("assets/images/eye_off.png", {}, {}, true), {500, 300}, {32, 28}, signUpPanel);
+            auto eyeIcon = makeImage(tgui::Texture("assets/images/eye_off.png", {}, {}, true), {signUpW * 0.806452f, signUpH * 0.545455f}, {signUpW * 0.051613f, signUpH * 0.050909f}, signUpPanel);
 
             bindSoundOnClick(eyeIcon, [eyeIcon, passwordBox]{
                 if (passwordBox->getPasswordCharacter() == '*'){
@@ -273,12 +286,12 @@ void Login::login_screen(){
                 centerPanel->setVisible(true);
             });
 
-        auto signUpButton = makeButton("Create account", {(Constants::Panel::signUpWidth - 500) / 2.f, 420}, {500, 60}, 28, signUpPanel);
+        auto signUpButton = makeButton("Create account", {signUpW * 0.096774f, signUpH * 0.763636f}, {signUpW * 0.806452f, signUpH * 0.109091f}, 28, signUpPanel);
 
 
         wrongLabel = tgui::Label::create("");
         wrongLabel->setTextSize(17);
-        wrongLabel->setPosition({90, 420});
+        wrongLabel->setPosition({signUpW * 0.145161f, signUpH * 0.763636f});
         wrongLabel->getRenderer()->setTextColor(sf::Color(160, 42, 16));
         signUpPanel->add(wrongLabel);
 
@@ -328,12 +341,4 @@ void Login::login_screen(){
             });
         });
 
-        timeLabel = tgui::Label::create("");
-        timeLabel->setTextSize(30);
-        timeLabel->setPosition({getGuiWidth() - 125.f, 10});
-        timeLabel->getRenderer()->setTextColor(color.text);
-        
-        topBar->add(timeLabel);
-
-        
     }

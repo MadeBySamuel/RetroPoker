@@ -28,11 +28,11 @@ void shuffle_cards(std::vector<Card>& game_cards);
 
 void shuffle_players(std::vector<std::string>& names);
 
-int set_player_position(std::vector<std::string>& game_names);
+int set_player_position();
 
 void sort_function_rank(std::vector<HandScore>& hand_cards);
 
-std::vector<std::unique_ptr<Player>>& createPlayers(std::vector<std::string>& game_names, std::vector<std::unique_ptr<Player>>& players);
+std::vector<std::unique_ptr<Player>>& createPlayers(std::vector<std::unique_ptr<Player>>& players);
 
 
 template<typename T>
@@ -45,7 +45,7 @@ void shuffle_function(std::vector<T>& map){
 
 void shuffle_cards(std::vector<Card>& cards);
 void shuffle_players(std::vector<std::string>& players);
-void settingInGameStatus(std::vector<std::unique_ptr<Player>>&players);  
+void settingInGameStatus(std::vector<std::unique_ptr<Player>>&players,int bigBlind);  
 
 void show_my_cards(std::vector<std::unique_ptr<Player>>& players);
 

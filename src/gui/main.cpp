@@ -84,8 +84,6 @@ int main(){
     };
 
     std::string last_time_text;
-    bool escapeMenuOpen = false;
-
         while(window.isOpen()){
             while(const auto event = window.pollEvent()){
                 gui.handleEvent(*event);
@@ -95,20 +93,14 @@ int main(){
 
                 if (const auto* key = event->getIf<sf::Event::KeyPressed>()){
                     if (key->code == sf::Keyboard::Key::Escape && currentPointer == &game){
-                        escapeMenuOpen = !escapeMenuOpen;
-                        if (escapeMenuOpen){
-                            game.showEscapeMenu(); 
-                        }
-                        else {
-                            game.hideEscapeMenu();
-                        }
+                        game.escape();
                     }
                     if (key->code == sf::Keyboard::Key::Escape && currentPointer == &mainmenu){
                         if (mainmenu.openedSettingsPanel){
                             mainmenu.hide_game_settings();
                         }
                         if(mainmenu.openedGameMenuPanel){
-                            mainmenu.hide_game_menu();
+                            mainmenu.handleGameMenuEscape();
                         }
                 
                     }

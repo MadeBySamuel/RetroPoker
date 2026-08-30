@@ -25,5 +25,7 @@ class MainMenu : public Gui_base {
         std::string loggedUsername;
 
         void showMainMenu();
+        void handleGameMenuEscape();
+        void handleGameSettingsEscape();
         void game_menu(std::vector<tgui::Button::Ptr> buttons);
 };

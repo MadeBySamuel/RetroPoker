@@ -28,9 +28,7 @@ class Game_GUI : public Gui_base {
         tgui::Slider::Ptr raiseSlider;
         tgui::Button::Ptr confirmButton;
         tgui::Label::Ptr raiseMoneyLabel;
-        
 
-        bool opened = false;
         float balanceCenterX = 0.f;
         float balanceY = 0.f;
         float communityY = 0.f;
@@ -42,13 +40,13 @@ class Game_GUI : public Gui_base {
         float gapPlayer = 90.f;
         float blindChipRadiusClanker = 50.f;
         float blindChipRadiusPlayer = 70.f;
-        
-
-
+        std::vector<tgui::Label::Ptr> moneyLabels;
+    
+        void createMoneyLabelsPlayers();
         void placeCard(tgui::Panel::Ptr parent, const Card& card, float x, float y, float w, float h);
         void placeFaceDownPair(tgui::Panel::Ptr parent, float leftX, float topY, float cardW, float cardH, float gap);
         void placePlayerName(tgui::Panel::Ptr parent, const std::string& name, const TableSeat& seat, float guiW, float guiH);
-        void placeCenteredLabel(tgui::Panel::Ptr parent, const tgui::Label::Ptr& label, float centerX, float topY, float minX, float maxX);
+        void placeCenteredLabel(const tgui::Label::Ptr& label, float centerX, float topY, float minX, float maxX);
 
         void refreshCommunity();
         void refreshHud();
@@ -58,6 +56,7 @@ class Game_GUI : public Gui_base {
         sf::Clock restartClock;
         bool restartPending = false;
         void hideEscapeMenu();
+        void escape();
 
         Game_GUI(tgui::Gui& gui, sf::Music& music, sf::RenderWindow& window);
 

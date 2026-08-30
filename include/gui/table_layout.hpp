@@ -10,6 +10,10 @@ struct TableSeat {
     float gap;
 };
 
+struct TablePanel {
+    float x;
+    float y;
+};
 
 namespace TableLayout {
 constexpr TableSeat HUMAN = {0.438f, 0.78f, 0.06f, 0.145f, 0.0042f};
@@ -24,4 +28,11 @@ constexpr std::array<TableSeat, 5> OPPONENT_SEATS = {{
 
 constexpr TableSeat COMMUNITY = {0.3044f, 0.4207f, 0.070f, 0.16f, 0.0054f};
 
+constexpr std::array<TablePanel, 5> OPPONENT_TURNS = {{
+    {0.035, 0.2f},
+    {0.285f, 0.06f},
+    {0.617f, 0.06f},
+    {0.869f, 0.2f},
+    {0.7060f, 0.8190f},
+}};
 } 

@@ -50,10 +50,8 @@ std::vector<std::unique_ptr<Player>>& Game::getPlayers(){
     return players;
 }
 
-void Game::setup_once(std::vector<std::unique_ptr<Player>>& players, std::vector<std::string>& game_names){
-    utils::shuffle_players(game_names);
-    utils::set_player_position(game_names);
-    utils::createPlayers(game_names, players);
+void Game::setup_once(std::vector<std::unique_ptr<Player>>& players){
+    utils::createPlayers(players);
     smallBlindPosition = 1;
     bigBlindPosition = 2;
     setSmallBlind(10);
@@ -62,14 +60,12 @@ void Game::setup_once(std::vector<std::unique_ptr<Player>>& players, std::vector
 
 void Game::setup_once_per_game(std::vector<std::unique_ptr<Player>>& players, std::vector<Card>& game_cards,
     std::vector<int>& used_cards_index, std::vector<Card>& community_cards){
-
     used_cards_index.clear();
-
+    utils::settingInGameStatus(players, bigBlind);
     utils::shuffle_cards(game_cards);
     utils::card_selection(players, used_cards_index, game_cards);
     utils::community_cards_selection(game_cards, used_cards_index, community_cards);
     utils::blindSelection(players, bigBlindPosition, smallBlindPosition);
-    utils::settingInGameStatus(players);
 
     for (size_t i = 0; i < players.size(); i++) {
         if (players[i]->getIsSmallBlind()) {
@@ -137,12 +133,11 @@ void Game::game() {
     players.clear();
 
     std::vector<Card> game_cards = gui_utils::game_cards();
-    std::vector<std::string> game_names = Constants::NAMES;
     std::vector<int> used_cards_index;
 
-    Game::setup_once(this->players, game_names);
+    Game::setup_once(players);
     
-    Game::setup_once_per_game(this->players, game_cards, used_cards_index, communityCards);
+    Game::setup_once_per_game(players, game_cards, used_cards_index, communityCards);
 }
 
 void Game::playerAction(ActionType action, int raiseAmount) {
@@ -154,7 +149,7 @@ void Game::playerAction(ActionType action, int raiseAmount) {
         }
     }
 
-    if (humanIdx != -1 && players[humanIdx]->getInGame()) {
+    if (humanIdx != -1 && players[humanIdx]->isInGame()) {
         switch (action) {
             case ActionType::FOLD:
                 players[humanIdx]->setInGame(false);
@@ -187,7 +182,7 @@ void Game::playerAction(ActionType action, int raiseAmount) {
     std::uniform_int_distribution<int> dist(0, 4);
 
     for (size_t i = 0; i < players.size(); i++) {
-        if (players[i]->getName() == "Player" || !players[i]->getInGame()){
+        if (players[i]->getName() == "Player" || !players[i]->isInGame()){
             continue;
         }
 

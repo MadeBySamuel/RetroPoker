@@ -25,13 +25,20 @@ class Player{
         bool isBigBlind = false;
         bool isSmallBlind = false;
         bool inGame = true;
+        bool isHuman = true;
+        bool eliminated = false;
+
 
         std::vector<Card> cards2;
     
         
         
     public:
-    Player();
+    Player(const std::string& name, int money, const bool isBot);
+
+        const bool isRealPlayer();
+        const bool isBot();
+
         std::string getName();
 
         std::vector<Card>& getcard2();
@@ -53,8 +60,11 @@ class Player{
 
         void ToggleSmallBlind();
 
-        int getInGame();
+        bool isInGame();
+        bool isEliminated() const;
+
         void setInGame(bool inGame);
+        void setEliminated();
 
         ~Player();
     };
