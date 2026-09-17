@@ -3,3 +3,5 @@
 build/
 .vscode/
 external/
+build-debug-shared
+build-release-lldb-test

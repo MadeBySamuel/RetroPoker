@@ -10,7 +10,6 @@ namespace Constants {
     inline constexpr float gap = 40.f;
 
 
-    // Ratios are based on the original 1920 x 1080 layout.
     namespace Panel {
         inline constexpr float loginWidthRatio = 0.322917f;
         inline constexpr float loginHeightRatio = 0.407407f;

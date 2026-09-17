@@ -94,14 +94,13 @@ int utils::set_player_position(){
 }
 
 
-std::vector<std::unique_ptr<Player>>& utils::createPlayers(std::vector<std::unique_ptr<Player>>& players){
+std::vector<std::unique_ptr<Player>>& utils::createPlayers(std::vector<std::unique_ptr<Player>>& players, int numberOfPlayers){
     players.clear();
     std::vector<std::string> game_names = Constants::NAMES;
+    players.reserve(numberOfPlayers);
 
-    players.reserve(game_names.size());
 
-
-    for (size_t i = 0; i < game_names.size(); i++) {
+    for (size_t i = 0; i < numberOfPlayers; i++) {
         if (i == 0){
             players.push_back(std::make_unique<Player>("Player", 200, true));
         }
@@ -126,7 +125,7 @@ for(size_t i = 0; i < players.size(); i++){
     } 
 }
 
-void utils::settingInGameStatus(std::vector<std::unique_ptr<Player>>& players, int bigBlind){
+void utils::settingInGameStatus(std::vector<std::unique_ptr<Player>>& players){
     
     for(size_t i = 0; i < players.size(); i++){
         auto& player = players[i];
@@ -175,6 +174,19 @@ void utils::community_cards_selection(std::vector<Card>& game_cards, std::vector
             community_cards.push_back(game_cards[number]);
         }
     }
+}
+
+void utils::dealerSelection(std::vector<std::unique_ptr<Player>>& players, int& dealerPosition){
+    if (players.empty()){
+        return;
+    }
+    
+    for (auto& player : players){
+        if (player->getIsDealer()){
+            player->ToggleDealer();
+        }
+    }
+    players[dealerPosition]->ToggleDealer();
 }
 
 void utils::blindSelection(std::vector<std::unique_ptr<Player>>& players, int& bigBlindPosition, int& smallBlindPositon){

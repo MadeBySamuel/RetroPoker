@@ -20,9 +20,11 @@ class MainMenu : public Gui_base {
 
     public:
         MainMenu(tgui::Gui& gui, sf::Music& music, sf::RenderWindow& window);
-        std::function<void()> onGame;
         std::function<void()> onLogout;
+        std::function<void(int, int)> onGame;
         std::string loggedUsername;
+
+        void gameplay_settings();
 
         void showMainMenu();
         void handleGameMenuEscape();

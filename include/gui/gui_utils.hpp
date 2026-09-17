@@ -61,11 +61,16 @@ class Gui_base{
             tgui::Color centerpanel{45, 35, 28, 230};
             tgui::Color gamePanel{84, 47, 19, 150};  
             tgui::Color title{0,0,0}; 
+            sf::Color colorgreen{19, 84, 0};
         };
 
-        float musicVolume = 0.f;
+        int musicVolume{0};
+        int clickVolume{20};
+        int ambienceVolume{0};
         int8_t borderRadius = 20.f;
         int blind = 0;
+        int selectedSmallBlind = 10;
+        int selectedPlayerCount = 6;
         float gap = 24.f;
 
 
@@ -78,6 +83,8 @@ class Gui_base{
         GuiTheme color;
         bool openedSettingsPanel = false;
         bool openedGameMenuPanel = false;
+
+
         
     void play_button(){
         clickSound.play();
@@ -98,8 +105,6 @@ class Gui_base{
     void hide_game_menu();
     void showOverlay();
     void hideOverlay();
-    void gameplay_settings();
-    void hideEscapeMenu();
     void handleEscape();
     tgui::Button::Ptr makePopUpButton(const std::string& title, tgui::Vector2f pos, const tgui::Vector2f size, const int8_t titleSize, tgui::ChildWindow::Ptr quitPanel);
     tgui::ChildWindow::Ptr makePopUpPanel(const std::string& title, tgui::Vector2f size, const int8_t titleSize, tgui::Color titleBarColor, tgui::Color titleTextColor, bool showOverlay);

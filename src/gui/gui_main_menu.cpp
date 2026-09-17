@@ -107,6 +107,10 @@ void MainMenu::showMainMenu(){
     auto buttonSettings = makeButton("Settings", {sideButtonX, sideBarH * 0.541667f}, {sideButtonW, sideBarH * 0.133333f}, 30, sideBar);
     auto quitButton = makeButton("Quit", {sideButtonX, sideBarH * 0.750000f}, {sideButtonW, sideBarH * 0.133333f}, 30, sideBar);
 
+    buttonsMainMenu.push_back(buttonCampaign);
+    buttonsMainMenu.push_back(buttonGameModes);
+    buttonsMainMenu.push_back(buttonSettings);
+    buttonsMainMenu.push_back(quitButton);
 
         bindSoundOnClick(buttonCampaign, [this]{
             //?????
@@ -116,7 +120,6 @@ void MainMenu::showMainMenu(){
             for (auto button : buttonsMainMenu){
                 button->setVisible(!(button->isVisible()));
             }
-
             
             game_menu(buttonsMainMenu);
         });
@@ -174,18 +177,19 @@ void MainMenu::game_menu(std::vector<tgui::Button::Ptr> buttons){
     openedGameMenuPanel = true;
     showOverlay();
     
-    const float totalWidth = getGuiWidth() * 0.479167f;
-    const float gameMenuHeight = getGuiHeight() * 0.611111f;
-    const float buttonW = totalWidth * Constants::GMButton::widthRatio;
-    const float buttonH = gameMenuHeight * Constants::GMButton::heightRatio;
+    const float gameMenuPanelW = getGuiWidth() * 0.479167f;
+    const float gameMenuPanelH = getGuiHeight() * 0.611111f;
+    const float buttonW = gameMenuPanelW * Constants::GMButton::widthRatio;
+    const float buttonH = gameMenuPanelH * Constants::GMButton::heightRatio;
 
-    gameMenuPanel = makePanel({totalWidth, gameMenuHeight}, color.centerpanel, root);
+
+    gameMenuPanel = makePanel({gameMenuPanelW, gameMenuPanelH}, color.centerpanel, root);
     auto gameMenuTitle = makeLabel("Game Modes", 45, color.text, gameMenuPanel);
-    gameMenuTitle->setPosition({(totalWidth - gameMenuTitle->getSize().x) / 2.f, gameMenuHeight * 0.030303f});
-    auto backIcon = makeImage("assets/images/arrow__left.png", {totalWidth * 0.043478f, gameMenuHeight * 0.840909f}, {totalWidth * 0.076087f, gameMenuHeight * 0.083333f}, gameMenuPanel);
-    auto texasHoldemButton = makeButton("Texas Hold'em", {totalWidth * Constants::GMButton::leftXRatio, gameMenuHeight * Constants::GMButton::topYRatio}, {buttonW, buttonH}, 33, gameMenuPanel);
-    auto fiveCardDrawButton = makeButton("5-Card draw", {totalWidth * Constants::GMButton::rightXRatio, gameMenuHeight * Constants::GMButton::topYRatio}, {buttonW, buttonH}, 33, gameMenuPanel);
-    auto backToMenu = makeButton("Back to login", {totalWidth * 0.043478f, gameMenuHeight * 0.833333f}, {totalWidth * 0.913043f, gameMenuHeight * 0.106061f}, 20, gameMenuPanel);
+    gameMenuTitle->setPosition({(gameMenuPanelW - gameMenuTitle->getSize().x) / 2.f, gameMenuPanelH * 0.030303f});
+    auto backIcon = makeImage("assets/images/arrow__left.png", {gameMenuPanelW * 0.043478f, gameMenuPanelH * 0.840909f}, {gameMenuPanelW * 0.076087f, gameMenuPanelH * 0.083333f}, gameMenuPanel);
+    auto texasHoldemButton = makeButton("Texas Hold'em", {gameMenuPanelW * Constants::GMButton::leftXRatio, gameMenuPanelH * Constants::GMButton::topYRatio}, {buttonW, buttonH}, 33, gameMenuPanel);
+    auto fiveCardDrawButton = makeButton("5-Card draw", {gameMenuPanelW * Constants::GMButton::rightXRatio, gameMenuPanelH * Constants::GMButton::topYRatio}, {buttonW, buttonH}, 33, gameMenuPanel);
+    auto backToMenu = makeButton("Back to Menu", {gameMenuPanelW * 0.043478f, gameMenuPanelH * 0.833333f}, {gameMenuPanelW * 0.913043f, gameMenuPanelH * 0.106061f}, 24, gameMenuPanel);
 
     bindSoundOnClick(backToMenu, [this, buttons]{
 
@@ -194,15 +198,19 @@ void MainMenu::game_menu(std::vector<tgui::Button::Ptr> buttons){
             x->setVisible(true);
         }
         root->remove(gameMenuPanel);
+        gameMenuPanel = nullptr;
         hideOverlay();
     });
 
+
     bindSoundOnClick(texasHoldemButton, [this]{
-        if(onGame) onGame();
+        gameMenuPanel->setVisible(false);
+        gameplay_settings();
+        std::cerr << selectedPlayerCount;
     });
 
     auto texasHoldemText = makeLabel("Two cards\nCommunity board\nBest five-card hand.", 20, color.text, gameMenuPanel);
-    texasHoldemText->setPosition({totalWidth * 0.054348f, gameMenuHeight * 0.303030f});
+    texasHoldemText->setPosition({gameMenuPanelW * 0.054348f, gameMenuPanelH * 0.303030f});
     texasHoldemText->setVisible(false);
 
     texasHoldemButton->onMouseEnter([this, texasHoldemButton,texasHoldemText]{
@@ -226,7 +234,7 @@ void MainMenu::game_menu(std::vector<tgui::Button::Ptr> buttons){
     });
 
     bindSoundOnClick(fiveCardDrawButton, [this]{
-        if(onGame) onGame();
+        //if(onGame) onGame();
     });
 
     bindSoundOnClick(backIcon, [this, buttons]{
@@ -239,3 +247,92 @@ void MainMenu::game_menu(std::vector<tgui::Button::Ptr> buttons){
 
 
     }
+
+
+void MainMenu::gameplay_settings(){
+
+    // position 
+    
+    const float panelW = Constants::Panel::loginWidthRatio * getGuiWidth();
+    const float panelH = Constants::Panel::loginHeightRatio * 2.f * getGuiHeight();
+    gameplaySettingsPanel = makePanel({panelW, panelH}, color.centerpanel, root);
+
+    float numOfPlayersY = panelH * 0.125f;
+    float smallBlindY = panelH * 0.193f;
+
+    const float padding = panelW * 0.04f;
+    const float sliderX = panelW * 0.42f;
+    const float sliderW = panelW * 0.43f;
+
+    const float rowH = panelH * 0.055f;
+
+    float numOfPlayerSliderY = numOfPlayersY + panelH * 0.009f;
+    float smallBlindSliderY = smallBlindY + panelH * 0.009f;
+
+
+    auto gameplayTitle = makeLabel("Table Setup", 45, color.text, gameplaySettingsPanel);
+    gameplayTitle->setPosition({(panelW - gameplayTitle->getSize().x) / 2.f, panelH * 0.023f});
+
+
+    auto numOfPlayersPanel = makePanel({panelW * 0.95f, rowH}, color.panel2, gameplaySettingsPanel);
+    auto smallBlindPanel = makePanel({panelW * 0.95f, rowH}, color.panel2, gameplaySettingsPanel);
+
+
+    numOfPlayersPanel->setPosition(panelW * 0.025f, numOfPlayersY - panelH * 0.011f);
+    numOfPlayersPanel->getRenderer()->setRoundedBorderRadius(0);
+
+    smallBlindPanel->setPosition(panelW * 0.025f, smallBlindY - panelH * 0.011f);
+    smallBlindPanel->getRenderer()->setRoundedBorderRadius(0);
+
+
+
+    auto numOfPlayersTitle = makeLabel("Number of players", 20, color.text, gameplaySettingsPanel);
+    numOfPlayersTitle->setPosition({padding, numOfPlayersY});
+
+    auto smallBlindTitle = makeLabel("Small Blind amount", 20, color.text, gameplaySettingsPanel);
+    smallBlindTitle->setPosition({padding, smallBlindY});
+
+    auto numOfPlayersValue = makeLabel(std::to_string(selectedPlayerCount), 20, color.text, gameplaySettingsPanel);
+    numOfPlayersValue->setPosition({panelW * 0.90f, numOfPlayersY});
+
+    auto smallBlindValue = makeLabel(std::to_string(selectedSmallBlind) + "$", 20, color.text, gameplaySettingsPanel);
+    smallBlindValue->setPosition({panelW * 0.90f, smallBlindY});
+
+    // panelW * 0.68f, panelH * 0.012f 
+    
+    auto numOfPlayersSlider = makeSlider({sliderX, numOfPlayerSliderY}, {sliderW, panelH * 0.012f}, selectedPlayerCount, gameplaySettingsPanel);
+    auto smallBlindSlider = makeSlider({sliderX, smallBlindSliderY}, {sliderW, panelH * 0.012f}, selectedSmallBlind, gameplaySettingsPanel);
+    numOfPlayersSlider->setMinimum(2);
+    numOfPlayersSlider->setMaximum(9);
+
+    smallBlindSlider->setMinimum(2);
+    smallBlindSlider->setMaximum(50);
+
+    auto confirmButton = makeButton("Start the game", {padding, panelH * 0.80f}, {panelW - 2.f * padding, panelH * 0.08f}, 24, gameplaySettingsPanel);
+    auto backToMenuButton = makeButton("Back to Menu", {padding, panelH * 0.90f}, {panelW - 2.f * padding, panelH * 0.08f}, 24, gameplaySettingsPanel);
+   
+    bindSoundOnClick(confirmButton, [this]{
+        root->remove(gameplaySettingsPanel);
+        gameplaySettingsPanel = nullptr;
+        if(onGame) onGame(selectedPlayerCount, selectedSmallBlind);
+    });
+
+    bindSoundOnClick(backToMenuButton, [this]{
+        root->remove(gameplaySettingsPanel);
+        gameplaySettingsPanel = nullptr;
+        gameMenuPanel->setVisible(true);
+    });
+
+    numOfPlayersSlider->onValueChange([this, numOfPlayersValue](int value){
+        selectedPlayerCount = value;
+        numOfPlayersValue->setText(std::to_string(value));
+        clickSound.play();
+    });
+
+    smallBlindSlider->onValueChange([this, smallBlindValue](int value){
+        selectedSmallBlind = value;
+        smallBlindValue->setText(std::to_string(value)+"$");
+        clickSound.play();
+    });
+}
+

@@ -31,7 +31,13 @@ int& Player::getMoney() {
 void Player::setMoney(int money){
     this->money = money; 
 }
+bool Player::getIsDealer(){
+    return isDealer;
+}
 
+void Player::ToggleDealer(){
+    this->isDealer = !isDealer;
+}
 
 bool Player::getIsBigBlind(){
     return isBigBlind;
@@ -53,12 +59,36 @@ bool Player::isInGame(){
     return inGame;
 }
 
-bool Player::isEliminated() const{
-    return eliminated;
+bool Player::getIsEliminated() const{
+    return isEliminated;
 }
 
 void Player::setEliminated(){
-    eliminated = false;
+    isEliminated = true;
+}
+
+int& Player::getBetThisRound(){
+    return betThisRound;
+}
+
+void Player::setBetThisRound(int betThisRound){
+    this->betThisRound = betThisRound;
+}
+
+void Player::setActed(bool hasActed){
+    this->hasActed = hasActed;
+}
+
+bool Player::getActed(){
+    return hasActed;
+}
+
+void Player::setAllIn(bool isAllIn){
+    this->isAllIn = isAllIn;
+}
+
+bool Player::getAllIn(){
+    return isAllIn;
 }
 
 
@@ -74,4 +104,3 @@ Player::~Player(){
 
 
     
-

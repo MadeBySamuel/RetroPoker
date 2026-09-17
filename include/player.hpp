@@ -21,12 +21,18 @@ class Player{
         
         std::string name;
         int money = 0;
+        int betThisRound = 0;
 
+
+        bool isDealer = false;
         bool isBigBlind = false;
         bool isSmallBlind = false;
         bool inGame = true;
         bool isHuman = true;
-        bool eliminated = false;
+        bool isEliminated = false;
+        bool hasActed = false;
+        bool isAllIn = false;
+
 
 
         std::vector<Card> cards2;
@@ -50,6 +56,8 @@ class Player{
 
         void setMoney(int money);
 
+        void ToggleDealer();
+        bool getIsDealer();
 
         bool getIsBigBlind();
 
@@ -61,10 +69,21 @@ class Player{
         void ToggleSmallBlind();
 
         bool isInGame();
-        bool isEliminated() const;
+        bool getIsEliminated() const;
 
         void setInGame(bool inGame);
         void setEliminated();
+
+        void setBetThisRound(int betThisRound);
+        int& getBetThisRound();
+
+        void setActed(bool hasActed);
+        bool getActed();
+
+
+        void setAllIn(bool isAllIn);
+        bool getAllIn();
+
 
         ~Player();
     };

@@ -40,6 +40,13 @@ tgui::Label::Ptr Gui_base::makeLabel(const std::string& title, const int16_t tit
 }
 
 
+tgui::Picture::Ptr Gui_base::makeImage(const tgui::Texture& texture, tgui::Vector2f pos, tgui::Vector2f size, tgui::Panel::Ptr panel){
+    auto image = tgui::Picture::create(texture);
+    image->setPosition(pos);
+    image->setSize(size);
+    panel->add(image);
+    return image;
+}
 
 tgui::Panel::Ptr Gui_base::makePanel(tgui::Vector2f size, tgui::Color backgroundColor, tgui::Panel::Ptr container){
    
@@ -52,6 +59,29 @@ tgui::Panel::Ptr Gui_base::makePanel(tgui::Vector2f size, tgui::Color background
 
     return panel;
 }
+
+tgui::Slider::Ptr Gui_base::makeSlider(tgui::Vector2f pos, tgui::Vector2f size, float startValue, tgui::Panel::Ptr panel) {
+
+        auto slider = tgui::Slider::create();
+        slider->setPosition(pos);
+        slider->setMinimum(0);
+        slider->setMaximum(100);
+        slider->setValue(startValue);
+        slider->setSize(size);
+
+        slider->getRenderer()->setThumbColor(color.text);
+        slider->getRenderer()->setTrackColor(color.text);
+
+        slider->getRenderer()->setThumbColorHover(color.down);
+        slider->getRenderer()->setTrackColorHover(color.text);
+
+        panel->add(slider);
+        
+
+        return slider;
+}
+
+
 
 tgui::CheckBox::Ptr Gui_base::makeCheckBox(tgui::Vector2f pos, tgui::Panel::Ptr panel){
         
@@ -125,48 +155,6 @@ tgui::ChildWindow::Ptr Gui_base::makePopUpPanel(const std::string& title, tgui::
 
 }      
 
-void Gui_base::gameplay_settings(){
-    const float panelW = Constants::Panel::loginWidthRatio * getGuiWidth();
-    const float panelH = Constants::Panel::loginHeightRatio * 2.f * getGuiHeight();
-    gameplaySettingsPanel = makePanel({panelW, panelH}, color.centerpanel, root);
-
-    const float padding = panelW * 0.04f;
-    const float rowOneY = panelH * 0.25f;
-    const float rowTwoY = panelH * 0.42f;
-    const float sliderX = panelW * 0.42f;
-    const float sliderW = panelW * 0.43f;
-
-    auto gameplayTitle = makeLabel("Gameplay Settings", 45, color.text, gameplaySettingsPanel);
-    gameplayTitle->setPosition({(panelW - gameplayTitle->getSize().x) / 2.f, panelH * 0.05f});
-
-    auto numOfPlayersTitle = makeLabel("Number of players", 20, color.text, gameplaySettingsPanel);
-    numOfPlayersTitle->setPosition({padding, rowOneY});
-    auto smallBlindTitle = makeLabel("Small Blind amount", 20, color.text, gameplaySettingsPanel);
-    smallBlindTitle->setPosition({padding, rowTwoY});
-
-    auto numOfPlayersValue = makeLabel("6", 20, color.text, gameplaySettingsPanel);
-    numOfPlayersValue->setPosition({panelW * 0.90f, rowOneY});
-
-    auto numOfPlayersSlider = makeSlider({sliderX, rowOneY + panelH * 0.02f}, {sliderW, panelH * 0.012f}, 6, gameplaySettingsPanel);
-    auto smallBlindSlider = makeSlider({sliderX, rowTwoY + panelH * 0.02f}, {sliderW, panelH * 0.012f}, 10, gameplaySettingsPanel);
-    numOfPlayersSlider->setMinimum(1);
-    numOfPlayersSlider->setMaximum(8);
-    smallBlindSlider->setMinimum(2);
-    smallBlindSlider->setMaximum(50);
-
-    auto backToSettingsButton = makeButton("Back to Settings", {padding, panelH * 0.88f}, {panelW - 2.f * padding, panelH * 0.08f}, 24, gameplaySettingsPanel);
-    bindSoundOnClick(backToSettingsButton, [this]{
-        root->remove(gameplaySettingsPanel);
-        gameplaySettingsPanel = nullptr;
-        gameSettingsPanel->setVisible(true);
-    });
-
-    numOfPlayersSlider->onValueChange([this, numOfPlayersValue](int value){
-        numOfPlayersValue->setText(std::to_string(value));
-        clickSound.play();
-    });
-}
-
 tgui::Button::Ptr Gui_base::makePopUpButton(const std::string& title, tgui::Vector2f pos, const tgui::Vector2f size, const int8_t sizeTitle, tgui::ChildWindow::Ptr quitPanel){
 
     auto button = tgui::Button::create(title);
@@ -232,14 +220,24 @@ tgui::Button::Ptr Gui_base::makeButton(const std::string& title, tgui::Vector2f 
     }
 
     if(panel == gameSettingsPanel || panel == gameMenuPanel || title == "Logout" || panel == audioSettingsPanel || panel == root || panel == escapeMenuPanel || panel == gameplaySettingsPanel){
+
+        if(title == "Start the game"){
+            button->getRenderer()->setBackgroundColorDownHover(color.colorgreen);
+            button->getRenderer()->setBackgroundColorDown(color.colorgreen);
+            button->getRenderer()->setBackgroundColorHover(color.colorgreen);
+            button->getRenderer()->setBackgroundColorDisabled(color.colorgreen);
+            button->getRenderer()->setBackgroundColorDownFocused(color.colorgreen);
+        }
+        else {
+            button->getRenderer()->setBackgroundColorDownHover(color.down);
+            button->getRenderer()->setBackgroundColorDown(color.down);
+            button->getRenderer()->setBackgroundColorHover(color.down);
+            button->getRenderer()->setBackgroundColorDisabled(color.down);
+            button->getRenderer()->setBackgroundColorDownFocused(color.down);
+        }
         button->getRenderer()->setBackgroundColorFocused(color.panel2);
         button->getRenderer()->setTextColorDownFocused(sf::Color(0,0,0));
         button->getRenderer()->setBackgroundColor(color.panel2);
-        button->getRenderer()->setBackgroundColorDownHover(color.down);
-        button->getRenderer()->setBackgroundColorDown(color.down);
-        button->getRenderer()->setBackgroundColorHover(color.down);
-        button->getRenderer()->setBackgroundColorDisabled(color.down);
-        button->getRenderer()->setBackgroundColorDownFocused(color.down);
         button->getRenderer()->setTextColorDisabled(color.text);
         button->getRenderer()->setTextColorHover(color.text);
         button->getRenderer()->setTextColorDown(color.text);
@@ -272,7 +270,6 @@ tgui::Button::Ptr Gui_base::makeButton(const std::string& title, tgui::Vector2f 
 }
 
 
-
 void Gui_base::audio_settings(){
     
     const float panelW = Constants::Panel::loginWidthRatio * getGuiWidth();
@@ -281,9 +278,9 @@ void Gui_base::audio_settings(){
     const float valuePos = panelW * 0.92f;
 
     audioSettingsPanel = makePanel({panelW, panelH}, color.centerpanel, root);
-    auto musicPanel = makePanel({panelW * 0.92f, rowH}, color.panel2, audioSettingsPanel);
-    auto clickPanel = makePanel({panelW * 0.92f, rowH}, color.panel2, audioSettingsPanel);
-    auto ambienceSoundPanel = makePanel({panelW * 0.92f, rowH}, color.panel2, audioSettingsPanel);
+    auto musicPanel = makePanel({panelW * 0.95f, rowH}, color.panel2, audioSettingsPanel);
+    auto clickPanel = makePanel({panelW * 0.95f, rowH}, color.panel2, audioSettingsPanel);
+    auto ambienceSoundPanel = makePanel({panelW * 0.95f, rowH}, color.panel2, audioSettingsPanel);
 
 
     auto audioTitle = makeLabel("Audio Settings", 45, color.text, audioSettingsPanel);
@@ -291,10 +288,11 @@ void Gui_base::audio_settings(){
     auto clickSoundTitle = makeLabel("Click", 20, color.text, audioSettingsPanel);
     auto ambienceSoundTitle = makeLabel("Ambience", 20, color.text, audioSettingsPanel);
 
-        
-    auto musicValue = makeLabel("0", 20, color.text, audioSettingsPanel);
-    auto clickSoundValue = makeLabel("100", 20, color.text, audioSettingsPanel);
-    auto ambienceSoundValue = makeLabel("100", 20, color.text, audioSettingsPanel);
+    
+   
+    auto musicValue = makeLabel(std::to_string(musicVolume), 20, color.text, audioSettingsPanel);
+    auto clickSoundValue = makeLabel(std::to_string(clickVolume), 20, color.text, audioSettingsPanel);
+    auto ambienceSoundValue = makeLabel(std::to_string(ambienceVolume), 20, color.text, audioSettingsPanel);
 
     float audioWidth = audioTitle->getSize().x;
     float audioHeight = audioTitle->getSize().y; 
@@ -311,6 +309,7 @@ void Gui_base::audio_settings(){
     float clickSoundTitleY = panelH * 0.193f;
     float ambienceSoundTitleY = panelH * 0.261f;
 
+    
     musicPanel->setPosition(panelW * 0.025f, musicTitleY - panelH * 0.011f);
     musicPanel->getRenderer()->setRoundedBorderRadius(0);
 
@@ -320,11 +319,6 @@ void Gui_base::audio_settings(){
 
     ambienceSoundPanel->setPosition(panelW * 0.025f, ambienceSoundTitleY - panelH * 0.011f);
     ambienceSoundPanel->getRenderer()->setRoundedBorderRadius(0);
-
-
-    std::cout << musicTitleY << std::endl;
-    std::cout << clickSoundTitleY << std::endl;
-    std::cout << ambienceSoundTitleY << std::endl;
 
     float sliderX = panelW * 0.20f;
 
@@ -345,19 +339,22 @@ void Gui_base::audio_settings(){
     clickSoundValue->setPosition(valuePos, clickSoundTitleY);
     ambienceSoundValue->setPosition(valuePos, ambienceSoundTitleY);
 
+    settingsMusicSlider->setValue(musicVolume);
+    clickSoundSlider->setValue(clickVolume);
+    ambienceSoundSlider->setValue(ambienceVolume);
 
     settingsMusicSlider->onValueChange([this, musicValue](int value){
         musicValue->setText(std::to_string(value));
         mainMenuMusic.setVolume(value);
+        musicVolume = value;
         if (volumeSlider) volumeSlider->setValue(value);
     });
-
-
 
 
     clickSoundSlider->onValueChange([this, clickSoundValue](int value){
         clickSoundValue->setText(std::to_string(value));
         clickSound.setVolume(value);
+        clickVolume = value;
         clickSound.play();
     });
 
@@ -366,6 +363,7 @@ void Gui_base::audio_settings(){
     ambienceSoundSlider->onValueChange([ambienceSoundValue, this](int value){
         ambienceSoundValue->setText(std::to_string(value));
         ambienceSound.setVolume(value);
+        ambienceVolume = value;
         clickSound.play();
     });
 
@@ -439,7 +437,6 @@ void Gui_base::hide_game_menu(){
 }
 
 
-
 void Gui_base::game_settings(){
     openedSettingsPanel = true;
 
@@ -468,7 +465,6 @@ void Gui_base::game_settings(){
     const float startX = (panelW - buttonW) / 2.f;
 
     tgui::Button::Ptr videoButton = makeButton("Video", {startX, panelH * 0.20f}, {buttonW, buttonH}, 28, gameSettingsPanel);
-    tgui::Button::Ptr gameplayButton = makeButton("Gameplay", {startX, panelH * 0.32f}, {buttonW, buttonH}, 28, gameSettingsPanel);
     tgui::Button::Ptr audioButton = makeButton("Audio", {startX, panelH * 0.44f}, {buttonW, buttonH}, 28, gameSettingsPanel);
     auto backToMenu = makeButton("Back to Main Menu", {padding, panelH * 0.88f}, {panelW - 2.f * padding, panelH * 0.08f}, 24, gameSettingsPanel);
 
@@ -477,13 +473,6 @@ void Gui_base::game_settings(){
         gameSettingsPanel->setVisible(false);
         audio_settings();
     });
-
-    bindSoundOnClick(gameplayButton, [this]{
-        gameSettingsPanel->setVisible(false);
-        gameplay_settings();
-    });
-
-
 
 
     bindSoundOnClick(backToMenu, [this]{
@@ -542,37 +531,6 @@ void Gui_base::update_time(){
             last_time_text = currentTimeText;
         }
 }
-
-tgui::Picture::Ptr Gui_base::makeImage(const tgui::Texture& texture, tgui::Vector2f pos, tgui::Vector2f size, tgui::Panel::Ptr panel){
-    auto image = tgui::Picture::create(texture);
-    image->setPosition(pos);
-    image->setSize(size);
-    panel->add(image);
-    return image;
-}
-
-
-tgui::Slider::Ptr Gui_base::makeSlider(tgui::Vector2f pos, tgui::Vector2f size, float startValue, tgui::Panel::Ptr panel) {
-
-        auto slider = tgui::Slider::create();
-        slider->setPosition(pos);
-        slider->setMinimum(0);
-        slider->setMaximum(100);
-        slider->setValue(startValue);
-        slider->setSize(size);
-
-        slider->getRenderer()->setThumbColor(color.text);
-        slider->getRenderer()->setTrackColor(color.text);
-
-        slider->getRenderer()->setThumbColorHover(color.down);
-        slider->getRenderer()->setTrackColorHover(color.text);
-
-        panel->add(slider);
-        
-
-        return slider;
-}
-
 
 void Gui_base::volume(tgui::Panel::Ptr topBar, tgui::Panel::Ptr root, sf::Music &music){
 

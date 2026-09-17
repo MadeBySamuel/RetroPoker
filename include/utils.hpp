@@ -32,7 +32,7 @@ int set_player_position();
 
 void sort_function_rank(std::vector<HandScore>& hand_cards);
 
-std::vector<std::unique_ptr<Player>>& createPlayers(std::vector<std::unique_ptr<Player>>& players);
+std::vector<std::unique_ptr<Player>>& createPlayers(std::vector<std::unique_ptr<Player>>& players, int numberOfPlayers);
 
 
 template<typename T>
@@ -45,14 +45,14 @@ void shuffle_function(std::vector<T>& map){
 
 void shuffle_cards(std::vector<Card>& cards);
 void shuffle_players(std::vector<std::string>& players);
-void settingInGameStatus(std::vector<std::unique_ptr<Player>>&players,int bigBlind);  
+void settingInGameStatus(std::vector<std::unique_ptr<Player>>& players);  
 
 void show_my_cards(std::vector<std::unique_ptr<Player>>& players);
 
 void card_selection(std::vector<std::unique_ptr<Player>>& players, std::vector<int>& used_cards_index, std::vector<Card>& game_cards);
 
 void community_cards_selection(std::vector<Card>& game_cards, std::vector<int>& used_cards_index, std::vector<Card>& community_cards);
-
+void dealerSelection(std::vector<std::unique_ptr<Player>>& players, int& dealerPosition);
 void blindSelection(std::vector<std::unique_ptr<Player>>& players, int& bigBlindPosition, int& smallBlindPositon);
 
 std::vector<Card> cards7collection(std::vector<std::unique_ptr<Player>>& players, int i, std::vector<Card>& community_cards);

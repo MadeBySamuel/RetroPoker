@@ -39,18 +39,18 @@ int main(){
     
     ScreenState screen = ScreenState::Game_GUI;
     
-    Gui_base gui_base(gui, music);
     Login login(gui, music, window);
     MainMenu mainmenu(gui, music, window);
     Game_GUI game(gui, music, window);
+    Gui_base gui_base(gui,music);
+
     
     // menič aktualneho módu
 
     //login.login_screen();
-    game.game();
-    //mainmenu.showMainMenu();
+    mainmenu.showMainMenu();
 
-    Gui_base* currentPointer = &game;
+    Gui_base* currentPointer = &mainmenu;
     std::string loggedUsername = "";
 
     login.onLogin = [&](std::string username){
@@ -63,10 +63,10 @@ int main(){
     };
 
 
-    mainmenu.onGame = [&]{
+    mainmenu.onGame = [&](int playerCount, int smallBlind){
         currentPointer = &game;
         screen = ScreenState::Game_GUI;
-        game.game();
+        game.game(playerCount, smallBlind);
     };
 
     mainmenu.onLogout = [&]{
@@ -113,6 +113,14 @@ int main(){
                 game.restartPending = false;
                 game.nextHand();
             } 
+
+            if(game.botWaiting && game.botChooseClock.getElapsedTime().asSeconds() >= game.timeForBot){
+                game.nextBot();
+            }
+
+
+
+            
             gui.draw();
             window.display();
         }

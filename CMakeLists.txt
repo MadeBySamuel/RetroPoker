@@ -30,13 +30,11 @@ endforeach()
 find_package(SQLite3 REQUIRED)
 
 add_executable(retro_poker
-    src/aiplayer.cpp
     src/constants.cpp
     src/game.cpp
     src/hand_evaluator.cpp
     src/logger.cpp
     src/player.cpp
-    src/plays.cpp
     src/utils.cpp
     src/gui/gui_login.cpp
     src/gui/gui_main_menu.cpp

@@ -40,8 +40,20 @@ class Game_GUI : public Gui_base {
         float gapPlayer = 90.f;
         float blindChipRadiusClanker = 50.f;
         float blindChipRadiusPlayer = 70.f;
+        
         std::vector<tgui::Label::Ptr> moneyLabels;
-    
+        std::vector<tgui::Label::Ptr> playerNameLabels;
+        std::vector<tgui::Label::Ptr> choiceLabels;
+        std::vector<tgui::Label::Ptr> currentBetLabels;
+
+
+        tgui::Button::Ptr foldButton;
+        tgui::Button::Ptr raiseButton;
+        tgui::Button::Ptr allInButton;
+        tgui::Button::Ptr checkButton;
+        tgui::Button::Ptr callButton;
+
+        void createCurrentBetLabel();
         void createMoneyLabelsPlayers();
         void placeCard(tgui::Panel::Ptr parent, const Card& card, float x, float y, float w, float h);
         void placeFaceDownPair(tgui::Panel::Ptr parent, float leftX, float topY, float cardW, float cardH, float gap);
@@ -49,14 +61,25 @@ class Game_GUI : public Gui_base {
         void placeCenteredLabel(const tgui::Label::Ptr& label, float centerX, float topY, float minX, float maxX);
 
         void refreshCommunity();
+        void updateBotWaiting();
         void refreshHud();
         void disableActions();
 
     public:
         sf::Clock restartClock;
+        sf::Clock botChooseClock;
         bool restartPending = false;
+        int playerTurn = 1;
+        bool botWaiting = true;
+        float timeForBot = 0.f;
+        std::vector<tgui::Panel::Ptr> panels;
+        int smallBigCounter = 2;
+
+
         void hideEscapeMenu();
         void escape();
+
+        void nextBot();
 
         Game_GUI(tgui::Gui& gui, sf::Music& music, sf::RenderWindow& window);
 
@@ -64,9 +87,10 @@ class Game_GUI : public Gui_base {
         void buildTable();
         std::function<void()> onExit;
         void showEscapeMenu();
-        void game();
+        void game(int playerCount, int smallBlind);
         void restartGame();
         void resolveShowdown();
         tgui::Panel::Ptr makeCirclePanel(std::string& name, tgui::Vector2f pos);
         void placeBlind(std::string& name, const std::string& title, tgui::Vector2f pos);
+        void revealShowdownCards();
     };
