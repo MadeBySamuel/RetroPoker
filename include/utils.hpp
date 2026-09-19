@@ -55,7 +55,7 @@ void community_cards_selection(std::vector<Card>& game_cards, std::vector<int>& 
 void dealerSelection(std::vector<std::unique_ptr<Player>>& players, int& dealerPosition);
 void blindSelection(std::vector<std::unique_ptr<Player>>& players, int& bigBlindPosition, int& smallBlindPositon);
 
-std::vector<Card> cards7collection(std::vector<std::unique_ptr<Player>>& players, int i, std::vector<Card>& community_cards);
+std::vector<Card> cards7collection(std::vector<std::unique_ptr<Player>>& players, int i, const std::vector<Card>& community_cards);
 
 
 }

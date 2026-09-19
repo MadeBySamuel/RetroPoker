@@ -1,5 +1,8 @@
 #include <algorithm>
+#include <array>
+#include <cmath>
 #include <iostream>
+#include <map>
 #include <memory>
 
 #include <SFML/Graphics.hpp>
@@ -16,6 +19,14 @@ constexpr const char* CARD_BACK_PATH = "assets/cards/turned_down_card.png";
 
 unsigned int scaledTextSize(float guiH, float ratio, unsigned int minSize, unsigned int maxSize) {
     return static_cast<unsigned int>(std::clamp(guiH * ratio, static_cast<float>(minSize), static_cast<float>(maxSize)));
+}
+
+const char* handCategoryName(int rank) {
+    static constexpr std::array<const char*, 10> names = {
+        "High card", "One pair", "Two pair", "Three of a kind", "Straight",
+        "Flush", "Full house", "Four of a kind", "Straight flush", "Royal flush"
+    };
+    return rank >= 0 && rank < static_cast<int>(names.size()) ? names[rank] : "Unknown hand";
 }
 
 float seatPairWidth(const TableSeat& seat, float guiW) {
@@ -106,6 +117,9 @@ void Game_GUI::createCurrentBetLabel(){
     for (std::size_t i = 0; i < players.size(); ++i){ 
         auto& player = players[i];   
         const auto& seat = player->isRealPlayer() ? TableLayout::PLAYER_BET : TableLayout::OPPONENTS_BET[aiSeat++]; 
+        if (!player->isRealPlayer() && player->getIsEliminated()) {
+            continue;
+        }
         auto x = seat.x * guiW; 
         auto y = seat.y * guiH; 
 
@@ -139,6 +153,9 @@ void Game_GUI::createMoneyLabelsPlayers(){
             continue;
         }
         auto position = TableLayout::OPPONENT_SEATS[seatIndex++];
+        if (players[i]->getIsEliminated()) {
+            continue;
+        }
         auto x = position.leftX * guiW + 65;
         auto y = position.topY * guiH - 40;
         auto moneyLabel = makeLabel(std::to_string(players[i]->getMoney()) + "$", 20, color.text, root);
@@ -159,15 +176,15 @@ tgui::Panel::Ptr Game_GUI::makeCirclePanel(std::string& name, tgui::Vector2f pos
     return circle;
 }
 
-void Game_GUI::placePlayerName(tgui::Panel::Ptr parent, const std::string& name, const TableSeat& seat, float guiW, float guiH) {
+ tgui::Label::Ptr Game_GUI::placePlayerName(tgui::Panel::Ptr parent, const std::string& name, const TableSeat& seat, float guiW, float guiH) {
     auto label = tgui::Label::create(name);
     label->setTextSize(scaledTextSize(guiH, 0.018f, 18, 28));
     label->getRenderer()->setTextColor(color.text);
     const float centerX = seatPairCenterX(seat, guiW);
     const float topY = seat.topY * guiH + seat.cardH * guiH + 10.f;
     placeCenteredLabel(label, centerX, topY, 20.f, guiW - 20.f);
-    playerNameLabels.push_back(label);
     parent->add(label);
+    return label;
 }
 
 void Game_GUI::placeBlind(std::string& name, const std::string& title, tgui::Vector2f pos){
@@ -180,12 +197,53 @@ void Game_GUI::placeBlind(std::string& name, const std::string& title, tgui::Vec
 
 
 void Game_GUI::refreshCommunity() {
-    communityPanel->removeAllWidgets();
     const auto visible = engine->getVisibleCommunityCards();
-    float cx = 0.f;
-    for (size_t i = 0; i < visible.size() && i < 5; i++) {
-        placeCard(communityPanel, visible[i], cx + 15, 0.f + 15, communityCardW, communityCardH);
-        cx += communityCardW + communityGap;
+    const std::size_t visibleCount = std::min<std::size_t>(visible.size(), 5);
+    if (visibleCount < communityCardReveals.size()) {
+        communityPanel->removeAllWidgets();
+        communityCardReveals.clear();
+    }
+
+    const float now = communityRevealClock.getElapsedTime().asSeconds();
+    float nextStart = communityCardReveals.empty()
+        ? now
+        : std::max(now, communityCardReveals.back().startTime + 0.16f);
+
+    for (std::size_t i = communityCardReveals.size(); i < visibleCount; ++i) {
+        if (visible[i].imagePath.empty()) {
+            break;
+        }
+
+        const tgui::Vector2f targetPosition{
+            15.f + i * (communityCardW + communityGap), 15.f
+        };
+        auto picture = tgui::Picture::create(tgui::Texture(visible[i].imagePath, {}, {}, true));
+        picture->setSize({communityCardW, communityCardH});
+        picture->setPosition({targetPosition.x, targetPosition.y + communityCardH * 0.12f});
+        picture->getRenderer()->setOpacity(0.f);
+        communityPanel->add(picture);
+        communityCardReveals.push_back({picture, targetPosition, nextStart, false});
+        nextStart += 0.16f;
+    }
+}
+
+void Game_GUI::animateCommunityCards() {
+    constexpr float duration = 0.28f;
+    const float now = communityRevealClock.getElapsedTime().asSeconds();
+
+    for (auto& card : communityCardReveals) {
+        if (card.finished) {
+            continue;
+        }
+
+        const float progress = std::clamp((now - card.startTime) / duration, 0.f, 1.f);
+        const float eased = progress * (2.f - progress);
+        card.picture->setPosition({
+            card.targetPosition.x,
+            card.targetPosition.y + communityCardH * 0.12f * (1.f - eased)
+        });
+        card.picture->getRenderer()->setOpacity(eased);
+        card.finished = (progress == 1.f);
     }
 }
 
@@ -196,24 +254,45 @@ void Game_GUI::disableActions() {
     }
 }
 
+void Game_GUI::layoutVisibleActionButtons() {
+    std::vector<tgui::Button::Ptr> visibleButtons;
+    for (const auto& button : actionButtons) {
+        if (button && button->isVisible()) {
+            visibleButtons.push_back(button);
+        }
+    }
+
+    if (visibleButtons.empty()) {
+        return;
+    }
+
+    const float buttonWidth = visibleButtons.front()->getSize().x;
+    const float buttonHeight = visibleButtons.front()->getSize().y;
+    const float buttonGap = getGuiWidth() * 0.010417f;
+    const float rowWidth = visibleButtons.size() * buttonWidth +
+                           (visibleButtons.size() - 1) * buttonGap;
+    const float startX = (getGuiWidth() - rowWidth) * 0.5f;
+    const float controlsY = getGuiHeight() * 0.944444f;
+
+    for (std::size_t i = 0; i < visibleButtons.size(); ++i) {
+        visibleButtons[i]->setPosition({startX + i * (buttonWidth + buttonGap), controlsY});
+        visibleButtons[i]->setSize({buttonWidth, buttonHeight});
+    }
+}
+
 void Game_GUI::refreshHud() {
     auto& players = engine->getPlayers();
     if (humanPlayerIndex >= players.size()) return;
 
     const float guiW = getGuiWidth();
-    auto centerLabel = [&](const tgui::Label::Ptr& label, float cx, float y) {
-        float lx = std::clamp(cx - label->getSize().x * 0.5f, 20.f, guiW - 20.f - label->getSize().x);
-        label->setPosition({lx, y});
-    };
-
-    balanceLabel->setText("Balance: " + std::to_string(players[humanPlayerIndex]->getMoney()) + "$");
+    balanceAmountLabel->setText(std::to_string(players[humanPlayerIndex]->getMoney()) + "$");
 
     potLabel->setText("Pot: " + std::to_string(engine->getPot()) + "$");
 
-    placeCenteredLabel(actionStatus, guiW/2.f, 80, 20.f, guiW - 20.f);
-
-    winnerLabel->setText(engine->getWinnerMessage());
-    centerLabel(winnerLabel, getGuiWidth() / 2.f, communityY + communityCardH + 22.f);
+    placeCenteredLabel(actionStatus, guiW / 2.f, getGuiHeight() * 0.074074f, 20.f, guiW - 20.f);
+    placeCenteredLabel(winnerReasonLabel, guiW / 2.f,
+                       actionStatus->getPosition().y + actionStatus->getSize().y + getGuiHeight() * 0.006f,
+                       20.f, guiW - 20.f);
     refreshCommunity();
 
     for(std::size_t i = 0; i < players.size(); i++){
@@ -245,8 +324,9 @@ void Game_GUI::restartGame(){
     actionButtons.clear();
     communityPanel = nullptr;
     balanceLabel = nullptr;
+    balanceAmountLabel = nullptr;
     potLabel = nullptr;
-    winnerLabel = nullptr;
+    winnerReasonLabel = nullptr;
     actionStatus = nullptr;
     raiseSlider = nullptr;
     raiseMoneyLabel = nullptr;
@@ -356,6 +436,15 @@ void Game_GUI::updateBotWaiting(){
         return;
     }
 
+    const int playersStillInHand = static_cast<int>(std::count_if(players.begin(), players.end(), [](const std::unique_ptr<Player>& player) {
+        return player->isInGame() && !player->getIsEliminated();
+    }));
+    if (playersStillInHand <= 1) {
+        engine->finishHand();
+        resolveShowdown(false);
+        return;
+    }
+
     const auto needsAction = [](const std::unique_ptr<Player>& player) {
         return player->isInGame() && !player->getIsEliminated() &&
                !player->getAllIn() && !player->getActed();
@@ -367,12 +456,11 @@ void Game_GUI::updateBotWaiting(){
             resolveShowdown();
             return;
         }
-        playerTurn = 0;
+        playerTurn = engine->getFirstTurnIndex();
         updateBotWaiting();
         return;
     }
 
-    // At most one full pass: a folded or all-in player can never stall this loop.
     for (std::size_t attempts = 0; attempts < players.size(); ++attempts) {
         if (playerTurn < 0 || playerTurn >= static_cast<int>(players.size())) {
             playerTurn = 0;
@@ -385,6 +473,12 @@ void Game_GUI::updateBotWaiting(){
         }
 
         if (player->isRealPlayer()) {
+            if (animatedTurnPanel) {
+                animatedTurnPanel->setVisible(false);
+                animatedTurnPanel = nullptr;
+                turnPanelMoving = false;
+            }
+
             const int toCall = std::max(0, engine->getCurrentBet() - player->getBetThisRound());
             for (const auto& button : actionButtons) {
                 button->setVisible(false);
@@ -402,6 +496,7 @@ void Game_GUI::updateBotWaiting(){
                 raiseButton->setVisible(true);
                 allInButton->setVisible(true);
             }
+            layoutVisibleActionButtons();
             return;
         }
 
@@ -418,7 +513,34 @@ void Game_GUI::updateBotWaiting(){
             const float guiH = getGuiHeight();
             const auto& seat = TableLayout::OPPONENT_SEATS[playerTurn - 1];
 
-            panels[playerTurn]->setVisible(true);
+            const tgui::Vector2f targetPosition = panels[playerTurn]->getPosition();
+            const tgui::Vector2f targetSize = panels[playerTurn]->getSize();
+
+            if (!animatedTurnPanel || !animatedTurnPanel->isVisible()) {
+                animatedTurnPanel = panels[playerTurn];
+                animatedTurnPanelBasePosition = targetPosition;
+                animatedTurnPanelBaseSize = targetSize;
+                constexpr float startScale = 0.78f;
+                const tgui::Vector2f startSize = animatedTurnPanelBaseSize * startScale;
+                animatedTurnPanel->setSize(startSize);
+                animatedTurnPanel->setPosition({
+                    animatedTurnPanelBasePosition.x + (animatedTurnPanelBaseSize.x - startSize.x) * 0.5f,
+                    animatedTurnPanelBasePosition.y + (animatedTurnPanelBaseSize.y - startSize.y) * 0.5f
+                });
+                animatedTurnPanel->setVisible(true);
+                turnPanelMoving = false;
+            } else {
+                turnPanelStartPosition = animatedTurnPanel->getPosition();
+                turnPanelStartSize = animatedTurnPanel->getSize();
+                turnPanelTargetPosition = targetPosition;
+                turnPanelTargetSize = targetSize;
+                turnPanelMoving = true;
+            }
+
+            if (panels[playerTurn] != animatedTurnPanel) {
+                panels[playerTurn]->setVisible(false);
+            }
+            turnPanelClock.restart();
             playerNameLabels[playerTurn]->setText(players[playerTurn]->getName() + "'s turn");
             const float centerX = seatPairCenterX(seat, guiW);
             const float topY = seat.topY * guiH + seat.cardH * guiH + 10.f;
@@ -428,20 +550,71 @@ void Game_GUI::updateBotWaiting(){
     }
 }
 
+void Game_GUI::animateTurnPanel() {
+    if (!animatedTurnPanel || !animatedTurnPanel->isVisible()) {
+        return;
+    }
+
+    constexpr float duration = 0.22f;
+    constexpr float startScale = 0.78f;
+    const float progress = std::clamp(turnPanelClock.getElapsedTime().asSeconds() / duration, 0.f, 1.f);
+    const float easedProgress = progress * (2.f - progress);
+
+    if (turnPanelMoving) {
+        const auto lerp = [easedProgress](float start, float end) {
+            return start + (end - start) * easedProgress;
+        };
+
+        animatedTurnPanel->setSize({
+            lerp(turnPanelStartSize.x, turnPanelTargetSize.x),
+            lerp(turnPanelStartSize.y, turnPanelTargetSize.y)
+        });
+        animatedTurnPanel->setPosition({
+            lerp(turnPanelStartPosition.x, turnPanelTargetPosition.x),
+            lerp(turnPanelStartPosition.y, turnPanelTargetPosition.y)
+        });
+
+        if (progress == 1.f) {
+            animatedTurnPanel->setSize(turnPanelTargetSize);
+            animatedTurnPanel->setPosition(turnPanelTargetPosition);
+            animatedTurnPanelBaseSize = turnPanelTargetSize;
+            animatedTurnPanelBasePosition = turnPanelTargetPosition;
+            turnPanelMoving = false;
+        }
+        return;
+    }
+
+    const float scale = startScale + (1.f - startScale) * easedProgress;
+    const tgui::Vector2f size = animatedTurnPanelBaseSize * scale;
+
+    animatedTurnPanel->setSize(size);
+    animatedTurnPanel->setPosition({
+        animatedTurnPanelBasePosition.x + (animatedTurnPanelBaseSize.x - size.x) * 0.5f,
+        animatedTurnPanelBasePosition.y + (animatedTurnPanelBaseSize.y - size.y) * 0.5f
+    });
+
+    if (progress == 1.f) {
+        animatedTurnPanel->setSize(animatedTurnPanelBaseSize);
+        animatedTurnPanel->setPosition(animatedTurnPanelBasePosition);
+    }
+}
+
 void Game_GUI::game(int playerCount, int smallBlind) {
     gui.removeAllWidgets();
+    winnerReasonLabel = nullptr;
     actionButtons.clear();
     panels.clear();
     choiceLabels.clear();
     playerNameLabels.clear();
     moneyLabels.clear();
     currentBetLabels.clear();
-    playerTurn = 1;
-    smallBigCounter = 2;
+    outLogMessages.clear();
+    outLogLabels.clear();
+    loggedOutPlayers.clear();
+    animatedTurnPanel = nullptr;
     botWaiting = false;
+    showdownResolved = false;
     tgui::Font::setGlobalFont("assets/fonts/Shelten.ttf");
-
-    
     if(!ambienceSound.openFromFile("assets/sound/ambienceSound.ogg")){
         std::cerr<< "Ambience sound is not loaded or other big problem. its cooked\n";
         return;     
@@ -456,22 +629,26 @@ void Game_GUI::game(int playerCount, int smallBlind) {
     engine->setNumberOfPlayers(playerCount);
 
     engine->game();
+    playerTurn = engine->getFirstTurnIndex();
     buildTable();
 
 }
 
 void Game_GUI::nextHand(){
     gui.removeAllWidgets();
+    winnerReasonLabel = nullptr;
     actionButtons.clear();
     choiceLabels.clear();
     playerNameLabels.clear();
     panels.clear();
+    outLogLabels.clear();
+    animatedTurnPanel = nullptr;
     botWaiting = false;
+    showdownResolved = false;
     timeForBot = 0.f;
-    playerTurn = 1;
-    smallBigCounter = 2;
     tgui::Font::setGlobalFont("assets/fonts/Shelten.ttf");
     engine->newHand();
+    playerTurn = engine->getFirstTurnIndex();
     buildTable();
 }
 
@@ -495,13 +672,11 @@ void Game_GUI::nextBot(){
     int i = playerTurn - 1;
     const auto& seat = TableLayout::OPPONENT_SEATS[i];
 
-    const float cardH = seat.cardH * guiH;
     const float centerX = seatPairCenterX(seat, guiW);
     const float topChoiceY = seat.topY * guiH + seat.cardH * guiH + 35.f;
 
 
     if (playerTurn < static_cast<int>(panels.size()) && panels[playerTurn]) {
-        panels[playerTurn]->setVisible(false);
         playerNameLabels[playerTurn]->setText(players[playerTurn]->getName());
 
         const float topY = seat.topY * guiH + seat.cardH * guiH + 10.f;
@@ -509,42 +684,20 @@ void Game_GUI::nextBot(){
         placeCenteredLabel(playerNameLabels[playerTurn], centerX, topY, 20.f, guiW - 20.f);
 
 
-        if (smallBigCounter > 0) {
-            if(players[playerTurn]->getIsSmallBlind()){
-                const int paid = std::min(engine->getSmallBlind(), players[playerTurn]->getMoney());
-                players[playerTurn]->getMoney() -= paid;
-                players[playerTurn]->getBetThisRound() += paid;
-                engine->setPot(paid);
-                engine->setCurrentBet(std::max(engine->getCurrentBet(), players[playerTurn]->getBetThisRound()));
-                currentBetLabels[playerTurn]->setText(std::to_string(players[playerTurn]->getBetThisRound()) + "$");
-                smallBigCounter--;           
-            }
-            else if (players[playerTurn]->getIsBigBlind()){
-                const int paid = std::min(engine->getBigBlind(), players[playerTurn]->getMoney());
-                players[playerTurn]->getMoney() -= paid;
-                players[playerTurn]->getBetThisRound() += paid;
-                engine->setPot(paid);
-                engine->setCurrentBet(std::max(engine->getCurrentBet(), players[playerTurn]->getBetThisRound()));
-                currentBetLabels[playerTurn]->setText(std::to_string(players[playerTurn]->getBetThisRound()) + "$");
-                smallBigCounter--;
-            }
+        const auto choice = engine->botChoice(playerTurn);
+        const std::string choiceLabelText = engine->toStringActionType(choice);
+
+        if (playerTurn < static_cast<int>(choiceLabels.size()) && choiceLabels[playerTurn]) {
+            if (choice == ActionType::RAISE) choiceLabels[playerTurn]->setText(choiceLabelText + " " + std::to_string(engine->raiseAmount) + "$");
+            else choiceLabels[playerTurn]->setText(choiceLabelText);
+            placeCenteredLabel(choiceLabels[playerTurn], centerX, topChoiceY, 20.f, guiW - 20.f);
         }
-        else {
-            auto choice = engine->botChoice(playerTurn);
-            std::string choiceLabelText = engine->toStringActionType(choice);
-            
-            if (i < static_cast<int>(choiceLabels.size()) && choiceLabels[i]) {
-                if (choice == ActionType::RAISE) choiceLabels[i]->setText(choiceLabelText + " " + std::to_string(engine->raiseAmount) + "$");
-                else choiceLabels[i]->setText(choiceLabelText);
-                placeCenteredLabel(choiceLabels[i], centerX, topChoiceY, 20.f, guiW - 20.f);
-            }
-            if (playerTurn < static_cast<int>(currentBetLabels.size()) && currentBetLabels[playerTurn]) {
-                currentBetLabels[playerTurn]->setText(std::to_string(players[playerTurn]->getBetThisRound()) + "$");
-            }
+        if (playerTurn < static_cast<int>(currentBetLabels.size()) && currentBetLabels[playerTurn]) {
+            currentBetLabels[playerTurn]->setText(std::to_string(players[playerTurn]->getBetThisRound()) + "$");
         }
     }
 
-    if(playerTurn == players.size() - 1){
+    if(playerTurn == static_cast<int>(players.size()) - 1){
         playerTurn = 0;
     }
     else {
@@ -555,9 +708,10 @@ void Game_GUI::nextBot(){
     refreshHud();
 }
 
-
 void Game_GUI::buildTable(){
-    
+    communityCardReveals.clear();
+    communityRevealClock.restart();
+
     root = tgui::Panel::create({getGuiWidth(), getGuiHeight()});
     root->getRenderer()->setTextureBackground("assets/images/backgrounds/game_background.png");
     gui.add(root);
@@ -576,8 +730,6 @@ void Game_GUI::buildTable(){
 
     // Community card panel
     const auto& communitySlot = TableLayout::COMMUNITY;
-    const float communityStartX = communitySlot.leftX * guiW;
-
     communityY = communitySlot.topY * guiH;
     communityCardW = communitySlot.cardW * guiW;
     communityCardH = communitySlot.cardH * guiH;
@@ -600,12 +752,11 @@ void Game_GUI::buildTable(){
 
     panels.clear();
     panels.resize(players.size());
-    std::size_t turnSeat = 0;
-
     for (std::size_t i = 0; i < players.size(); ++i) {
         auto& player = players[i];
-        if (!player->isRealPlayer() && player->isInGame() && !player->getIsEliminated() && turnSeat < TableLayout::OPPONENT_TURNS.size()) {
-            const auto& seat = TableLayout::OPPONENT_TURNS[turnSeat++];
+        if (!player->isRealPlayer() && player->isInGame() && !player->getIsEliminated() &&
+            i > 0 && i - 1 < TableLayout::OPPONENT_TURNS.size()) {
+            const auto& seat = TableLayout::OPPONENT_TURNS[i - 1];
             auto x = seat.x * guiW;
             auto y = seat.y * guiH;
 
@@ -619,7 +770,9 @@ void Game_GUI::buildTable(){
     createMoneyLabelsPlayers();
     createCurrentBetLabel();
 
-    playerNameLabels.push_back(makeLabel("Player", 20, color.text, root));
+    playerNameLabels.resize(players.size());
+    choiceLabels.resize(players.size());
+    playerNameLabels[0] = makeLabel("Player", 20, color.text, root);
     playerNameLabels[0]->setVisible(false);
 
     for (size_t i = 0; i < players.size(); ++i) {
@@ -634,15 +787,17 @@ void Game_GUI::buildTable(){
         const float cardH = seat.cardH * guiH;
         const float gap = seat.gap * guiW;
 
-        if (player->getIsSmallBlind()){
-            placeBlind(name, "SMALL\nBLIND", {seatX,seatY});
-        }
-        if (player->getIsBigBlind()){
-            placeBlind(name, "BIG\nBLIND", {seatX,seatY});
-        }
-        if (player->getIsDealer()){
-            placeBlind(name, "DEALER", {seatX, seatY});
-        }
+        const float badgeSize = player->isRealPlayer() ? guiW * 0.036458f : guiW * 0.026042f;
+        const float badgeStep = badgeSize + guiH * 0.008f;
+        int badgeIndex = 0;
+        const auto placeBadge = [&](const std::string& title) {
+            placeBlind(name, title, {seatX, seatY - badgeIndex * badgeStep});
+            ++badgeIndex;
+        };
+
+        if (player->getIsSmallBlind()) placeBadge("SMALL\nBLIND");
+        if (player->getIsBigBlind()) placeBadge("BIG\nBLIND");
+        if (player->getIsDealer()) placeBadge("DEALER");
 
         if (player->isRealPlayer()) {
             humanPlayerIndex = i;
@@ -653,19 +808,21 @@ void Game_GUI::buildTable(){
                 holeX += cardW + gap;
             }
             
-            balanceLabel = makeLabel("Balance: " + std::to_string(player->getMoney()) + "$", 20, color.text, topBar);
+            balanceLabel = makeLabel("Balance:", 20, color.text, topBar);
             balanceLabel->setPosition({guiW * 0.01, topBarH * 0.20f});
+            balanceAmountLabel = makeLabel(std::to_string(player->getMoney()) + "$", 20, color.down, topBar);
+            balanceAmountLabel->setPosition({balanceLabel->getPosition().x + balanceLabel->getSize().x + 8.f, balanceLabel->getPosition().y});
 
         } else {
-            placeFaceDownPair(root, seatX, seatY, cardW, cardH, gap);
-            placePlayerName(root, player->getName(), seat, guiW, guiH);
-            
-            const float centerX = seatPairCenterX(seat, guiW);
-
-            auto choiceLabel = makeLabel("", 18, color.text, root);
-            choiceLabels.push_back(choiceLabel);
+            if (!player->getIsEliminated()){
+                placeFaceDownPair(root, seatX, seatY, cardW, cardH, gap);
+                playerNameLabels[i] = placePlayerName(root, player->getName(), seat, guiW, guiH);
+                choiceLabels[i]= makeLabel("", 18, color.text, root);
+            }
         }
     }
+
+    placeOutLabel();
 
     for(size_t i = 0; i < players.size(); i++){
             if(players[i]->getName() == "Player"){
@@ -692,10 +849,6 @@ void Game_GUI::buildTable(){
     potLabel = makeLabel("Pot: " + std::to_string(engine->getPot()) + "$", scaledTextSize(guiH, 0.026f, 24, 40), color.accent, root);
     placeCenteredLabel(potLabel, guiW / 2.f, communityY - potLabel->getSize().y - 18.f, 20.f, guiW - 20.f);
 
-    winnerLabel = makeLabel("", scaledTextSize(guiH, 0.022f, 22, 34), color.text, root);
-    placeCenteredLabel(winnerLabel, guiW / 2.f, communityY + communityCardH + 22.f, 20.f, guiW - 20.f);
-    
-
     if (humanPlayerIndex < players.size()) {
         const float controlsY = guiH * 0.944444f;
         const float btnW = guiW * 0.064583f;
@@ -705,7 +858,13 @@ void Game_GUI::buildTable(){
         const float startX = (guiW - actionRowW) / 2.f;
 
         actionStatus = makeLabel("Choose action", 24, color.text, root);
+        actionStatus->setMaximumTextWidth(guiW - 40.f);
+        actionStatus->setHorizontalAlignment(tgui::HorizontalAlignment::Center);
         placeCenteredLabel(actionStatus, guiW / 2.f, guiH * 0.074074f, guiW * 0.010417f, guiW * 0.989583f);
+        winnerReasonLabel = makeLabel("", scaledTextSize(guiH, 0.019f, 18, 26), color.text, root);
+        winnerReasonLabel->setHorizontalAlignment(tgui::HorizontalAlignment::Center);
+        winnerReasonLabel->setMaximumTextWidth(guiW * 0.48f);
+        winnerReasonLabel->setVisible(false);
 
         root->remove(raiseSlider);
         root->remove(confirmButton);
@@ -745,41 +904,49 @@ void Game_GUI::buildTable(){
             refreshHud();
         });
 
-        auto placeActionButton = [this, controlsY, startX, btnW, btnH, btnGap](tgui::Button::Ptr button, ActionType action, std::string statusMsg) {
-            bindSoundOnClick(button, [this, action, msg = std::move(statusMsg), controlsY, startX, btnW, btnH, btnGap] {
+        auto placeActionButton = [this, btnW, btnH, btnGap](tgui::Button::Ptr button, ActionType action, std::string statusMsg) {
+            bindSoundOnClick(button, [this, action, msg = std::move(statusMsg), btnW, btnH, btnGap] {
             auto& players = engine->getPlayers();
                 if (action == ActionType::RAISE){
+                    const float sliderW = btnW * 2.f + btnGap;
+                    const float sliderH = btnH * 0.20f;
+                    const float sliderX = raiseButton->getPosition().x + raiseButton->getSize().x + btnGap;
+                    const float sliderY = raiseButton->getPosition().y + (btnH - sliderH) * 0.5f;
+                    confirmButton->setPosition({sliderX + sliderW + btnGap, raiseButton->getPosition().y});
+
+                    const auto updateRaiseValueLabel = [this](float value) {
+                        const float range = raiseSlider->getMaximum() - raiseSlider->getMinimum();
+                        const float ratio = range > 0.f
+                            ? std::clamp((value - raiseSlider->getMinimum()) / range, 0.f, 1.f)
+                            : 0.f;
+                        const float thumbX = raiseSlider->getPosition().x + ratio * raiseSlider->getSize().x;
+                        raiseMoneyLabel->setText(std::to_string(static_cast<int>(value)) + "$");
+                        raiseMoneyLabel->setPosition({
+                            thumbX - raiseMoneyLabel->getSize().x * 0.5f,
+                            raiseSlider->getPosition().y - raiseMoneyLabel->getSize().y - getGuiHeight() * 0.005f
+                        });
+                    };
+
                     if (!raiseSlider){
-                        raiseSlider = makeSlider({startX + (btnW + btnGap) * 3.f, controlsY - btnH * 0.35f}, {btnW * 2.f + btnGap, btnH * 0.20f}, 0, root);
-                        float thumbX = raiseSlider->getPosition().x + 0.0 * raiseSlider->getSize().x;
+                        raiseSlider = makeSlider({sliderX, sliderY}, {sliderW, sliderH}, 0, root);
 
                         const int toCall = std::max(0, engine->getCurrentBet() - players[humanPlayerIndex]->getBetThisRound());
                         raiseSlider->setMaximum(std::max(0, players[humanPlayerIndex]->getMoney() - toCall));
-                        
-                        raiseMoneyLabel->setPosition({thumbX - getGuiWidth() * 0.006250f, raiseSlider->getPosition().y - getGuiHeight() * 0.023148f});
                         raiseMoneyLabel->setVisible(true);
-                        raiseMoneyLabel->setText("0$");
+                        updateRaiseValueLabel(raiseSlider->getValue());
                         
-                        raiseSlider->onValueChange([this](float value){
-
-                            if(value > 1) {
-                                confirmButton->setVisible(true);
-                            }
-                            if (value < 1){
-                                confirmButton->setVisible(false);
-                            }
+                        raiseSlider->onValueChange([this, updateRaiseValueLabel](float value){
+                            confirmButton->setVisible(value >= 1.f);
                             play_button();
-                            float ratio = (value - raiseSlider->getMinimum()) / (raiseSlider->getMaximum() - raiseSlider->getMinimum());
-                            float thumbX = raiseSlider->getPosition().x + ratio * raiseSlider->getSize().x;
-
-                            raiseMoneyLabel->setPosition({thumbX - getGuiWidth() * 0.006250f, raiseSlider->getPosition().y - getGuiHeight() * 0.023148f});
-                            raiseMoneyLabel->setText(std::to_string((int)value) + "$");
+                            updateRaiseValueLabel(value);
                         });
                     } else {
-                        confirmButton->setVisible(false);
+                        raiseSlider->setPosition({sliderX, sliderY});
                         bool show = !raiseSlider->isVisible();
                         raiseSlider->setVisible(show);
                         raiseMoneyLabel->setVisible(show);
+                        confirmButton->setVisible(show && raiseSlider->getValue() >= 1.f);
+                        updateRaiseValueLabel(raiseSlider->getValue());
                     }
                     return;
                 }
@@ -790,7 +957,7 @@ void Game_GUI::buildTable(){
                     raiseMoneyLabel->setVisible(false);
                 }
                 if(players[humanPlayerIndex]->isInGame()){
-                    auto choice = engine->playerAction(action, 0);
+                    engine->playerAction(action, 0);
                     currentBetLabels[humanPlayerIndex]->setText("Current bet: " + std::to_string(engine->getCurrentBet()) + "$");
 
                 }
@@ -816,11 +983,11 @@ void Game_GUI::buildTable(){
     callButton = makeButton("Call", {startX + (btnW + btnGap) * 1.f, controlsY}, {btnW, btnH}, 20, root);
 
 
-    actionButtons.push_back(foldButton);
-    actionButtons.push_back(raiseButton);
-    actionButtons.push_back(allInButton);
     actionButtons.push_back(checkButton);
     actionButtons.push_back(callButton);
+    actionButtons.push_back(allInButton);
+    actionButtons.push_back(foldButton);
+    actionButtons.push_back(raiseButton);
 
     for(auto& button : actionButtons){
         button->setVisible(false);
@@ -837,6 +1004,7 @@ void Game_GUI::buildTable(){
 
 
     updateBotWaiting();
+    refreshCommunity();
 
 
 
@@ -845,77 +1013,166 @@ void Game_GUI::buildTable(){
 }
 
 
-void Game_GUI::resolveShowdown() {
+void Game_GUI::resolveShowdown(bool revealCards) {
+    if (showdownResolved) {
+        return;
+    }
+    showdownResolved = true;
+    botWaiting = false;
 
-    revealShowdownCards();
+    if (revealCards) {
+        revealShowdownCards();
+    }
 
     auto& players = engine->getPlayers();
 
     HandEvaluator handEvaluator;
     std::vector<Card> cards;
-    std::vector<HandScore> evoluation_cards;
-    auto communityCards = engine->getCommunityCards();
+    std::vector<HandScore> evaluationCards;
+    const auto& communityCards = engine->getCommunityCards();
 
     for (size_t i = 0; i < players.size(); i++) {
         auto& player = players[i];
         if (!player->isInGame()) continue;
        
         cards = utils::cards7collection(players, i, communityCards);
-        evoluation_cards.push_back(handEvaluator.evaluate(cards, players, communityCards, i));
+        evaluationCards.push_back(handEvaluator.evaluate(cards, player->getName()));
     }
 
-    if (evoluation_cards.empty()) {
+    if (evaluationCards.empty()) {
         actionStatus->setText("No winner");
+        winnerReasonLabel->setVisible(false);
         return;
     }
 
-    utils::sort_function_hand_score(evoluation_cards);
+    const auto isBetter = [](const HandScore& left, const HandScore& right) {
+        return left.rank != right.rank ? left.rank < right.rank
+                                       : left.sum_for_tie < right.sum_for_tie;
+    };
+    std::map<std::string, HandScore> scores;
+    for (const HandScore& score : evaluationCards) {
+        scores.emplace(score.name, score);
+    }
 
-    std::vector<HandScore> ties;
-    for (int i = 0; i < static_cast<int>(evoluation_cards.size()) - 1; i++) {
-        if (evoluation_cards[i].rank == evoluation_cards[i+1].rank &&
-            evoluation_cards[i].sum_for_tie == evoluation_cards[i+1].sum_for_tie) {
-            ties.push_back(evoluation_cards[i]);
-            ties.push_back(evoluation_cards[i+1]);
+    std::vector<int> contributionLevels;
+    for (const auto& player : players) {
+        if (player->getCommittedThisHand() > 0) {
+            contributionLevels.push_back(player->getCommittedThisHand());
+        }
+    }
+    std::sort(contributionLevels.begin(), contributionLevels.end());
+    contributionLevels.erase(std::unique(contributionLevels.begin(), contributionLevels.end()), contributionLevels.end());
+
+    std::map<std::string, int> payouts;
+    int previousLevel = 0;
+    for (const int level : contributionLevels) {
+        std::vector<std::string> eligibleNames;
+        int contributorCount = 0;
+
+        for (const auto& player : players) {
+            if (player->getCommittedThisHand() < level) {
+                continue;
+            }
+            ++contributorCount;
+            if (player->isInGame() && scores.find(player->getName()) != scores.end()) {
+                eligibleNames.push_back(player->getName());
+            }
+        }
+
+        const int sidePot = (level - previousLevel) * contributorCount;
+        previousLevel = level;
+        if (sidePot == 0 || eligibleNames.empty()) {
+            continue;
+        }
+
+        HandScore best = scores.at(eligibleNames.front());
+        std::vector<std::string> winners{eligibleNames.front()};
+        for (std::size_t i = 1; i < eligibleNames.size(); ++i) {
+            const HandScore& candidate = scores.at(eligibleNames[i]);
+            if (isBetter(best, candidate)) {
+                best = candidate;
+                winners = {eligibleNames[i]};
+            } else if (!isBetter(candidate, best) && !isBetter(best, candidate)) {
+                winners.push_back(eligibleNames[i]);
+            }
+        }
+
+        const int share = sidePot / static_cast<int>(winners.size());
+        int remainder = sidePot % static_cast<int>(winners.size());
+        for (const std::string& winnerName : winners) {
+            payouts[winnerName] += share;
+            if (remainder > 0) {
+                ++payouts[winnerName];
+                --remainder;
+            }
         }
     }
 
-    HandScore winner = utils::max(evoluation_cards);
-
-    if (ties.empty()) {
-        actionStatus->setText("Winner: " + winner.name);
-        for (auto& player: players) {
-            if (winner.name == player->getName())
-                player->getMoney() += engine->getPot();
+    std::vector<std::string> winnerNames;
+    for (auto& player : players) {
+        const auto payout = payouts.find(player->getName());
+        if (payout == payouts.end() || payout->second == 0) {
+            continue;
         }
+        player->getMoney() += payout->second;
+        winnerNames.push_back(player->getName());
+    }
+
+    if (winnerNames.empty()) {
+        actionStatus->setText("No winner");
+        winnerReasonLabel->setVisible(false);
+    } else if (winnerNames.size() == 1) {
+        actionStatus->setText("Winner: " + winnerNames.front());
+        winnerReasonLabel->setText(revealCards ? handCategoryName(scores.at(winnerNames.front()).rank)
+                                                : "All other players folded");
+        winnerReasonLabel->setVisible(true);
     } else {
-        HandScore tieswinner = utils::max(ties);
-        if (winner.sum_for_tie > tieswinner.sum_for_tie && winner.rank > tieswinner.rank) {
-            actionStatus->setText("Winner: " + winner.name);
-            for (auto& player: players) {
-                if (winner.name == player->getName())
-                    player->getMoney() += engine->getPot();
+        std::string names;
+        std::string reasons;
+        for (std::size_t i = 0; i < winnerNames.size(); ++i) {
+            if (i > 0) {
+                names += ", ";
+                reasons += "\n";
             }
-        } else {
-            std::vector<std::string> tied_names;
-            for (const auto& tie : ties) {
-                if (std::find(tied_names.begin(), tied_names.end(), tie.name) == tied_names.end())
-                    tied_names.push_back(tie.name);
-            }
-            std::string winnerMessage = "";
-            for (size_t n = 0; n < tied_names.size(); n++) {
-                if (n > 0) winnerMessage += ", ";
-                winnerMessage += tied_names[n];
-            }
-            actionStatus->setText("Split pot: " + winnerMessage);
-
-            int part = engine->getPot() / static_cast<int>(tied_names.size());
-            for (auto& player: players) {
-                if (std::find(tied_names.begin(), tied_names.end(), player->getName()) != tied_names.end())
-                    player->getMoney() += part;
-            }
+            names += winnerNames[i];
+            reasons += winnerNames[i] + ": " + handCategoryName(scores.at(winnerNames[i]).rank);
         }
+        actionStatus->setText("Winners: " + names);
+        winnerReasonLabel->setText(reasons);
+        winnerReasonLabel->setVisible(true);
     }
     actionStatus->setTextSize(30);
+    placeCenteredLabel(actionStatus, getGuiWidth() / 2.f, getGuiHeight() * 0.074074f,
+                       20.f, getGuiWidth() - 20.f);
+    placeCenteredLabel(winnerReasonLabel, getGuiWidth() / 2.f,
+                       actionStatus->getPosition().y + actionStatus->getSize().y + getGuiHeight() * 0.006f,
+                       20.f, getGuiWidth() - 20.f);
+    placeOutLabel();
 
+}
+
+void Game_GUI::placeOutLabel() {
+    const auto& players = engine->getPlayers();
+    loggedOutPlayers.resize(players.size(), false);
+
+    for (std::size_t i = 0; i < players.size(); ++i) {
+        const auto& player = players[i];
+        const bool out = player->getIsEliminated() || (engine->getPhase() == GamePhase::SHOWDOWN && player->getMoney() <= 0);
+        if (player->isBot() && out && !loggedOutPlayers[i]) {
+            outLogMessages.push_back(player->getName() + " is out");
+            loggedOutPlayers[i] = true;
+        }
+    }
+
+    const float guiW = getGuiWidth();
+    const float guiH = getGuiHeight();
+    const int fontSize = scaledTextSize(guiH, 0.013f, 12, 18);
+    const float firstY = Constants::Bar::topHeightRatio * guiH + guiH * 0.005f;
+    const float lineHeight = fontSize * 1.4f;
+
+    for (std::size_t i = outLogLabels.size(); i < outLogMessages.size(); ++i) {
+        auto label = makeLabel(outLogMessages[i], fontSize, color.text, root);
+        label->setPosition({guiW - guiW * 0.01f - label->getSize().x, firstY + i * lineHeight});
+        outLogLabels.push_back(label);
+    }
 }

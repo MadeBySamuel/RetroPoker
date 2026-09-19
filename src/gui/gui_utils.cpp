@@ -34,7 +34,7 @@ tgui::Label::Ptr Gui_base::makeLabel(const std::string& title, const int16_t tit
 
     auto label = tgui::Label::create(title);
     label->setTextSize(titleSize);
-    label->getRenderer()->setTextColor(color.text);
+    label->getRenderer()->setTextColor(titleColor);
     panel->add(label);
     return label;
 }

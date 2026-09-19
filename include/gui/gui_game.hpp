@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include <SFML/Audio.hpp>
@@ -20,9 +21,18 @@ class Game_GUI : public Gui_base {
         std::unique_ptr<Game> engine;
 
         tgui::Panel::Ptr communityPanel;
+        struct CommunityCardReveal {
+            tgui::Picture::Ptr picture;
+            tgui::Vector2f targetPosition;
+            float startTime = 0.f;
+            bool finished = false;
+        };
+        std::vector<CommunityCardReveal> communityCardReveals;
+        sf::Clock communityRevealClock;
         tgui::Label::Ptr potLabel;
-        tgui::Label::Ptr winnerLabel;
+        tgui::Label::Ptr winnerReasonLabel;
         tgui::Label::Ptr balanceLabel;
+        tgui::Label::Ptr balanceAmountLabel;
         tgui::Label::Ptr actionStatus;
         std::vector<tgui::Button::Ptr> actionButtons;
         tgui::Slider::Ptr raiseSlider;
@@ -45,6 +55,9 @@ class Game_GUI : public Gui_base {
         std::vector<tgui::Label::Ptr> playerNameLabels;
         std::vector<tgui::Label::Ptr> choiceLabels;
         std::vector<tgui::Label::Ptr> currentBetLabels;
+        std::vector<std::string> outLogMessages;
+        std::vector<tgui::Label::Ptr> outLogLabels;
+        std::vector<bool> loggedOutPlayers;
 
 
         tgui::Button::Ptr foldButton;
@@ -52,44 +65,55 @@ class Game_GUI : public Gui_base {
         tgui::Button::Ptr allInButton;
         tgui::Button::Ptr checkButton;
         tgui::Button::Ptr callButton;
+        tgui::Panel::Ptr animatedTurnPanel;
+        tgui::Vector2f animatedTurnPanelBasePosition;
+        tgui::Vector2f animatedTurnPanelBaseSize;
+        tgui::Vector2f turnPanelStartPosition;
+        tgui::Vector2f turnPanelStartSize;
+        tgui::Vector2f turnPanelTargetPosition;
+        tgui::Vector2f turnPanelTargetSize;
+        sf::Clock turnPanelClock;
+        bool turnPanelMoving = false;
 
         void createCurrentBetLabel();
         void createMoneyLabelsPlayers();
         void placeCard(tgui::Panel::Ptr parent, const Card& card, float x, float y, float w, float h);
         void placeFaceDownPair(tgui::Panel::Ptr parent, float leftX, float topY, float cardW, float cardH, float gap);
-        void placePlayerName(tgui::Panel::Ptr parent, const std::string& name, const TableSeat& seat, float guiW, float guiH);
+        tgui::Label::Ptr placePlayerName(tgui::Panel::Ptr parent, const std::string& name, const TableSeat& seat, float guiW, float guiH);
         void placeCenteredLabel(const tgui::Label::Ptr& label, float centerX, float topY, float minX, float maxX);
 
         void refreshCommunity();
         void updateBotWaiting();
         void refreshHud();
         void disableActions();
+        void layoutVisibleActionButtons();
 
     public:
         sf::Clock restartClock;
         sf::Clock botChooseClock;
         bool restartPending = false;
+        bool showdownResolved = false;
         int playerTurn = 1;
         bool botWaiting = true;
         float timeForBot = 0.f;
         std::vector<tgui::Panel::Ptr> panels;
-        int smallBigCounter = 2;
-
-
         void hideEscapeMenu();
         void escape();
 
         void nextBot();
+        void animateTurnPanel();
+        void animateCommunityCards();
 
         Game_GUI(tgui::Gui& gui, sf::Music& music, sf::RenderWindow& window);
 
+        void placeOutLabel();
         void nextHand();
         void buildTable();
         std::function<void()> onExit;
         void showEscapeMenu();
         void game(int playerCount, int smallBlind);
         void restartGame();
-        void resolveShowdown();
+        void resolveShowdown(bool revealCards = true);
         tgui::Panel::Ptr makeCirclePanel(std::string& name, tgui::Vector2f pos);
         void placeBlind(std::string& name, const std::string& title, tgui::Vector2f pos);
         void revealShowdownCards();

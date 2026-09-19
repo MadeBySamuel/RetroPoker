@@ -22,6 +22,7 @@ class Player{
         std::string name;
         int money = 0;
         int betThisRound = 0;
+        int committedThisHand = 0;
 
 
         bool isDealer = false;
@@ -42,8 +43,8 @@ class Player{
     public:
     Player(const std::string& name, int money, const bool isBot);
 
-        const bool isRealPlayer();
-        const bool isBot();
+        bool isRealPlayer();
+        bool isBot();
 
         std::string getName();
 
@@ -76,6 +77,9 @@ class Player{
 
         void setBetThisRound(int betThisRound);
         int& getBetThisRound();
+        void addCommittedThisHand(int amount);
+        int getCommittedThisHand() const;
+        void resetCommittedThisHand();
 
         void setActed(bool hasActed);
         bool getActed();
@@ -87,6 +91,4 @@ class Player{
 
         ~Player();
     };
-
-
 

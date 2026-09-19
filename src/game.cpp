@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include <memory>
 #include <random>
 
@@ -36,7 +37,7 @@ void Game::setBigBlind(int bigBlind)
 
 void Game::setSmallBlind(int smallBlind)
 {
-    this->smallBlindAmount = smallBlind;
+    this->smallBlindAmount = std::max(1, smallBlind);
 }
 
 int Game::getSmallBlind()
@@ -56,7 +57,7 @@ int Game::getNumberOfPlayers()
 
 void Game::setNumberOfPlayers(int numberOfPlayers)
 {
-    this->numberOfPlayers = numberOfPlayers;
+    this->numberOfPlayers = std::clamp(numberOfPlayers, 2, static_cast<int>(Constants::NAMES.size()));
 }
 
 void Game::setCurrentBet(int currentBet)
@@ -73,8 +74,8 @@ void Game::setup_once(std::vector<std::unique_ptr<Player>> &players)
 {
     utils::createPlayers(players, numberOfPlayers);
     dealerPosition = 0;
-    smallBlindPosition = 1;
-    bigBlindPosition = 2;
+    smallBlindPosition = 1 % static_cast<int>(players.size());
+    bigBlindPosition = (smallBlindPosition + 1) % static_cast<int>(players.size());
 
     setSmallBlind(smallBlindAmount);
     setBigBlind(smallBlindAmount * 2);
@@ -90,6 +91,55 @@ void Game::setup_once_per_game(std::vector<std::unique_ptr<Player>> &players, st
     utils::community_cards_selection(game_cards, used_cards_index, community_cards);
     utils::dealerSelection(players, dealerPosition);
     utils::blindSelection(players, bigBlindPosition, smallBlindPosition);
+    if (smallBlindPosition >= 0) {
+        postBlind(*players[smallBlindPosition], smallBlindAmount);
+    }
+    if (bigBlindPosition >= 0) {
+        postBlind(*players[bigBlindPosition], bigBlindAmount);
+    }
+}
+
+void Game::postBlind(Player& player, int amount)
+{
+    if (player.getIsEliminated() || amount <= 0) {
+        return;
+    }
+
+    const int paid = std::min(amount, player.getMoney());
+    player.getMoney() -= paid;
+    player.getBetThisRound() += paid;
+    player.addCommittedThisHand(paid);
+    pot += paid;
+    currentBet = std::max(currentBet, player.getBetThisRound());
+
+    if (player.getMoney() == 0) {
+        player.setAllIn(true);
+        player.setActed(true);
+    }
+}
+
+int Game::nextEligiblePlayerIndex(int startIndex) const
+{
+    if (players.empty()) {
+        return 0;
+    }
+
+    const int playerCount = static_cast<int>(players.size());
+    const int normalizedStart = ((startIndex % playerCount) + playerCount) % playerCount;
+    for (int offset = 1; offset <= playerCount; ++offset) {
+        const int index = (normalizedStart + offset) % playerCount;
+        const auto& player = players[index];
+        if (player->isInGame() && !player->getIsEliminated() && !player->getAllIn()) {
+            return index;
+        }
+    }
+    return 0;
+}
+
+int Game::getFirstTurnIndex() const
+{
+    const int anchor = currentPhase == GamePhase::PRE_FLOP ? bigBlindPosition : dealerPosition;
+    return nextEligiblePlayerIndex(anchor);
 }
 
 const std::vector<Card> &Game::getCommunityCards() const
@@ -99,6 +149,9 @@ const std::vector<Card> &Game::getCommunityCards() const
 
 std::vector<Card> Game::getVisibleCommunityCards() const
 {
+    if (handWonByFold) {
+        return {};
+    }
     switch (currentPhase)
     {
     case GamePhase::PRE_FLOP:
@@ -144,10 +197,12 @@ void Game::newHand()
     raiseAmount = 0;
     currentPhase = GamePhase::PRE_FLOP;
     winnerMessage.clear();
+    handWonByFold = false;
     communityCards.clear();
 
     for (auto& player : players) {
         player->setBetThisRound(0);
+        player->resetCommittedThisHand();
         player->setActed(false);
         player->setAllIn(false);
     }
@@ -157,13 +212,13 @@ void Game::newHand()
 
     const int playerCount = static_cast<int>(players.size());
 
-    smallBlindPosition++;
-    bigBlindPosition++;
-    dealerPosition++;
+    if (playerCount == 0) {
+        return;
+    }
 
-    smallBlindPosition = smallBlindPosition == playerCount ? 0 : smallBlindPosition;
-    bigBlindPosition = bigBlindPosition == playerCount ? 0 : bigBlindPosition;
-    dealerPosition = dealerPosition == playerCount ? 0 : dealerPosition;
+    smallBlindPosition = (smallBlindPosition + 1) % playerCount;
+    bigBlindPosition = (bigBlindPosition + 1) % playerCount;
+    dealerPosition = (dealerPosition + 1) % playerCount;
 
 
     setup_once_per_game(players, game_cards, used_cards_index, communityCards);
@@ -176,6 +231,7 @@ void Game::game()
     raiseAmount = 0;
     currentPhase = GamePhase::PRE_FLOP;
     winnerMessage.clear();
+    handWonByFold = false;
     communityCards.clear();
     players.clear();
 
@@ -205,16 +261,25 @@ ActionType Game::botChoice(std::size_t playerTurn)
     const int money = player->getMoney();
 
     std::vector<ActionType> possibleActions{ActionType::FOLD, ActionType::ALLIN};
+    std::vector<int> weights;
+
+    weights.push_back(30);
+    weights.push_back(5);
+
     if (toCall == 0) {
         possibleActions.push_back(ActionType::CHECK);
+        weights.push_back(20);
     } else {
         possibleActions.push_back(ActionType::CALL);
+        weights.push_back(30);
     }
     if (money > toCall) {
         possibleActions.push_back(ActionType::RAISE);
+        weights.push_back(10);
     }
 
-    std::uniform_int_distribution<std::size_t> actionDist(0, possibleActions.size() - 1);
+    std::discrete_distribution<std::size_t> actionDist(weights.begin(), weights.end());
+
     const ActionType action = possibleActions[actionDist(choice)];
     player->setActed(true);
 
@@ -231,6 +296,7 @@ ActionType Game::botChoice(std::size_t playerTurn)
         const int paid = std::min(toCall, money);
         player->getMoney() -= paid;
         player->getBetThisRound() += paid;
+        player->addCommittedThisHand(paid);
         pot += paid;
         if (player->getMoney() == 0) {
             player->setAllIn(true);
@@ -245,6 +311,7 @@ ActionType Game::botChoice(std::size_t playerTurn)
 
         player->setMoney(0);
         player->setBetThisRound(totalBet);
+        player->addCommittedThisHand(paid);
         player->setAllIn(true);
         pot += paid;
         currentBet = std::max(currentBet, totalBet);
@@ -268,6 +335,7 @@ ActionType Game::botChoice(std::size_t playerTurn)
     raiseAmount = totalBet;
     player->getMoney() -= paid;
     player->getBetThisRound() = totalBet;
+    player->addCommittedThisHand(paid);
     pot += paid;
     currentBet = totalBet;
 
@@ -305,6 +373,9 @@ ActionType Game::playerAction(ActionType action, int raiseAmount)
     }
 
     if (action == ActionType::CHECK) {
+        if (toCall != 0) {
+            player->setActed(false);
+        }
         return ActionType::CHECK;
     }
 
@@ -312,6 +383,7 @@ ActionType Game::playerAction(ActionType action, int raiseAmount)
         const int paid = std::min(toCall, money);
         player->getMoney() -= paid;
         player->getBetThisRound() += paid;
+        player->addCommittedThisHand(paid);
         pot += paid;
         if (player->getMoney() == 0) {
             player->setAllIn(true);
@@ -326,6 +398,7 @@ ActionType Game::playerAction(ActionType action, int raiseAmount)
 
         player->setMoney(0);
         player->setBetThisRound(totalBet);
+        player->addCommittedThisHand(paid);
         player->setAllIn(true);
         pot += paid;
         currentBet = std::max(currentBet, totalBet);
@@ -345,6 +418,7 @@ ActionType Game::playerAction(ActionType action, int raiseAmount)
         const int paid = std::min(toCall, money);
         player->getMoney() -= paid;
         player->getBetThisRound() += paid;
+        player->addCommittedThisHand(paid);
         pot += paid;
         if (player->getMoney() == 0) {
             player->setAllIn(true);
@@ -361,6 +435,7 @@ ActionType Game::playerAction(ActionType action, int raiseAmount)
     this->raiseAmount = totalBet;
     player->getMoney() -= paid;
     player->getBetThisRound() = totalBet;
+    player->addCommittedThisHand(paid);
     pot += paid;
     currentBet = totalBet;
     if (player->getMoney() == 0) {
@@ -400,4 +475,10 @@ void Game::advancePhase()
     default:
         break;
     }
+}
+
+void Game::finishHand()
+{
+    handWonByFold = true;
+    currentPhase = GamePhase::SHOWDOWN;
 }

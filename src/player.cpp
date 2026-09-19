@@ -15,11 +15,11 @@ void Player::setName(std::string name){
     this->name = name;
 }
 
-const bool Player::isRealPlayer(){
+bool Player::isRealPlayer(){
     return isHuman;
 }
 
-const bool Player::isBot(){
+bool Player::isBot(){
     return !isHuman;
 }
 
@@ -73,6 +73,18 @@ int& Player::getBetThisRound(){
 
 void Player::setBetThisRound(int betThisRound){
     this->betThisRound = betThisRound;
+}
+
+void Player::addCommittedThisHand(int amount){
+    committedThisHand += amount;
+}
+
+int Player::getCommittedThisHand() const{
+    return committedThisHand;
+}
+
+void Player::resetCommittedThisHand(){
+    committedThisHand = 0;
 }
 
 void Player::setActed(bool hasActed){

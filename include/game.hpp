@@ -19,9 +19,13 @@ class Game {
         std::vector<Card> communityCards;
         std::string winnerMessage;
         GamePhase currentPhase = GamePhase::PRE_FLOP;
+        bool handWonByFold = false;
         int smallBlindPosition;
         int bigBlindPosition;
         int dealerPosition;
+
+        void postBlind(Player& player, int amount);
+        int nextEligiblePlayerIndex(int startIndex) const;
         
 
 
@@ -44,6 +48,7 @@ class Game {
         void setSmallBlind(int smallBlind);
 
         int getCurrentBet();
+        int getFirstTurnIndex() const;
 
         void setCurrentBet(int currentBet);
         std::vector<std::unique_ptr<Player>>& getPlayers();
@@ -59,6 +64,7 @@ class Game {
         void game();
         ActionType playerAction(ActionType action, int raiseAmount = 0);
         void advancePhase();
+        void finishHand();
 
         const std::vector<Card>& getCommunityCards() const;
         std::vector<Card> getVisibleCommunityCards() const;

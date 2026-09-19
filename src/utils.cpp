@@ -3,9 +3,6 @@
 
 #include "utils.hpp"
 #include "game.hpp"
-#include <argon2.h>
-
-
 #include <memory>
 
 
@@ -97,15 +94,16 @@ int utils::set_player_position(){
 std::vector<std::unique_ptr<Player>>& utils::createPlayers(std::vector<std::unique_ptr<Player>>& players, int numberOfPlayers){
     players.clear();
     std::vector<std::string> game_names = Constants::NAMES;
-    players.reserve(numberOfPlayers);
+    const int safePlayerCount = std::clamp(numberOfPlayers, 2, static_cast<int>(game_names.size()));
+    players.reserve(safePlayerCount);
 
 
-    for (size_t i = 0; i < numberOfPlayers; i++) {
+    for (int i = 0; i < safePlayerCount; i++) {
         if (i == 0){
             players.push_back(std::make_unique<Player>("Player", 200, true));
         }
         else {
-            players.push_back(std::make_unique<Player>(game_names[i], 200, false));
+            players.push_back(std::make_unique<Player>(game_names[static_cast<std::size_t>(i)], 200, false));
         }
 
     }
@@ -129,6 +127,11 @@ void utils::settingInGameStatus(std::vector<std::unique_ptr<Player>>& players){
     
     for(size_t i = 0; i < players.size(); i++){
         auto& player = players[i];
+        player->setBetThisRound(0);
+        player->resetCommittedThisHand();
+        player->setActed(false);
+        player->setAllIn(false);
+
         if (player->getMoney() <= 0 && player->isBot()){
             player->setInGame(false);
             player->setEliminated();
@@ -141,24 +144,18 @@ void utils::settingInGameStatus(std::vector<std::unique_ptr<Player>>& players){
 
 
 void utils::card_selection(std::vector<std::unique_ptr<Player>>& players, std::vector<int>& used_cards_index, std::vector<Card>& game_cards){
-    
+    std::size_t nextCard = 0;
 
     for (auto& player: players){
         player->getcard2().clear();
+        if (player->getIsEliminated() || nextCard + 2 > game_cards.size()) {
+            continue;
+        }
 
-        int card1;
-        int card2;
-        do{
-        card1 = rand() % game_cards.size();
-        card2 = rand() % game_cards.size();
-        }while(card1 == card2 ||
-        std::find(used_cards_index.begin(), used_cards_index.end(), card1) != used_cards_index.end() ||
-        std::find(used_cards_index.begin(), used_cards_index.end(), card2) != used_cards_index.end());
-
-        used_cards_index.push_back(card1);
-        player->getcard2().push_back(game_cards[card1]);
-        used_cards_index.push_back(card2);
-        player->getcard2().push_back(game_cards[card2]);
+        used_cards_index.push_back(static_cast<int>(nextCard));
+        player->getcard2().push_back(game_cards[nextCard++]);
+        used_cards_index.push_back(static_cast<int>(nextCard));
+        player->getcard2().push_back(game_cards[nextCard++]);
     }
 }
 
@@ -166,13 +163,10 @@ void utils::card_selection(std::vector<std::unique_ptr<Player>>& players, std::v
 void utils::community_cards_selection(std::vector<Card>& game_cards, std::vector<int>& used_cards_index, std::vector<Card>& community_cards){
     community_cards.clear();
 
-    while (community_cards.size() < 5) {
-        int number = rand() % game_cards.size();
-        if(std::find(used_cards_index.begin(), used_cards_index.end(), number) == used_cards_index.end())
-        {
-            used_cards_index.push_back(number);
-            community_cards.push_back(game_cards[number]);
-        }
+    std::size_t nextCard = used_cards_index.size();
+    while (community_cards.size() < 5 && nextCard < game_cards.size()) {
+        used_cards_index.push_back(static_cast<int>(nextCard));
+        community_cards.push_back(game_cards[nextCard++]);
     }
 }
 
@@ -186,7 +180,14 @@ void utils::dealerSelection(std::vector<std::unique_ptr<Player>>& players, int& 
             player->ToggleDealer();
         }
     }
-    players[dealerPosition]->ToggleDealer();
+    for (std::size_t offset = 0; offset < players.size(); ++offset) {
+        const int index = (dealerPosition + static_cast<int>(offset)) % static_cast<int>(players.size());
+        if (!players[index]->getIsEliminated()) {
+            dealerPosition = index;
+            players[index]->ToggleDealer();
+            return;
+        }
+    }
 }
 
 void utils::blindSelection(std::vector<std::unique_ptr<Player>>& players, int& bigBlindPosition, int& smallBlindPositon){
@@ -203,11 +204,29 @@ void utils::blindSelection(std::vector<std::unique_ptr<Player>>& players, int& b
         }
     }
 
-    players[bigBlindPosition]->ToggleBigBlind();
-    players[smallBlindPositon]->ToggleSmallBlind();
+    const auto findActive = [&players](int start, int excluded) {
+        const int playerCount = static_cast<int>(players.size());
+        for (int offset = 0; offset < playerCount; ++offset) {
+            const int index = (start + offset) % playerCount;
+            if (index != excluded && !players[index]->getIsEliminated()) {
+                return index;
+            }
+        }
+        return -1;
+    };
+
+    smallBlindPositon = findActive(smallBlindPositon, -1);
+    bigBlindPosition = findActive(bigBlindPosition, smallBlindPositon);
+
+    if (smallBlindPositon != -1) {
+        players[smallBlindPositon]->ToggleSmallBlind();
+    }
+    if (bigBlindPosition != -1) {
+        players[bigBlindPosition]->ToggleBigBlind();
+    }
 }
 
-std::vector<Card> utils::cards7collection(std::vector<std::unique_ptr<Player>>& players, int i, std::vector<Card>& community_cards){
+std::vector<Card> utils::cards7collection(std::vector<std::unique_ptr<Player>>& players, int i, const std::vector<Card>& community_cards){
     
     std::vector<Card> map;
 
@@ -219,10 +238,5 @@ std::vector<Card> utils::cards7collection(std::vector<std::unique_ptr<Player>>& 
     for (size_t i = 0; i < community_cards.size(); i ++){
             map.push_back(community_cards[i]);
     }
-        return map;
-    
-
     return map;
 }
-
-

@@ -1,177 +1,160 @@
+#include <algorithm>
+#include <array>
+#include <map>
 #include <vector>
 
 #include "hand_evaluator.hpp"
-#include "player.hpp"
-#include "utils.hpp"
 
+namespace {
 
-
-    int HandEvaluator::RoyalFlush(std::vector<Card>& cards, int& sum){
-        utils::sort_function(cards);
-        
-        for (size_t i = 0; i < static_cast<int>(cards.size()) - 4; i++){
-            if (cards[i].rank == 10 && cards[i+1].rank == 11 && cards[i+2].rank == 12 && cards[i+3].rank == 13 && cards[i+4].rank == 14 &&
-                cards[i].name == cards[i+1].name && cards[i+1].name == cards[i+2].name && cards[i+2].name == cards[i+3].name && cards[i+3].name == cards[i+4].name){
-            
-            sum = 0;    
-            return 9;
-            }
-        }
-        return 0;
+int packRanks(const std::vector<int>& ranks)
+{
+    int value = 0;
+    for (const int rank : ranks) {
+        value = value * 15 + rank;
     }
-
-        
-    int HandEvaluator::StraightFlush(std::vector<Card>& cards, int& sum){
-        utils::sort_function(cards);
-        
-        for (size_t i = 0; i < static_cast<int>(cards.size()) - 4; i++){
-            if (cards[i].rank == (cards[i+1].rank - 1)  && cards[i+1].rank == (cards[i+2].rank - 2) && cards[i+2].rank == (cards[i+3].rank -3) && cards[i+3].rank == (cards[i+4].rank - 4)){
-                if (cards[i].name == cards[i+1].name && cards[i+1].name == cards[i+2].name && cards[i+2].name == cards[i+3].name && cards[i+3].name == cards[i+4].name){
-                    sum = cards[i+4].rank;
-                    return 8;
-                }
-            }
-        }
-        return 0;
-    }
-
-    int HandEvaluator::FourOfKind(std::vector<Card>& cards, int& sum){
-        utils::sort_function(cards);        
-        
-        for (size_t i = 0; i < static_cast<int>(cards.size()) - 3; i++){
-            if (cards[i].rank == cards[i+1].rank && cards[i+1].rank == cards[i+2].rank && cards[i+2].rank == cards[i+3].rank ){
-                sum = cards[i].rank;
-                return 7;
-            }
-        }
-        return 0;
-    }
-        
-    int HandEvaluator::FullHouse(std::vector<Card>& cards, int& sum){
-        sum = 0; 
-
-
-        utils::sort_function(cards);
-
-        for (size_t i = 0; i < static_cast<int>(cards.size()) - 4; i++){
-            if (cards[i].rank == cards[i+1].rank && cards[i+1].rank == cards[i+2].rank){
-                sum = cards[i].rank;
-                if(cards[i+3].rank == cards[i+4].rank){
-                    return 6;
-                }
-            }
-            else if(cards[i+2].rank == cards[i+3].rank && cards[i+3].rank == cards[i+4].rank){
-                sum = cards[i].rank;
-                return 6;
-            }
-    
-        }
-        return 0;
-    }
-
-    int HandEvaluator::Flush(std::vector<Card>& cards, int& sum){
-        sum = 0;
-        utils::sort_name(cards);
-        for (size_t i = 0; i < static_cast<int>(cards.size()) - 4; i++){
-            if (cards[i].name == cards[i+1].name && cards[i+1].name == cards[i+2].name && cards[i+2].name == cards[i+3].name && cards[i+3].name == cards[i+4].name){
-                sum = cards[i+4].rank;
-                return 5;
-            }
-        }
-        return 0;
-    }
-    int HandEvaluator::Straight(std::vector<Card>& cards, int& sum){
-        sum = 0;
-
-        utils::sort_function(cards);
-        
-        for (size_t i = 0; i < static_cast<int>(cards.size()) - 4; i++){
-            if (cards[i].rank + 1 == cards[i+1].rank && cards[i+1].rank + 1 == cards[i+2].rank && cards[i+2].rank + 1 == cards[i+3].rank &&cards[i+3].rank + 1 == cards[i+4].rank)
-            {
-                sum = (cards[i+4].rank + 4); 
-                return 4;
-        }
-    }
-        return 0;
+    return value;
 }
 
-    int HandEvaluator::ThreeOfKind(std::vector<Card>& cards, int& sum){
-
-        sum = 0;
-        utils::sort_function(cards);        
-        
-        for (size_t i = 0; i < static_cast<int>(cards.size()) - 2; i++){
-            if (cards[i].rank == cards[i+1].rank && cards[i+1].rank == cards[i+2].rank){
-                sum = cards[i].rank + cards[i+1].rank + cards[i+2].rank;
-                return 3;
+int findStraightHigh(const std::array<int, 15>& rankCount)
+{
+    for (int high = 14; high >= 5; --high) {
+        bool hasStraight = true;
+        for (int rank = high; rank > high - 5; --rank) {
+            if (rankCount[rank] == 0) {
+                hasStraight = false;
+                break;
             }
         }
-        return 0;
-    }
-    int HandEvaluator::TwoPairs(std::vector<Card>& cards, int& sum){
-        
-        sum = 0;
-        utils::sort_function(cards);
-        int counter = 0;
-
-        std::vector<Card> highpaircomp;
-
-        for(size_t i = 0; i < static_cast<int>(cards.size()) - 1; i ++){
-            if(cards[i].rank == cards[i+1].rank)
-            
-            highpaircomp.push_back(cards[i]);
-            highpaircomp.push_back(cards[i+1]);
-            counter++;
+        if (hasStraight) {
+            return high;
         }
-        if (counter == 2) {
-            for(size_t i = 0; i < static_cast<int>(highpaircomp.size()); i++){
-                if(i == static_cast<int>(highpaircomp.size()) - 1){
-                    sum = highpaircomp[i].rank;
-                }
-            }
-            return 2;
-        }
-        return 0;
-    }
-    int HandEvaluator::OnePair(std::vector<Card>& cards, int& sum){
-        sum = 0;
-
-       utils::sort_function(cards);
-
-        for (size_t i = 0; i < static_cast<int>(cards.size()) - 1; i++){
-            if(cards[i].rank == cards[i+1].rank){
-                sum = cards[i].rank;
-                return 1;
-            }
-        }
-
-       return 0;
     }
 
-
-    HandScore HandEvaluator::evaluate(std::vector<Card> &cards, std::vector<std::unique_ptr<Player>>& players, std::vector<Card> community_cards, int i){
-    
-    int sum = 0;
-
-    std::vector<HandScore> list;
-
-    if(players[i]->isInGame()){
- 
-    list.emplace_back(HandScore{HandEvaluator::OnePair(cards, sum), sum, players[i]->getName()});
-    list.emplace_back(HandScore{HandEvaluator::TwoPairs(cards, sum), sum,  players[i]->getName()});
-    list.emplace_back(HandScore{HandEvaluator::ThreeOfKind(cards, sum), sum,  players[i]->getName()});
-    list.emplace_back(HandScore{HandEvaluator::Straight(cards, sum), sum,  players[i]->getName()});
-    list.emplace_back(HandScore{HandEvaluator::Flush(cards,sum ), sum,  players[i]->getName()});
-    list.emplace_back(HandScore{HandEvaluator::FullHouse(cards,sum), sum,  players[i]->getName()});
-    list.emplace_back(HandScore{HandEvaluator::FourOfKind(cards, sum),sum,  players[i]->getName()});
-    list.emplace_back(HandScore{HandEvaluator::StraightFlush(cards,sum),sum,  players[i]->getName()});
-    list.emplace_back(HandScore{HandEvaluator::RoyalFlush(cards,sum),sum,  players[i]->getName()});
-
-    
+    if (rankCount[14] && rankCount[2] && rankCount[3] && rankCount[4] && rankCount[5]) {
+        return 5;
     }
-    HandScore best_hand = utils::max(list);  
-    return best_hand;
-    
+    return 0;
 }
 
+std::vector<int> ranksDescending(const std::array<int, 15>& rankCount, int excludedRank = -1)
+{
+    std::vector<int> ranks;
+    for (int rank = 14; rank >= 2; --rank) {
+        if (rank != excludedRank && rankCount[rank] > 0) {
+            ranks.push_back(rank);
+        }
+    }
+    return ranks;
+}
 
+} // namespace
+
+HandScore HandEvaluator::evaluate(const std::vector<Card>& cards, const std::string& playerName)
+{
+    std::array<int, 15> rankCount{};
+    std::map<std::string, std::vector<int>> suitRanks;
+
+    for (const Card& card : cards) {
+        if (card.rank < 2 || card.rank > 14) {
+            continue;
+        }
+        ++rankCount[card.rank];
+        suitRanks[card.name].push_back(card.rank);
+    }
+
+    for (auto& [suit, ranks] : suitRanks) {
+        std::sort(ranks.begin(), ranks.end(), std::greater<int>());
+    }
+
+    for (const auto& [suit, ranks] : suitRanks) {
+        if (ranks.size() < 5) {
+            continue;
+        }
+
+        std::array<int, 15> suitedRankCount{};
+        for (const int rank : ranks) {
+            suitedRankCount[rank] = 1;
+        }
+        const int straightFlushHigh = findStraightHigh(suitedRankCount);
+        if (straightFlushHigh == 14) {
+            return {9, packRanks({14}), playerName};
+        }
+        if (straightFlushHigh != 0) {
+            return {8, packRanks({straightFlushHigh}), playerName};
+        }
+    }
+
+    int fourKind = 0;
+    for (int rank = 14; rank >= 2; --rank) {
+        if (rankCount[rank] == 4) {
+            fourKind = rank;
+            break;
+        }
+    }
+    if (fourKind != 0) {
+        return {7, packRanks({fourKind, ranksDescending(rankCount, fourKind).front()}), playerName};
+    }
+
+    std::vector<int> trips;
+    std::vector<int> pairs;
+    for (int rank = 14; rank >= 2; --rank) {
+        if (rankCount[rank] >= 3) {
+            trips.push_back(rank);
+        }
+        if (rankCount[rank] >= 2) {
+            pairs.push_back(rank);
+        }
+    }
+    if (!trips.empty()) {
+        const int trip = trips.front();
+        int pair = 0;
+        for (const int rank : pairs) {
+            if (rank != trip) {
+                pair = rank;
+                break;
+            }
+        }
+        if (pair != 0) {
+            return {6, packRanks({trip, pair}), playerName};
+        }
+    }
+
+    for (const auto& [suit, ranks] : suitRanks) {
+        if (ranks.size() >= 5) {
+            return {5, packRanks({ranks[0], ranks[1], ranks[2], ranks[3], ranks[4]}), playerName};
+        }
+    }
+
+    const int straightHigh = findStraightHigh(rankCount);
+    if (straightHigh != 0) {
+        return {4, packRanks({straightHigh}), playerName};
+    }
+
+    if (!trips.empty()) {
+        const int trip = trips.front();
+        const auto kickers = ranksDescending(rankCount, trip);
+        return {3, packRanks({trip, kickers[0], kickers[1]}), playerName};
+    }
+
+    if (pairs.size() >= 2) {
+        const auto kickers = ranksDescending(rankCount, pairs[0]);
+        const int kicker = *std::find_if(kickers.begin(), kickers.end(), [&pairs](int rank) {
+            return rank != pairs[1];
+        });
+        return {2, packRanks({pairs[0], pairs[1], kicker}), playerName};
+    }
+
+    if (!pairs.empty()) {
+        const int pair = pairs.front();
+        const auto kickers = ranksDescending(rankCount, pair);
+        return {1, packRanks({pair, kickers[0], kickers[1], kickers[2]}), playerName};
+    }
+
+    const auto highCards = ranksDescending(rankCount);
+    std::vector<int> bestHighCards;
+    for (std::size_t i = 0; i < highCards.size() && i < 5; ++i) {
+        bestHighCards.push_back(highCards[i]);
+    }
+    return {0, packRanks(bestHighCards), playerName};
+}

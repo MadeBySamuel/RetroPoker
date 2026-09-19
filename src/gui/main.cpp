@@ -109,7 +109,7 @@ int main(){
             }
             currentPointer->update_time();
 
-            if(game.restartPending && game.restartClock.getElapsedTime().asSeconds() >= 3.f){
+            if(game.restartPending && game.restartClock.getElapsedTime().asSeconds() >= 10.f){
                 game.restartPending = false;
                 game.nextHand();
             } 
@@ -118,6 +118,10 @@ int main(){
                 game.nextBot();
             }
 
+            if (currentPointer == &game) {
+                game.animateTurnPanel();
+                game.animateCommunityCards();
+            }
 
 
             
