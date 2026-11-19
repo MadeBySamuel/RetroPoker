@@ -606,10 +606,10 @@ std::vector<Card> gui_utils::game_cards (){
     cardImagePaths.emplace_back("assets/cards/heart/hearts_8.png");
     cardImagePaths.emplace_back("assets/cards/heart/hearts_9.png");
     cardImagePaths.emplace_back("assets/cards/heart/hearts_10.png");
-    cardImagePaths.emplace_back("assets/cards/heart/hearts_A.png");
     cardImagePaths.emplace_back("assets/cards/heart/hearts_J.png");
-    cardImagePaths.emplace_back("assets/cards/heart/hearts_K.png");
     cardImagePaths.emplace_back("assets/cards/heart/hearts_Q.png");
+    cardImagePaths.emplace_back("assets/cards/heart/hearts_K.png");
+    cardImagePaths.emplace_back("assets/cards/heart/hearts_A.png");
 
     cardImagePaths.emplace_back("assets/cards/diamond/diamonds_2.png");
     cardImagePaths.emplace_back("assets/cards/diamond/diamonds_3.png");
@@ -620,10 +620,10 @@ std::vector<Card> gui_utils::game_cards (){
     cardImagePaths.emplace_back("assets/cards/diamond/diamonds_8.png");
     cardImagePaths.emplace_back("assets/cards/diamond/diamonds_9.png");
     cardImagePaths.emplace_back("assets/cards/diamond/diamonds_10.png");
-    cardImagePaths.emplace_back("assets/cards/diamond/diamonds_A.png");
     cardImagePaths.emplace_back("assets/cards/diamond/diamonds_J.png");
-    cardImagePaths.emplace_back("assets/cards/diamond/diamonds_K.png");
     cardImagePaths.emplace_back("assets/cards/diamond/diamonds_Q.png");
+    cardImagePaths.emplace_back("assets/cards/diamond/diamonds_K.png");
+    cardImagePaths.emplace_back("assets/cards/diamond/diamonds_A.png");
 
     cardImagePaths.emplace_back("assets/cards/club/clubs_2.png");
     cardImagePaths.emplace_back("assets/cards/club/clubs_3.png");
@@ -634,10 +634,10 @@ std::vector<Card> gui_utils::game_cards (){
     cardImagePaths.emplace_back("assets/cards/club/clubs_8.png");
     cardImagePaths.emplace_back("assets/cards/club/clubs_9.png");
     cardImagePaths.emplace_back("assets/cards/club/clubs_10.png");
-    cardImagePaths.emplace_back("assets/cards/club/clubs_A.png");
     cardImagePaths.emplace_back("assets/cards/club/clubs_J.png");
-    cardImagePaths.emplace_back("assets/cards/club/clubs_K.png");
     cardImagePaths.emplace_back("assets/cards/club/clubs_Q.png");
+    cardImagePaths.emplace_back("assets/cards/club/clubs_K.png");
+    cardImagePaths.emplace_back("assets/cards/club/clubs_A.png");
 
     cardImagePaths.emplace_back("assets/cards/spade/spades_2.png");
     cardImagePaths.emplace_back("assets/cards/spade/spades_3.png");
@@ -648,10 +648,10 @@ std::vector<Card> gui_utils::game_cards (){
     cardImagePaths.emplace_back("assets/cards/spade/spades_8.png");
     cardImagePaths.emplace_back("assets/cards/spade/spades_9.png");
     cardImagePaths.emplace_back("assets/cards/spade/spades_10.png");
-    cardImagePaths.emplace_back("assets/cards/spade/spades_A.png");
     cardImagePaths.emplace_back("assets/cards/spade/spades_J.png");
-    cardImagePaths.emplace_back("assets/cards/spade/spades_K.png");
     cardImagePaths.emplace_back("assets/cards/spade/spades_Q.png");
+    cardImagePaths.emplace_back("assets/cards/spade/spades_K.png");
+    cardImagePaths.emplace_back("assets/cards/spade/spades_A.png");
 
     size_t image_iterator = 0;
 

@@ -13,12 +13,17 @@
 #include "gui_utils.hpp"
 #include "table_layout.hpp"
 #include "hand_evaluator.hpp"
+#include "campaign.hpp"
 
 class Game_GUI : public Gui_base {
 
     private:
         sf::RenderWindow& window;
         std::unique_ptr<Game> engine;
+        int campaignStage = -1;
+        bool seriesFinished = false;
+        void publishCampaignBalance();
+        void finishSeries(campaign::SeriesResult result);
 
         tgui::Panel::Ptr communityPanel;
         struct CommunityCardReveal {
@@ -30,6 +35,8 @@ class Game_GUI : public Gui_base {
         std::vector<CommunityCardReveal> communityCardReveals;
         sf::Clock communityRevealClock;
         tgui::Label::Ptr potLabel;
+        tgui::Label::Ptr blindStatusLabel;
+        void refreshBlindStatus();
         tgui::Label::Ptr winnerReasonLabel;
         tgui::Label::Ptr balanceLabel;
         tgui::Label::Ptr balanceAmountLabel;
@@ -110,8 +117,13 @@ class Game_GUI : public Gui_base {
         void nextHand();
         void buildTable();
         std::function<void()> onExit;
+        std::function<void(int, bool)> onCampaignUpdate;
+        void stopSession();
+        bool isPaused() const { return modalOverlay && modalOverlay->isVisible(); }
         void showEscapeMenu();
-        void game(int playerCount, int smallBlind);
+        void game(int playerCount, int smallBlind,
+                  int startingMoney = Constants::START_PLAYER_MONEY,
+                  int opponentMoney = Constants::START_PLAYER_MONEY, int stage = -1);
         void restartGame();
         void resolveShowdown(bool revealCards = true);
         tgui::Panel::Ptr makeCirclePanel(std::string& name, tgui::Vector2f pos);

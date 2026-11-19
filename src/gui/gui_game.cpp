@@ -125,7 +125,7 @@ void Game_GUI::createCurrentBetLabel(){
 
         tgui::Label::Ptr currentBet;
         if (player->isRealPlayer()){
-                currentBet = makeLabel("Current bet: " + std::to_string(players[i]->getBetThisRound()) + "$", 24, color.text, root);
+                currentBet = makeLabel("Current bet: " + std::to_string(engine->getCurrentBet()) + "$", 24, color.text, root);
         }
         else {
             currentBet = makeLabel(std::to_string(players[i]->getBetThisRound()) + "$", 20, color.text, root);
@@ -280,12 +280,33 @@ void Game_GUI::layoutVisibleActionButtons() {
     }
 }
 
+void Game_GUI::refreshBlindStatus() {
+    if (!engine || !blindStatusLabel) return;
+    std::string text = "Blinds: " + std::to_string(engine->getSmallBlind()) + "/" +
+                       std::to_string(engine->getBigBlind()) + "$";
+    if (engine->hasBlindProgression()) {
+        const auto& schedule = engine->getBlindSchedule();
+        text = "Level " + std::to_string(schedule.getLevel()) + " | " + text;
+        const int remaining = schedule.getHandsUntilIncrease() -
+                              (engine->getPhase() == GamePhase::SHOWDOWN ? 1 : 0);
+        text += remaining == 0 ? "\nNext hand: " : "\nNext: ";
+        text += std::to_string(schedule.getNextSmallBlind()) + "/" +
+                std::to_string(schedule.getNextBigBlind()) + "$";
+        if (remaining > 0) {
+            text += " in " + std::to_string(remaining) + (remaining == 1 ? " hand" : " hands");
+        }
+    }
+    blindStatusLabel->setText(text);
+}
+
 void Game_GUI::refreshHud() {
     auto& players = engine->getPlayers();
     if (humanPlayerIndex >= players.size()) return;
 
     const float guiW = getGuiWidth();
     balanceAmountLabel->setText(std::to_string(players[humanPlayerIndex]->getMoney()) + "$");
+    publishCampaignBalance();
+    refreshBlindStatus();
 
     potLabel->setText("Pot: " + std::to_string(engine->getPot()) + "$");
 
@@ -299,7 +320,7 @@ void Game_GUI::refreshHud() {
         if(moneyLabels[i]) moneyLabels[i]->setText(std::to_string(players[i]->getMoney()) + "$");
         if (i < currentBetLabels.size() && currentBetLabels[i]) {
             if (players[i]->isRealPlayer()) {
-                currentBetLabels[i]->setText("Current bet: " + std::to_string(players[i]->getBetThisRound()) + "$");
+                currentBetLabels[i]->setText("Current bet: " + std::to_string(engine->getCurrentBet()) + "$");
             } else {
                 currentBetLabels[i]->setText(std::to_string(players[i]->getBetThisRound()) + "$");
             }
@@ -309,7 +330,7 @@ void Game_GUI::refreshHud() {
     if (engine->getPhase() == GamePhase::SHOWDOWN) {
         disableActions();
 
-        if(!restartPending){
+        if(!restartPending && !seriesFinished){
             restartPending = true;
             restartClock.restart();
         }
@@ -317,6 +338,7 @@ void Game_GUI::refreshHud() {
 }
 
 void Game_GUI::restartGame(){
+    if (campaignStage >= 0) return;
     const int playerCount = engine->getNumberOfPlayers();
     const int smallBlind = engine->getSmallBlind();
 
@@ -354,6 +376,7 @@ void Game_GUI::hideEscapeMenu(){
 }
 
 void Game_GUI::escape(){
+    if (seriesFinished) return;
     handleEscape();
     if(escapeMenuPanel == nullptr && openedSettingsPanel == true)  showEscapeMenu();
 }
@@ -376,6 +399,13 @@ void Game_GUI::showEscapeMenu(){
 
     auto backToGameButton = makeButton("Back to Game", {startX, panelH * 0.181818f}, {buttonW, buttonH}, 28, escapeMenuPanel);
     auto restartGameButton = makeButton("Restart game", {startX, panelH * 0.333333f}, {buttonW, buttonH}, 24, escapeMenuPanel);
+    restartGameButton->setEnabled(campaignStage < 0);
+    if (campaignStage >= 0) {
+        restartGameButton->setText("Campaign: no free rebuy");
+        auto notice = makeLabel("Leaving forfeits chips already bet in this hand.", 16, color.accent, escapeMenuPanel);
+        notice->setMaximumTextWidth(panelW * 0.94f);
+        notice->setPosition({panelW * 0.03f, panelH * 0.12f});
+    }
     auto settingsButton = makeButton("Settings", {startX, panelH * 0.484848f}, {buttonW, buttonH}, 24, escapeMenuPanel);
     auto backToMenuButton = makeButton("Back to Menu", {startX, panelH * 0.636364f}, {buttonW, buttonH}, 24, escapeMenuPanel);
     auto quitGameButton = makeButton("Exit Game", {startX, panelH * 0.787879f}, {buttonW, buttonH}, 24, escapeMenuPanel);
@@ -394,7 +424,7 @@ void Game_GUI::showEscapeMenu(){
     });
 
     bindSoundOnClick(backToMenuButton, [this]{
-        ambienceSound.stop();
+        stopSession();
         hideOverlay();
         root->remove(escapeMenuPanel);
         escapeMenuPanel = nullptr;
@@ -412,6 +442,7 @@ void Game_GUI::showEscapeMenu(){
 
         bindSoundOnClick(yesButton, [this]
         {
+            stopSession();
             root->remove(escapeMenuPanel);
             escapeMenuPanel = nullptr;
             window.close();
@@ -520,7 +551,7 @@ void Game_GUI::updateBotWaiting(){
                 animatedTurnPanel = panels[playerTurn];
                 animatedTurnPanelBasePosition = targetPosition;
                 animatedTurnPanelBaseSize = targetSize;
-                constexpr float startScale = 0.78f;
+                constexpr float startScale = 0.50f;
                 const tgui::Vector2f startSize = animatedTurnPanelBaseSize * startScale;
                 animatedTurnPanel->setSize(startSize);
                 animatedTurnPanel->setPosition({
@@ -551,11 +582,12 @@ void Game_GUI::updateBotWaiting(){
 }
 
 void Game_GUI::animateTurnPanel() {
+
     if (!animatedTurnPanel || !animatedTurnPanel->isVisible()) {
         return;
     }
 
-    constexpr float duration = 0.22f;
+    constexpr float duration = 0.4f;
     constexpr float startScale = 0.78f;
     const float progress = std::clamp(turnPanelClock.getElapsedTime().asSeconds() / duration, 0.f, 1.f);
     const float easedProgress = progress * (2.f - progress);
@@ -569,6 +601,7 @@ void Game_GUI::animateTurnPanel() {
             lerp(turnPanelStartSize.x, turnPanelTargetSize.x),
             lerp(turnPanelStartSize.y, turnPanelTargetSize.y)
         });
+        
         animatedTurnPanel->setPosition({
             lerp(turnPanelStartPosition.x, turnPanelTargetPosition.x),
             lerp(turnPanelStartPosition.y, turnPanelTargetPosition.y)
@@ -599,7 +632,15 @@ void Game_GUI::animateTurnPanel() {
     }
 }
 
-void Game_GUI::game(int playerCount, int smallBlind) {
+void Game_GUI::game(int playerCount, int smallBlind, int startingMoney, int opponentMoney, int stage) {
+    campaignStage = stage;
+    seriesFinished = false;
+    restartPending = false;
+    escapeMenuPanel = nullptr;
+    gameSettingsPanel = nullptr;
+    audioSettingsPanel = nullptr;
+    modalOverlay = nullptr;
+    openedSettingsPanel = false;
     gui.removeAllWidgets();
     winnerReasonLabel = nullptr;
     actionButtons.clear();
@@ -617,7 +658,6 @@ void Game_GUI::game(int playerCount, int smallBlind) {
     tgui::Font::setGlobalFont("assets/fonts/Shelten.ttf");
     if(!ambienceSound.openFromFile("assets/sound/ambienceSound.ogg")){
         std::cerr<< "Ambience sound is not loaded or other big problem. its cooked\n";
-        return;     
     }
     ambienceSound.play();
     ambienceSound.setVolume(10);
@@ -627,14 +667,19 @@ void Game_GUI::game(int playerCount, int smallBlind) {
     engine = std::make_unique<Game>();
     engine->setSmallBlind(smallBlind);
     engine->setNumberOfPlayers(playerCount);
+    engine->setStartingMoney(startingMoney, opponentMoney);
+    engine->setBlindProgressionEnabled(campaignStage >= 0);
 
     engine->game();
     playerTurn = engine->getFirstTurnIndex();
     buildTable();
+    publishCampaignBalance();
 
 }
 
 void Game_GUI::nextHand(){
+    if (seriesFinished || !engine) return;
+    restartPending = false;
     gui.removeAllWidgets();
     winnerReasonLabel = nullptr;
     actionButtons.clear();
@@ -650,6 +695,7 @@ void Game_GUI::nextHand(){
     engine->newHand();
     playerTurn = engine->getFirstTurnIndex();
     buildTable();
+    publishCampaignBalance();
 }
 
 void Game_GUI::nextBot(){
@@ -724,9 +770,20 @@ void Game_GUI::buildTable(){
 
     volume(topBar, root, mainMenuMusic);
 
+    if (campaignStage >= 0) {
+        auto stageLabel = makeLabel(std::string(campaign::stages[campaignStage].title) + " - " +
+                                    campaign::stages[campaignStage].location, 18, color.accent, topBar);
+        stageLabel->setPosition({getGuiWidth() * 0.25f, getGuiHeight() * 0.014f});
+    }
+
     const float guiW = getGuiWidth();
     const float guiH = getGuiHeight();
     const float topBarH = Constants::Bar::topHeightRatio * guiW;
+
+    blindStatusLabel = makeLabel("", scaledTextSize(guiH, 0.016f, 12, 18), color.accent, bottomBar);
+    blindStatusLabel->setMaximumTextWidth(guiW * 0.28f);
+    blindStatusLabel->setPosition({guiW * 0.01f, bottomBarH * 0.08f});
+    refreshBlindStatus();
 
     // Community card panel
     const auto& communitySlot = TableLayout::COMMUNITY;
@@ -823,28 +880,6 @@ void Game_GUI::buildTable(){
     }
 
     placeOutLabel();
-
-    for(size_t i = 0; i < players.size(); i++){
-            if(players[i]->getName() == "Player"){
-                if(players[i]->getMoney() <= 0 ){  
-
-                tgui::ChildWindow::Ptr gameOverPanel = makePopUpPanel("Game Over", {Constants::Panel::loginWidthRatio * guiW, guiH * 0.277778f}, 32, sf::Color(128, 30, 30), sf::Color(253, 253, 253), true);
-                tgui::Button::Ptr restartGameButton = makePopUpButton("Restart game", {(gameOverPanel->getSize().x - 500.f) / 2.f, 40.f}, {500,66}, 24, gameOverPanel);
-                tgui::Button::Ptr exitGameButton = makePopUpButton("Exit game", {(gameOverPanel->getSize().x - 500.f) / 2.f, 140.f}, {500,66}, 24, gameOverPanel);
-
-                bindSoundOnClick(restartGameButton,[this]{
-                    restartGame();
-                });
-
-                bindSoundOnClick(exitGameButton, [gameOverPanel, this]{
-                    root->remove(gameOverPanel);
-                    onExit();
-                });
-                return;
-            }
-        }
-    }
-
 
     potLabel = makeLabel("Pot: " + std::to_string(engine->getPot()) + "$", scaledTextSize(guiH, 0.026f, 24, 40), color.accent, root);
     placeCenteredLabel(potLabel, guiW / 2.f, communityY - potLabel->getSize().y - 18.f, 20.f, guiW - 20.f);
@@ -958,8 +993,6 @@ void Game_GUI::buildTable(){
                 }
                 if(players[humanPlayerIndex]->isInGame()){
                     engine->playerAction(action, 0);
-                    currentBetLabels[humanPlayerIndex]->setText("Current bet: " + std::to_string(engine->getCurrentBet()) + "$");
-
                 }
                 if (engine->getPhase() == GamePhase::SHOWDOWN) {
                     resolveShowdown();
@@ -1142,13 +1175,72 @@ void Game_GUI::resolveShowdown(bool revealCards) {
         winnerReasonLabel->setVisible(true);
     }
     actionStatus->setTextSize(30);
-    placeCenteredLabel(actionStatus, getGuiWidth() / 2.f, getGuiHeight() * 0.074074f,
-                       20.f, getGuiWidth() - 20.f);
-    placeCenteredLabel(winnerReasonLabel, getGuiWidth() / 2.f,
-                       actionStatus->getPosition().y + actionStatus->getSize().y + getGuiHeight() * 0.006f,
-                       20.f, getGuiWidth() - 20.f);
+    placeCenteredLabel(actionStatus, getGuiWidth() / 2.f, getGuiHeight() * 0.074074f,20.f, getGuiWidth() - 20.f);
+    placeCenteredLabel(winnerReasonLabel, getGuiWidth() / 2.f, actionStatus->getPosition().y + actionStatus->getSize().y + getGuiHeight() * 0.006f, 20.f, getGuiWidth() - 20.f);
     placeOutLabel();
+    publishCampaignBalance();
+    refreshBlindStatus();
+    std::vector<int> stacks;
+    for (const auto& player : players) stacks.push_back(player->getMoney());
+    const auto result = campaign::seriesResult(stacks, humanPlayerIndex);
+    if (result != campaign::SeriesResult::InProgress) finishSeries(result);
+}
 
+void Game_GUI::publishCampaignBalance() {
+    if (campaignStage < 0 || !engine || !onCampaignUpdate) return;
+    for (const auto& player : engine->getPlayers()) {
+        if (player->isRealPlayer()) {
+            onCampaignUpdate(player->getMoney(), false);
+            return;
+        }
+    }
+}
+
+void Game_GUI::stopSession() {
+    botWaiting = false;
+    restartPending = false;
+    ambienceSound.stop();
+    publishCampaignBalance();
+}
+
+void Game_GUI::finishSeries(campaign::SeriesResult result) {
+    if (seriesFinished) return;
+    seriesFinished = true;
+    botWaiting = false;
+    restartPending = false;
+    disableActions();
+    if (animatedTurnPanel) animatedTurnPanel->setVisible(false);
+    const bool won = result == campaign::SeriesResult::Won;
+    if (campaignStage >= 0 && onCampaignUpdate) {
+        onCampaignUpdate(engine->getPlayers()[humanPlayerIndex]->getMoney(), won);
+    }
+
+    const float width = getGuiWidth() * 0.48f;
+    const float height = getGuiHeight() * 0.33f;
+    showOverlay();
+    // Put the result above any pause/settings panels that were open.
+    if (escapeMenuPanel) escapeMenuPanel->setVisible(false);
+    if (gameSettingsPanel) gameSettingsPanel->setVisible(false);
+    if (audioSettingsPanel) audioSettingsPanel->setVisible(false);
+    auto panel = makePanel({width, height}, color.centerpanel, root);
+    auto title = makeLabel(won ? "Series won!" : "Series lost", 32, color.accent, panel);
+    title->setPosition({width * 0.06f, height * 0.08f});
+    std::string message = won ? "You eliminated every opponent." : "Your bankroll is empty.";
+    if (campaignStage >= 0 && won) {
+        message += campaignStage + 1 < static_cast<int>(campaign::stages.size())
+            ? "\nNext stop: " + std::string(campaign::stages[campaignStage + 1].title)
+            : "\nYou are the WSOP champion in Las Vegas!";
+    }
+    message += "\nBalance: " + std::to_string(engine->getPlayers()[humanPlayerIndex]->getMoney()) + "$";
+    auto detail = makeLabel(message, 22, color.text, panel);
+    detail->setMaximumTextWidth(width * 0.88f);
+    detail->setPosition({width * 0.06f, height * 0.30f});
+    auto back = makeButton(campaignStage >= 0 ? "Back to Campaign" : "Back to Menu",
+                           {width * 0.06f, height * 0.76f}, {width * 0.88f, height * 0.17f}, 24, panel);
+    bindSoundOnClick(back, [this] {
+        stopSession();
+        if (onExit) onExit();
+    });
 }
 
 void Game_GUI::placeOutLabel() {

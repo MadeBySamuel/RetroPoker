@@ -9,6 +9,7 @@
 #include "gui_main_menu.hpp"
 #include "gui_utils.hpp"
 #include "constants.hpp"
+#include "blind_schedule.hpp"
 
 MainMenu::MainMenu(tgui::Gui& gui, sf::Music& music, sf::RenderWindow& window)
     : Gui_base(gui, music), window(window) {}
@@ -21,6 +22,15 @@ void MainMenu::showMainMenu(){
     const float topBarH = Constants::Bar::topHeightRatio * guiH;
 
     gui.removeAllWidgets();
+    buttonsMainMenu.clear();
+    gameMenuPanel = nullptr;
+    gameplaySettingsPanel = nullptr;
+    gameSettingsPanel = nullptr;
+    audioSettingsPanel = nullptr;
+    settingsMusicSlider = nullptr;
+    openedSettingsPanel = false;
+    modalOverlay = nullptr;
+    openedGameMenuPanel = false;
     tgui::Font::setGlobalFont("assets/fonts/Shelten.ttf");
 
     root = tgui::Panel::create({guiW, guiH});
@@ -48,7 +58,7 @@ void MainMenu::showMainMenu(){
     float usernamePanelLenght = 0;
 
     if (loggedUsername.length() <= 0){
-        std::cerr<< "ERROR";
+        usernamePanelLenght = guiW * 0.093750f;
     }
     else if (loggedUsername.length() > 0 && loggedUsername.length() < 6){
         usernamePanelLenght = guiW * 0.078125f;
@@ -65,7 +75,7 @@ void MainMenu::showMainMenu(){
     auto usernamePanel = makePanel({usernamePanelLenght, topBarH}, color.border, topBar);
     usernamePanel->setPosition({0, 0});
 
-    auto usernameShow = makeLabel(loggedUsername, 30, color.text, usernamePanel);
+    auto usernameShow = makeLabel(loggedUsername.empty() ? "Guest" : loggedUsername, 30, color.text, usernamePanel);
     usernameShow->setPosition({usernamePanelLenght * 0.40f, topBarH * 0.18f});
 
     auto usernmaeIcon = makeImage("assets/images/login_icon.png", {usernamePanelLenght * 0.08f, topBarH * 0.25f}, {usernamePanelLenght * 0.20f, topBarH * 0.54f}, usernamePanel);
@@ -93,7 +103,7 @@ void MainMenu::showMainMenu(){
         }
     });
 
-    const int16_t money = Constants::START_PLAYER_MONEY;
+    const int money = campaignProfile.balance;
 
     auto moneyShowLabel = makeLabel("Balance: " + std::to_string(money) + "$" , 20, color.text, topBar);
     moneyShowLabel->getRenderer()->setFont("assets/fonts/Shelten.ttf");
@@ -113,7 +123,7 @@ void MainMenu::showMainMenu(){
     buttonsMainMenu.push_back(quitButton);
 
         bindSoundOnClick(buttonCampaign, [this]{
-            //?????
+            showCampaign();
         });
 
         bindSoundOnClick(buttonGameModes, [this]{
@@ -165,7 +175,71 @@ void MainMenu::handleGameMenuEscape(){
         root->remove(gameMenuPanel);
         gameMenuPanel = nullptr;
         hideOverlay();
+        openedGameMenuPanel = false;
+        for (const auto& button : buttonsMainMenu) button->setVisible(true);
         return;
+    }
+}
+
+void MainMenu::showCampaign() {
+    for (const auto& button : buttonsMainMenu) button->setVisible(false);
+    openedGameMenuPanel = true;
+    showOverlay();
+
+    const float width = getGuiWidth() * 0.80f;
+    const float height = getGuiHeight() * 0.82f;
+    gameMenuPanel = makePanel({width, height}, color.centerpanel, root);
+    const int titleSize = static_cast<int>(getGuiHeight() * 0.038f);
+    const int textSize = static_cast<int>(getGuiHeight() * 0.020f);
+    auto title = makeLabel("Campaign - Road to Las Vegas", titleSize, color.accent, gameMenuPanel);
+    title->setPosition({width * 0.04f, height * 0.035f});
+    auto rules = makeLabel("Win the whole series: eliminate every opponent to unlock the next stop.\n"
+                           "Blinds increase by about 50% every " + std::to_string(BlindSchedule::handsPerLevel) + " hands.",
+                           textSize, color.text, gameMenuPanel);
+    rules->setPosition({width * 0.04f, height * 0.11f});
+    rules->setMaximumTextWidth(width * 0.92f);
+
+    for (int i = 0; i < static_cast<int>(campaign::stages.size()); ++i) {
+        const auto& stage = campaign::stages[i];
+        const float y = height * (0.20f + i * 0.15f);
+        const bool completed = i < campaignProfile.completedStages;
+        const bool locked = i > campaignProfile.completedStages;
+        auto row = makePanel({width * 0.92f, height * 0.13f}, color.panel2, gameMenuPanel);
+        row->setPosition({width * 0.04f, y});
+        auto name = makeLabel(std::to_string(i + 1) + ". " + stage.title, textSize + 3,
+                              completed ? color.accent : color.text, row);
+        name->setPosition({width * 0.015f, height * 0.01f});
+        auto detail = makeLabel(std::string(stage.location) + " | " + std::to_string(stage.players) +
+            " players | Blinds " + std::to_string(stage.smallBlind) + "/" +
+            std::to_string(stage.smallBlind * 2) + "$", textSize - 2, color.text, row);
+        detail->setPosition({width * 0.015f, height * 0.065f});
+        const std::string status = locked ? "Locked" : completed ? "Won - Replay" : "Play series";
+        auto play = makeButton(status, {width * 0.72f, height * 0.028f},
+                               {width * 0.18f, height * 0.075f}, textSize, row);
+        play->setEnabled(campaignProfile.canEnter(i) && campaignSaveError.empty());
+        bindSoundOnClick(play, [this, i] {
+            if (campaignProfile.canEnter(i) && onCampaign) onCampaign(i);
+        });
+    }
+
+    std::string status = "Bankroll: " + std::to_string(campaignProfile.balance) + "$ | " +
+                         std::to_string(campaignProfile.completedStages) + "/4 series won";
+    if (campaignProfile.completedStages == static_cast<int>(campaign::stages.size()))
+        status += " | WSOP champion!";
+    if (campaignProfile.balance == 0) status = "Bankroll empty. Start a new campaign to return to Bratislava.";
+    if (!campaignSaveError.empty()) status = campaignSaveError;
+    auto statusLabel = makeLabel(status, textSize, color.accent, gameMenuPanel);
+    statusLabel->setPosition({width * 0.04f, height * 0.815f});
+    statusLabel->setMaximumTextWidth(width * 0.92f);
+    auto back = makeButton("Back to Menu", {width * 0.04f, height * 0.90f},
+                           {width * 0.30f, height * 0.07f}, textSize, gameMenuPanel);
+    bindSoundOnClick(back, [this] { handleGameMenuEscape(); });
+    if (campaignProfile.balance == 0) {
+        auto reset = makeButton("New campaign (reset progress)", {width * 0.45f, height * 0.90f},
+                                {width * 0.51f, height * 0.07f}, textSize, gameMenuPanel);
+        bindSoundOnClick(reset, [this] {
+            if (onResetCampaign) onResetCampaign();
+        });
     }
 }
 void MainMenu::handleGameSettingsEscape(){

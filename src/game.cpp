@@ -37,7 +37,24 @@ void Game::setBigBlind(int bigBlind)
 
 void Game::setSmallBlind(int smallBlind)
 {
-    this->smallBlindAmount = std::max(1, smallBlind);
+    blindSchedule = BlindSchedule(smallBlind);
+    smallBlindAmount = blindSchedule.getSmallBlind();
+    bigBlindAmount = blindSchedule.getBigBlind();
+}
+
+void Game::setBlindProgressionEnabled(bool enabled)
+{
+    blindProgressionEnabled = enabled;
+}
+
+bool Game::hasBlindProgression() const
+{
+    return blindProgressionEnabled;
+}
+
+const BlindSchedule& Game::getBlindSchedule() const
+{
+    return blindSchedule;
 }
 
 int Game::getSmallBlind()
@@ -65,6 +82,12 @@ void Game::setCurrentBet(int currentBet)
     this->currentBet = currentBet;
 }
 
+void Game::setStartingMoney(int humanMoney, int botMoney)
+{
+    startingMoney = std::max(1, humanMoney);
+    opponentMoney = std::max(1, botMoney);
+}
+
 std::vector<std::unique_ptr<Player>> &Game::getPlayers()
 {
     return players;
@@ -73,11 +96,13 @@ std::vector<std::unique_ptr<Player>> &Game::getPlayers()
 void Game::setup_once(std::vector<std::unique_ptr<Player>> &players)
 {
     utils::createPlayers(players, numberOfPlayers);
+    for (auto& player : players) {
+        player->setMoney(player->isRealPlayer() ? startingMoney : opponentMoney);
+    }
     dealerPosition = 0;
     smallBlindPosition = 1 % static_cast<int>(players.size());
     bigBlindPosition = (smallBlindPosition + 1) % static_cast<int>(players.size());
 
-    setSmallBlind(smallBlindAmount);
     setBigBlind(smallBlindAmount * 2);
 }
 
@@ -147,6 +172,7 @@ const std::vector<Card> &Game::getCommunityCards() const
     return communityCards;
 }
 
+
 std::vector<Card> Game::getVisibleCommunityCards() const
 {
     if (handWonByFold) {
@@ -192,6 +218,13 @@ const std::string Game::toStringActionType(ActionType type)
 
 void Game::newHand()
 {
+    if (players.empty() || currentPhase != GamePhase::SHOWDOWN) return;
+    if (blindProgressionEnabled) {
+        blindSchedule.advanceHand();
+        smallBlindAmount = blindSchedule.getSmallBlind();
+        bigBlindAmount = blindSchedule.getBigBlind();
+    }
+
     pot = 0;
     currentBet = 0;
     raiseAmount = 0;
@@ -226,6 +259,9 @@ void Game::newHand()
 
 void Game::game()
 {
+    blindSchedule.reset();
+    smallBlindAmount = blindSchedule.getSmallBlind();
+    bigBlindAmount = blindSchedule.getBigBlind();
     pot = 0;
     currentBet = 0;
     raiseAmount = 0;
@@ -263,19 +299,25 @@ ActionType Game::botChoice(std::size_t playerTurn)
     std::vector<ActionType> possibleActions{ActionType::FOLD, ActionType::ALLIN};
     std::vector<int> weights;
 
-    weights.push_back(30);
-    weights.push_back(5);
+    if(currentPhase == GamePhase::PRE_FLOP){
+        weights.push_back(10);
+    }
+    else {
+        weights.push_back(40);
+    }
+    
+    weights.push_back(1);
 
     if (toCall == 0) {
         possibleActions.push_back(ActionType::CHECK);
-        weights.push_back(20);
+        weights.push_back(40);
     } else {
         possibleActions.push_back(ActionType::CALL);
         weights.push_back(30);
     }
     if (money > toCall) {
         possibleActions.push_back(ActionType::RAISE);
-        weights.push_back(10);
+        weights.push_back(2);
     }
 
     std::discrete_distribution<std::size_t> actionDist(weights.begin(), weights.end());

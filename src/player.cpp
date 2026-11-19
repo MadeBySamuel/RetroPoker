@@ -23,7 +23,6 @@ bool Player::isBot(){
     return !isHuman;
 }
 
-
 int& Player::getMoney() {
     return money;
 }

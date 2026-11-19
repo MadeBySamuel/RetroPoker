@@ -9,6 +9,7 @@
 #include <TGUI/TGUI.hpp>
 
 #include "gui_utils.hpp"
+#include "campaign.hpp"
 
 class MainMenu : public Gui_base {
 
@@ -22,11 +23,16 @@ class MainMenu : public Gui_base {
         MainMenu(tgui::Gui& gui, sf::Music& music, sf::RenderWindow& window);
         std::function<void()> onLogout;
         std::function<void(int, int)> onGame;
+        std::function<void(int)> onCampaign;
+        std::function<void()> onResetCampaign;
+        campaign::Profile campaignProfile;
+        std::string campaignSaveError;
         std::string loggedUsername;
 
         void gameplay_settings();
 
         void showMainMenu();
+        void showCampaign();
         void handleGameMenuEscape();
         void handleGameSettingsEscape();
         void game_menu(std::vector<tgui::Button::Ptr> buttons);

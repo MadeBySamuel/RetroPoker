@@ -31,6 +31,7 @@ find_package(SQLite3 REQUIRED)
 
 add_executable(retro_poker
     src/constants.cpp
+    src/campaign.cpp
     src/game.cpp
     src/hand_evaluator.cpp
     src/logger.cpp
@@ -92,3 +93,4 @@ target_compile_options(retro_poker PRIVATE
     $<$<CONFIG:Debug>:-g -O0>
     $<$<CONFIG:Release>:-O2>
 )
+

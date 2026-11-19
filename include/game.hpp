@@ -1,6 +1,7 @@
 #pragma once
 #include "player.hpp"
 #include "utils.hpp"
+#include "blind_schedule.hpp"
 
 
 enum class GamePhase { PRE_FLOP, FLOP, TURN, RIVER, SHOWDOWN };
@@ -14,6 +15,10 @@ class Game {
         int smallBlindAmount = 10;
         int bigBlindAmount = 0;
         int numberOfPlayers = 2;
+        int startingMoney = Constants::START_PLAYER_MONEY;
+        int opponentMoney = Constants::START_PLAYER_MONEY;
+        BlindSchedule blindSchedule;
+        bool blindProgressionEnabled = false;
 
         std::vector<std::unique_ptr<Player>> players;
         std::vector<Card> communityCards;
@@ -44,8 +49,12 @@ class Game {
 
         int getNumberOfPlayers();
         void setNumberOfPlayers(int numberOfPlayers); 
+        void setStartingMoney(int humanMoney, int botMoney);
         int getSmallBlind();
         void setSmallBlind(int smallBlind);
+        void setBlindProgressionEnabled(bool enabled);
+        bool hasBlindProgression() const;
+        const BlindSchedule& getBlindSchedule() const;
 
         int getCurrentBet();
         int getFirstTurnIndex() const;
